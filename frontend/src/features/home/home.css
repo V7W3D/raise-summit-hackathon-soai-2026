@@ -1,5 +1,11 @@
 .home {
   max-width: 1080px;
+  margin: 0 auto;
+}
+
+/* ─── Welcome header ─── */
+.home-header {
+  margin-bottom: 40px;
 }
 
 /* ─── Top intro ─── */
@@ -50,6 +56,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  padding-left: 24px;
 }
 
 .home-btn {
@@ -291,6 +298,7 @@
   .home-actions {
     flex-direction: column;
     align-items: stretch;
+    padding-left: 0;
   }
 
   .home-btn {

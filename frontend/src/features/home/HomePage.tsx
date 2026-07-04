@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Plus, Play, ArrowRight } from 'lucide-react';
+import { userFirstName } from '../../lib/user-display';
 import { useDashboard } from './use-home-api-queries';
 import './home.css';
 
@@ -16,7 +17,10 @@ export function HomePage() {
     return <p className="home-loading">Unable to load dashboard.</p>;
   }
 
-  const { stats, recentMissions, recentProspects } = data;
+  const { stats, recentMissions, recentProspects, user, subtitle } = data;
+  const firstName = userFirstName(user.name);
+  const welcomeSubtitle =
+    subtitle || "Here's what's happening in your workspace.";
 
   const keyMetrics = stats.filter((stat) =>
     KEY_METRIC_LABELS.includes(stat.label as (typeof KEY_METRIC_LABELS)[number]),
@@ -27,6 +31,11 @@ export function HomePage() {
 
   return (
     <div className="home">
+      <header className="home-header">
+        <h1 className="page-title">Welcome back, {firstName}</h1>
+        <p className="page-subtitle">{welcomeSubtitle}</p>
+      </header>
+
       <div className="home-top">
         <div className="home-intro">
           <div className="home-kpi-grid">

@@ -96,3 +96,11 @@ export function useDashboard() {
     queryFn: ({ signal }) => fetchDashboard(signal),
   });
 }
+
+export function useCurrentUser() {
+  return useQuery({
+    queryKey: dashboardQueryKey,
+    queryFn: ({ signal }) => fetchDashboard(signal),
+    select: (data) => data.user,
+  });
+}
