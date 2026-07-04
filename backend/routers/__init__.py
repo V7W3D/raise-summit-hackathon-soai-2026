@@ -1,3 +1,3 @@
-from routers import home, leads, missions
+from routers import business_profiles, home, leads, missions
 
-__all__ = ["home", "leads", "missions"]
+__all__ = ["business_profiles", "home", "leads", "missions"]

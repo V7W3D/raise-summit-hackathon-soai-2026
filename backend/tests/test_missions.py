@@ -8,7 +8,6 @@ def _create_mission(client: TestClient, **overrides) -> dict:
 		"name": "Construction Clients – Lyon",
 		"target": "Target: small service businesses",
 		"location": "Lyon, France",
-		"status": "Active",
 		"description": "Find small construction service businesses in Lyon.",
 		"target_industry": "construction",
 		"language": "fr",
@@ -40,12 +39,33 @@ def test_create_and_list_missions(client: TestClient) -> None:
 	assert created["id"] > 0
 	assert created["name"] == "Construction Clients – Lyon"
 	assert created["progress"] == 0
+	assert created["is_archived"] is False
 
 	res = client.get("/missions")
 	assert res.status_code == 200
 	missions = res.json()
 	assert len(missions) == 1
 	assert missions[0]["id"] == created["id"]
+
+
+def test_list_archived_missions(client: TestClient) -> None:
+	active = _create_mission(client, name="Active mission")
+	archived = _create_mission(client, name="Archived mission")
+	client.patch(f"/missions/{archived['id']}", json={"is_archived": True})
+
+	active_res = client.get("/missions", params={"is_archived": False})
+	assert active_res.status_code == 200
+	assert [m["name"] for m in active_res.json()] == ["Active mission"]
+
+	archived_res = client.get("/missions", params={"is_archived": True})
+	assert archived_res.status_code == 200
+	assert [m["name"] for m in archived_res.json()] == ["Archived mission"]
+
+
+def test_get_archived_mission_returns_404(client: TestClient) -> None:
+	created = _create_mission(client)
+	client.patch(f"/missions/{created['id']}", json={"is_archived": True})
+	assert client.get(f"/missions/{created['id']}").status_code == 404
 
 
 def test_get_mission_404(client: TestClient) -> None:
@@ -56,22 +76,11 @@ def test_update_mission(client: TestClient) -> None:
 	created = _create_mission(client)
 	res = client.patch(
 		f"/missions/{created['id']}",
-		json={"status": "Paused", "progress": 42},
+		json={"progress": 42},
 	)
 	assert res.status_code == 200
 	body = res.json()
-	assert body["status"] == "Paused"
 	assert body["progress"] == 42
-
-
-def test_filter_by_status(client: TestClient) -> None:
-	_create_mission(client, name="Active One", status="Active")
-	_create_mission(client, name="Draft One", status="Draft")
-
-	res = client.get("/missions", params={"status": "Draft"})
-	assert res.status_code == 200
-	names = [m["name"] for m in res.json()]
-	assert names == ["Draft One"]
 
 
 def test_delete_mission(client: TestClient) -> None:

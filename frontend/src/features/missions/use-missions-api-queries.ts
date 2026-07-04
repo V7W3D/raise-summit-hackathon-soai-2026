@@ -4,17 +4,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { API_BASE_URL } from '../../api/config';
 import { dashboardQueryKey } from '../home/use-home-api-queries';
 
-const STATUS_TONE: Record<string, string> = {
-  Active: 'green',
-  Draft: 'neutral',
-  Paused: 'orange',
-  Archived: 'neutral',
-};
-
-function statusTone(status: string): string {
-  return STATUS_TONE[status] ?? 'neutral';
-}
-
 export const missionUrgencies = ['low', 'medium', 'high'] as const;
 
 export type MissionUrgency = (typeof missionUrgencies)[number];
@@ -25,8 +14,8 @@ const missionSchema = z
     name: z.string(),
     target: z.string(),
     location: z.string(),
-    status: z.string(),
     progress: z.number(),
+    is_archived: z.boolean(),
     description: z.string(),
     target_industry: z.string().nullable(),
     target_business_size: z.string().nullable(),
@@ -43,19 +32,18 @@ const missionSchema = z
     target: dto.target,
     location: dto.location,
     progress: dto.progress,
-    status: dto.status,
+    isArchived: dto.is_archived,
     description: dto.description,
     targetIndustry: dto.target_industry,
     targetBusinessSize: dto.target_business_size,
     desiredLeadCount: dto.desired_lead_count,
     urgency: dto.urgency,
     language: dto.language,
-    statusTone: statusTone(dto.status),
   }));
 
 export type MissionVM = z.infer<typeof missionSchema>;
 
-export const missionsQueryKey = ['missions'] as const;
+export const missionsQueryKey = (isArchived = false) => ['missions', { isArchived }] as const;
 
 export const missionQueryKey = (id: number) => ['mission', id] as const;
 
@@ -63,7 +51,6 @@ export type MissionCreatePayload = {
   name: string;
   target?: string;
   location?: string;
-  status?: string;
   description?: string;
   target_industry?: string;
   target_business_size?: string;
@@ -72,8 +59,16 @@ export type MissionCreatePayload = {
   language?: string;
 };
 
-async function fetchMissions(signal?: AbortSignal) {
-  const { data } = await axios.get(`${API_BASE_URL}/missions`, { signal });
+export type MissionUpdatePayload = {
+  is_archived?: boolean;
+  progress?: number;
+};
+
+async function fetchMissions(isArchived: boolean, signal?: AbortSignal) {
+  const { data } = await axios.get(`${API_BASE_URL}/missions`, {
+    params: { is_archived: isArchived },
+    signal,
+  });
   return z.array(missionSchema).parse(data);
 }
 
@@ -87,14 +82,21 @@ async function createMission(payload: MissionCreatePayload) {
   return missionSchema.parse(data);
 }
 
+async function updateMission(id: number, payload: MissionUpdatePayload) {
+  const { data } = await axios.patch(`${API_BASE_URL}/missions/${id}`, payload);
+  return missionSchema.parse(data);
+}
+
 async function deleteMission(id: number) {
   await axios.delete(`${API_BASE_URL}/missions/${id}`);
 }
 
-export function useMissions() {
+export function useMissions(options: { isArchived?: boolean; enabled?: boolean } = {}) {
+  const isArchived = options.isArchived ?? false;
   return useQuery({
-    queryKey: missionsQueryKey,
-    queryFn: ({ signal }) => fetchMissions(signal),
+    queryKey: missionsQueryKey(isArchived),
+    queryFn: ({ signal }) => fetchMissions(isArchived, signal),
+    enabled: options.enabled ?? true,
   });
 }
 
@@ -111,7 +113,19 @@ export function useCreateMission() {
   return useMutation({
     mutationFn: createMission,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: missionsQueryKey });
+      queryClient.invalidateQueries({ queryKey: ['missions'] });
+      queryClient.invalidateQueries({ queryKey: dashboardQueryKey });
+    },
+  });
+}
+
+export function useUpdateMission() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: MissionUpdatePayload }) =>
+      updateMission(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['missions'] });
       queryClient.invalidateQueries({ queryKey: dashboardQueryKey });
     },
   });
@@ -122,7 +136,7 @@ export function useDeleteMission() {
   return useMutation({
     mutationFn: deleteMission,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: missionsQueryKey });
+      queryClient.invalidateQueries({ queryKey: ['missions'] });
       queryClient.invalidateQueries({ queryKey: dashboardQueryKey });
       queryClient.invalidateQueries({ queryKey: ['leads'] });
     },

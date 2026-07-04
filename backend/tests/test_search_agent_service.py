@@ -19,7 +19,6 @@ LYON_MISSION = {
 	"name": "Construction Clients – Lyon",
 	"target": "Target: small service businesses",
 	"location": "Lyon, France",
-	"status": "Active",
 	"description": (
 		"Find small construction service businesses in Lyon likely to "
 		"need AI call reception."
@@ -110,7 +109,6 @@ def test_run_search_for_mission_requires_business_profile(db_session: Session) -
 		name="Unlinked mission",
 		target="Target: test",
 		location="Lyon, France",
-		status="Active",
 		description="Test mission without user link.",
 	)
 	db_session.add(mission)

@@ -7,19 +7,23 @@ from models.clients.missions import Mission
 from models.clients.user_mission_links import UserMissionLink
 from models.schemas.missions import MissionCreate, MissionUpdate
 
-# Status values that count as "active" for dashboards.
-ACTIVE_STATUSES = {"Active"}
 
-
-def list_missions(db: Session, *, status: str | None = None) -> list[Mission]:
-	stmt = select(Mission).order_by(Mission.last_activity_at.desc())
-	if status:
-		stmt = stmt.where(Mission.status == status)
+def list_missions(db: Session, *, is_archived: bool = False) -> list[Mission]:
+	stmt = (
+		select(Mission)
+		.where(Mission.is_archived == is_archived)
+		.order_by(Mission.last_activity_at.desc())
+	)
 	return list(db.scalars(stmt).all())
 
 
-def get_mission(db: Session, mission_id: int) -> Mission | None:
-	return db.get(Mission, mission_id)
+def get_mission(db: Session, mission_id: int, *, active_only: bool = True) -> Mission | None:
+	mission = db.get(Mission, mission_id)
+	if mission is None:
+		return None
+	if active_only and mission.is_archived:
+		return None
+	return mission
 
 
 def create_mission(
