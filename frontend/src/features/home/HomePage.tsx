@@ -1,52 +1,238 @@
-import { StatusPill } from '@components/StatusPill';
-import { useBackendHealth } from '@hooks/useBackendHealth';
-import { useCurrentYear } from '@hooks/useCurrentYear';
+import { Link } from 'react-router-dom';
+import {
+  Plus,
+  Play,
+  Users,
+  Send,
+  Bell,
+  ChevronRight,
+  ArrowRight,
+  UsersRound,
+  PenSquare,
+  MessageSquare,
+  Clock,
+  RefreshCw,
+  ClipboardList,
+  Search,
+  User,
+  Smile,
+  Calendar,
+  Activity,
+  Building2,
+  Reply,
+  AlertTriangle,
+  Globe,
+  Star,
+  Target,
+  Leaf,
+  UtensilsCrossed,
+  MessageCircle,
+} from 'lucide-react';
+import {
+  nextBestActions,
+  homeStats,
+  opportunityFeed,
+  recentMissions,
+  recentProspects,
+  type Priority,
+} from '../../data/mock';
+import './home.css';
+
+const NBA_ICONS = {
+  leads: { Icon: UsersRound, tone: 'blue' },
+  draft: { Icon: PenSquare, tone: 'blue' },
+  reply: { Icon: MessageSquare, tone: 'green' },
+  clock: { Icon: Clock, tone: 'orange' },
+  refresh: { Icon: RefreshCw, tone: 'blue' },
+} as const;
+
+const STAT_ICONS = {
+  missions: ClipboardList,
+  search: Search,
+  user: User,
+  send: Send,
+  smile: Smile,
+  calendar: Calendar,
+} as const;
+
+const FEED_ICONS = {
+  building: Building2,
+  reply: Reply,
+  warning: AlertTriangle,
+  globe: Globe,
+  star: Star,
+} as const;
+
+const MISSION_ICONS = {
+  building: { Icon: Building2, tone: 'blue', bar: '#2563eb' },
+  leaf: { Icon: Leaf, tone: 'green', bar: '#16a34a' },
+  sushi: { Icon: UtensilsCrossed, tone: 'orange', bar: '#ea8a1f' },
+} as const;
+
+const priorityClass: Record<Priority, string> = {
+  High: 'pill-high',
+  Medium: 'pill-medium',
+  Low: 'pill-low',
+};
 
 export function HomePage() {
-  const currentYear = useCurrentYear();
-  const backendHealth = useBackendHealth();
-
   return (
-    <main className="page">
-      <section className="shell">
-        <div className="hero">
-          <StatusPill label="Raise Summit Frontend" />
-          <h1 className="title">A clean React base for the summit experience.</h1>
-          <p className="subtitle">
-            This frontend is wired with Vite, React, TypeScript, and path aliases that match the existing folder
-            structure so features, shared components, and hooks stay organized from day one. It also checks the
-            FastAPI backend via axios and TanStack Query.
-          </p>
-          <div className="grid">
-            <article className="card">
-              <h2>Features</h2>
-              <p>Keep screens and flows inside <strong>src/features</strong>.</p>
-            </article>
-            <article className="card">
-              <h2>Shared UI</h2>
-              <p>Place reusable pieces in the root <strong>components</strong> folder.</p>
-            </article>
-            <article className="card">
-              <h2>Hooks</h2>
-              <p>Store reusable logic in the root <strong>hooks</strong> folder.</p>
-            </article>
-            <article className="card">
-              <h2>Backend status</h2>
-              <p>{backendHealth.message}</p>
-            </article>
+    <div>
+      <div className="home-header">
+        <div>
+          <h1 className="page-title">Good morning, Azzedine 👋</h1>
+          <p className="page-subtitle">You have 3 prospects waiting for review and 2 follow-ups due today.</p>
+        </div>
+        <button className="icon-btn notif-btn" aria-label="Notifications">
+          <Bell size={19} />
+        </button>
+      </div>
+
+      <div className="home-actions">
+        <Link to="/missions" className="btn btn-primary">
+          <Plus /> Start new mission
+        </Link>
+        <Link to="/discover" className="btn btn-outline">
+          <Play /> Continue current mission
+        </Link>
+        <Link to="/discover" className="btn btn-outline">
+          <Users /> Review leads
+        </Link>
+        <button className="btn btn-outline">
+          <Send /> Send follow-ups
+        </button>
+      </div>
+
+      <div className="home-section-head">
+        <h2 className="section-title">Next Best Actions</h2>
+        <a className="link" href="#actions">
+          View all actions <ArrowRight />
+        </a>
+      </div>
+
+      <div className="nba-grid">
+        {nextBestActions.map((action) => {
+          const { Icon, tone } = NBA_ICONS[action.icon];
+          return (
+            <div key={action.title} className="card nba-card">
+              <div className="nba-card-top">
+                <span className={`icon-tile ${tone}`}>
+                  <Icon />
+                </span>
+                <span className={`pill ${priorityClass[action.priority]}`}>{action.priority}</span>
+              </div>
+              <div>
+                <div className="nba-title">{action.title}</div>
+                {action.subtitle && <div className="nba-subtitle">{action.subtitle}</div>}
+              </div>
+              <ChevronRight size={17} className="nba-chevron" />
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="card home-stats">
+        {homeStats.map((stat) => {
+          const Icon = STAT_ICONS[stat.icon];
+          return (
+            <div key={stat.label} className="home-stat">
+              <span className="icon-tile blue">
+                <Icon />
+              </span>
+              <div>
+                <div className="home-stat-label">{stat.label}</div>
+                <div className="home-stat-value">{stat.value}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="home-columns">
+        <section className="card panel">
+          <div className="panel-head">
+            <span className="panel-head-title">
+              <Activity /> Opportunity Feed
+            </span>
+            <a className="link" href="#feed">
+              View all
+            </a>
           </div>
-        </div>
-        <div className="footer">
-          <span>
-            {backendHealth.isSuccess
-              ? 'Connected to the backend API.'
-              : backendHealth.isLoading
-                ? 'Connecting to the backend API...'
-                : 'Unable to reach the backend API.'}
-          </span>
-          <span>© {currentYear} Raise Summit</span>
-        </div>
-      </section>
-    </main>
+          {opportunityFeed.map((item) => {
+            const Icon = FEED_ICONS[item.icon];
+            return (
+              <div key={item.text} className="feed-item">
+                <span className="feed-dot" style={{ background: item.dot }} />
+                <span className="feed-icon">
+                  <Icon />
+                </span>
+                <span className="feed-text">{item.text}</span>
+                <span className="feed-time">{item.time}</span>
+              </div>
+            );
+          })}
+        </section>
+
+        <section className="card panel">
+          <div className="panel-head">
+            <span className="panel-head-title">
+              <Target /> Recent Missions
+            </span>
+            <Link className="link" to="/missions">
+              View all missions <ArrowRight />
+            </Link>
+          </div>
+          {recentMissions.map((mission) => {
+            const { Icon, tone, bar } = MISSION_ICONS[mission.icon];
+            return (
+              <div key={mission.name} className="rm-item">
+                <span className={`icon-tile ${tone}`}>
+                  <Icon />
+                </span>
+                <div className="rm-body">
+                  <div className="rm-top">
+                    <span className="rm-name">{mission.name}</span>
+                    <span className="rm-pct">{mission.progress}%</span>
+                  </div>
+                  <div className="rm-meta">
+                    <span>{mission.updated}</span>
+                    <span>{mission.leads} leads</span>
+                  </div>
+                  <div className="rm-bar">
+                    <div className="rm-bar-fill" style={{ width: `${mission.progress}%`, background: bar }} />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </section>
+
+        <section className="card panel">
+          <div className="panel-head">
+            <span className="panel-head-title">
+              <MessageCircle /> Recent Prospects
+            </span>
+            <Link className="link" to="/discover">
+              View all prospects <ArrowRight />
+            </Link>
+          </div>
+          {recentProspects.map((prospect) => (
+            <div key={prospect.name} className="rp-item">
+              <span className="avatar-initials" style={{ background: `${prospect.color}1a`, color: prospect.color }}>
+                {prospect.initials}
+              </span>
+              <div>
+                <div className="rp-name">{prospect.name}</div>
+                <div className="rp-meta">{prospect.meta}</div>
+              </div>
+              <div className="rp-right">
+                <span className={`pill pill-${prospect.fitTone}`}>{prospect.fit}</span>
+                <span className="rp-time">{prospect.time}</span>
+              </div>
+            </div>
+          ))}
+        </section>
+      </div>
+    </div>
   );
 }
