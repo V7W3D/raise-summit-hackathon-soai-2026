@@ -231,7 +231,7 @@ export function HomePage() {
             </Link>
           </div>
           {recentProspects.map((prospect) => (
-            <Link key={prospect.id} to={`/leads/${prospect.slug}`} className="rp-item">
+            <Link key={prospect.id} to={`/leads/${prospect.id}`} className="rp-item">
               <span className="avatar-initials" style={{ background: `${prospect.color}1a`, color: prospect.color }}>
                 {prospect.initials}
               </span>

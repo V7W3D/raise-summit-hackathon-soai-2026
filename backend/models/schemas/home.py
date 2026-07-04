@@ -5,8 +5,6 @@ from pydantic import BaseModel
 
 class UserSummary(BaseModel):
 	name: str
-	plan: str
-	initials: str
 
 
 class NextBestAction(BaseModel):
@@ -38,7 +36,6 @@ class RecentMission(BaseModel):
 
 class RecentProspect(BaseModel):
 	id: int
-	slug: str
 	initials: str
 	color: str
 	name: str
