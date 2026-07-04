@@ -13,6 +13,7 @@ from services import business_profiles as business_profile_service
 from services import search_agent as search_agent_service
 from services.business_profiles import BusinessProfileNotFoundError
 from services.leads import list_leads
+from services.mission_search import _execute_mission_search
 from tests.search_agent.support.fakes import FakePageFetcher, FakeSearchProvider
 
 LYON_MISSION = {
@@ -29,7 +30,7 @@ LYON_MISSION = {
 
 
 @pytest.fixture(autouse=True)
-def _inject_fake_search(monkeypatch: pytest.MonkeyPatch):
+def _inject_fake_search(db_session: Session, monkeypatch: pytest.MonkeyPatch):
 	original = search_agent_service.run_search_for_mission
 
 	def _wrapped(db, mission_id, **kwargs):
@@ -38,6 +39,16 @@ def _inject_fake_search(monkeypatch: pytest.MonkeyPatch):
 		return original(db, mission_id, **kwargs)
 
 	monkeypatch.setattr(search_agent_service, "run_search_for_mission", _wrapped)
+
+	def _run_search_sync(mission_id: int, user_id: int) -> None:
+		from services.mission_search import _execute_mission_search
+
+		_execute_mission_search(db_session, mission_id, user_id)
+
+	monkeypatch.setattr(
+		"services.mission_search.enqueue_mission_search",
+		_run_search_sync,
+	)
 
 
 def _create_mission(db: Session, **overrides) -> Mission:
@@ -123,11 +134,17 @@ def test_run_search_for_mission_requires_business_profile(db_session: Session) -
 		)
 
 
-def test_create_mission_runs_search_and_persists_leads(client: TestClient) -> None:
+def test_run_mission_search_persists_leads(client: TestClient) -> None:
 	res = client.post("/missions", json=LYON_MISSION)
 	assert res.status_code == 201, res.text
-	mission_id = res.json()["id"]
-	assert res.json()["target_industry"] == "construction"
+	body = res.json()
+	mission_id = body["id"]
+	assert body["target_industry"] == "construction"
+	assert body["search_status"] == "ready"
+
+	search_res = client.post(f"/missions/{mission_id}/search")
+	assert search_res.status_code == 200, search_res.text
+	assert search_res.json()["search_status"] == "ready"
 
 	leads = client.get("/leads", params={"mission_id": mission_id}).json()
 	assert len(leads) > 0

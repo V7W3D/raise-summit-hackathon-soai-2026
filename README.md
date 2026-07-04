@@ -6,7 +6,7 @@ Verification, and Insights.
 
 ## Quick start — run the full stack
 
-You need **two terminals**: one for the backend API, one for the frontend.
+You need **three terminals**: backend API, Celery worker, and frontend.
 
 ### 1. Backend (terminal 1)
 
@@ -24,7 +24,20 @@ The API is now live at `http://127.0.0.1:8000` (interactive docs at `/docs`).
 
 > To reset the demo data at any time: `poetry run python -m database.seed --reset`
 
-### 2. Frontend (terminal 2)
+### 2. Celery worker (terminal 2)
+
+Mission search runs in the background via Celery. You need **Redis** running locally
+(e.g. `docker run -p 6379:6379 redis:7` or a local Redis install), then start a worker:
+
+```bash
+cd backend
+poetry run celery -A celery_app worker --loglevel=info
+```
+
+When you create a mission, the API enqueues a search task; the worker runs the search
+agent and updates the mission's `search_status` in the database when it finishes.
+
+### 3. Frontend (terminal 3)
 
 ```bash
 cd frontend
@@ -40,10 +53,12 @@ renders.
 
 ### Ports at a glance
 
-| Service  | URL                       | Notes                          |
-| -------- | ------------------------- | ------------------------------ |
-| Backend  | `http://127.0.0.1:8000`   | FastAPI, OpenAPI docs at `/docs` |
-| Frontend | `http://localhost:5173`   | Vite dev server                |
+| Service       | URL                       | Notes                          |
+| ------------- | ------------------------- | ------------------------------ |
+| Backend       | `http://127.0.0.1:8000`   | FastAPI, OpenAPI docs at `/docs` |
+| Redis         | `redis://localhost:6379`  | Celery broker (background search) |
+| Celery worker | —                         | `celery -A celery_app worker`  |
+| Frontend      | `http://localhost:5173`   | Vite dev server                |
 
 ---
 

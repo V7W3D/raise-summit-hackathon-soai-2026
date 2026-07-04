@@ -7,6 +7,7 @@ from models.schemas.missions import MissionCreate, MissionRead, MissionUpdate
 from services import missions as mission_service
 from services import users as user_service
 from services.business_profiles import BusinessProfileNotFoundError
+from services.mission_search import MissionSearchAlreadyRunningError, start_mission_search
 from search_agent.errors import ProviderNotConfiguredError
 
 router = APIRouter(prefix="/missions", tags=["missions"])
@@ -30,8 +31,22 @@ def list_missions(db: DbSession, is_archived: bool = Query(default=False)):
 @router.post("", response_model=MissionRead, status_code=status.HTTP_201_CREATED)
 def create_mission(payload: MissionCreate, db: DbSession):
 	user = _require_default_user(db)
+	return mission_service.create_mission(db, payload, user_id=user.id)
+
+
+@router.post("/{mission_id}/search", response_model=MissionRead)
+def run_mission_search(mission_id: int, db: DbSession):
+	user = _require_default_user(db)
+	mission = mission_service.get_mission(db, mission_id)
+	if mission is None:
+		raise HTTPException(status_code=404, detail="Mission not found")
 	try:
-		return mission_service.create_mission(db, payload, user_id=user.id)
+		return start_mission_search(db, mission_id, user_id=user.id)
+	except MissionSearchAlreadyRunningError as exc:
+		raise HTTPException(
+			status_code=status.HTTP_409_CONFLICT,
+			detail=str(exc),
+		) from None
 	except BusinessProfileNotFoundError:
 		raise HTTPException(
 			status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

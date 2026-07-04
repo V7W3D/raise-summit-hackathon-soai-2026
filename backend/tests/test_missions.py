@@ -40,6 +40,7 @@ def test_create_and_list_missions(client: TestClient) -> None:
 	assert created["name"] == "Construction Clients – Lyon"
 	assert created["progress"] == 0
 	assert created["is_archived"] is False
+	assert created["search_status"] == "ready"
 
 	res = client.get("/missions")
 	assert res.status_code == 200
@@ -87,6 +88,23 @@ def test_delete_mission(client: TestClient) -> None:
 	created = _create_mission(client)
 	assert client.delete(f"/missions/{created['id']}").status_code == 204
 	assert client.get(f"/missions/{created['id']}").status_code == 404
+
+
+def test_start_mission_search_returns_running(client: TestClient) -> None:
+	created = _create_mission(client)
+	assert created["search_status"] == "ready"
+
+	res = client.post(f"/missions/{created['id']}/search")
+	assert res.status_code == 200, res.text
+	assert res.json()["search_status"] == "running"
+
+
+def test_start_mission_search_conflict_when_already_running(client: TestClient) -> None:
+	created = _create_mission(client)
+	client.post(f"/missions/{created['id']}/search")
+
+	res = client.post(f"/missions/{created['id']}/search")
+	assert res.status_code == 409
 
 
 def test_delete_mission_cascades_leads(client: TestClient) -> None:

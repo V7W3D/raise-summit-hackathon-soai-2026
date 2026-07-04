@@ -17,6 +17,9 @@ class Mission(Base):
 	__tablename__ = "missions"
 
 	id: Mapped[int] = mapped_column(primary_key=True)
+	search_status: Mapped[str] = mapped_column(
+		String(20), default="ready", server_default="ready", nullable=False
+	)
 	name: Mapped[str] = mapped_column(String(160), nullable=False)
 	target: Mapped[str] = mapped_column(String(255), default="", nullable=False)
 	location: Mapped[str] = mapped_column(String(120), default="", nullable=False)

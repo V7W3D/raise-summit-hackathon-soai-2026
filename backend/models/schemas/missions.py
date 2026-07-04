@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from typing_extensions import Self
 
 MissionUrgency = Literal["low", "medium", "high"]
+MissionSearchStatus = Literal["running", "ready", "failed"]
 
 
 def _default_description(name: str, target: str) -> str:
@@ -55,6 +56,7 @@ class MissionRead(MissionBase):
 	model_config = ConfigDict(from_attributes=True)
 
 	id: int
+	search_status: MissionSearchStatus
 	progress: int
 	is_archived: bool
 	created_at: datetime
