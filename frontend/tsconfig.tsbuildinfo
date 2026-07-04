@@ -1,0 +1,1 @@
+{"root":["./src/App.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/features/home/HomePage.tsx","./src/features/home/useBackendHealth.ts","./src/lib/api.ts","./components/StatusPill.tsx","./hooks/useCurrentYear.ts"],"version":"5.9.3"}
