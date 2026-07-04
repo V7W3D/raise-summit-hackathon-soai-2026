@@ -116,6 +116,80 @@
   border-color: var(--border-strong);
 }
 
+.mission-run-search-btn {
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+}
+
+.mission-run-search-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.mission-card-searching {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.mission-card-searching:hover {
+  border-color: var(--border);
+}
+
+.mission-search-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.mission-search-spinner {
+  animation: mission-search-spin 0.9s linear infinite;
+}
+
+@keyframes mission-search-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mission-search-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mission-detail-panel-searching {
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.mission-search-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
 .mission-main {
   flex: 1;
   min-width: 0;

@@ -12,6 +12,8 @@ uvicorn = { extras = ["standard"], version = "^0.34.0" }
 sqlalchemy = "^2.0.0"
 python-dotenv = "^1.0.0"
 alembic = "^1.14.0"
+celery = { extras = ["redis"], version = "^5.4.0" }
+redis = "^5.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.0"

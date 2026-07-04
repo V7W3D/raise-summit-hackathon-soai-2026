@@ -11,6 +11,7 @@ import { MissionListItem } from './MissionListItem';
 import {
   useDeleteMission,
   useMissions,
+  useRunMissionSearch,
   useUpdateMission,
 } from './use-missions-api-queries';
 import './missions.css';
@@ -25,6 +26,7 @@ export function MissionsPage() {
   } = useMissions({ isArchived: true, enabled: showArchived });
   const deleteMission = useDeleteMission();
   const updateMission = useUpdateMission();
+  const runMissionSearch = useRunMissionSearch();
   const missions = activeMissions ?? [];
   const archived = archivedMissions ?? [];
 
@@ -65,6 +67,7 @@ export function MissionsPage() {
               key={mission.id}
               mission={mission}
               onDelete={() => deleteMission.mutate(mission.id)}
+              onRunSearch={() => runMissionSearch.mutate(mission.id)}
               onArchive={() =>
                 updateMission.mutate({ id: mission.id, payload: { is_archived: true } })
               }
@@ -73,6 +76,9 @@ export function MissionsPage() {
               }
               isArchiving={
                 updateMission.isPending && updateMission.variables?.id === mission.id
+              }
+              isRunningSearch={
+                runMissionSearch.isPending && runMissionSearch.variables === mission.id
               }
             />
           ))
@@ -110,6 +116,7 @@ export function MissionsPage() {
                     deleteMission.isPending && deleteMission.variables === mission.id
                   }
                   isArchiving={false}
+                  isRunningSearch={false}
                 />
               ))}
             </div>
