@@ -105,7 +105,7 @@ def search_mission(mission_id: int, db: DbSession):
 
 @router.get("/{mission_id}", response_model=MissionRead)
 def get_mission(mission_id: int, db: DbSession):
-	mission = mission_service.get_mission(db, mission_id)
+	mission = mission_service.get_mission(db, mission_id, active_only=False)
 	if mission is None:
 		raise HTTPException(status_code=404, detail="Mission not found")
 	return mission
@@ -113,7 +113,7 @@ def get_mission(mission_id: int, db: DbSession):
 
 @router.patch("/{mission_id}", response_model=MissionRead)
 def update_mission(mission_id: int, payload: MissionUpdate, db: DbSession):
-	mission = mission_service.get_mission(db, mission_id)
+	mission = mission_service.get_mission(db, mission_id, active_only=False)
 	if mission is None:
 		raise HTTPException(status_code=404, detail="Mission not found")
 	return mission_service.update_mission(db, mission, payload)

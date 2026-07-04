@@ -3,17 +3,11 @@ import { Link } from 'react-router-dom';
 import {
   Plus,
   ArrowUpDown,
-  ChevronDown,
   Archive,
   ChevronUp,
 } from 'lucide-react';
 import { MissionListItem } from './MissionListItem';
-import {
-  useDeleteMission,
-  useMissions,
-  useRunMissionSearch,
-  useUpdateMission,
-} from './use-missions-api-queries';
+import { useMissions, useRunMissionSearch } from './use-missions-api-queries';
 import './missions.css';
 
 export function MissionsPage() {
@@ -24,8 +18,6 @@ export function MissionsPage() {
     isPending: isArchivedPending,
     isError: isArchivedError,
   } = useMissions({ isArchived: true, enabled: showArchived });
-  const deleteMission = useDeleteMission();
-  const updateMission = useUpdateMission();
   const runMissionSearch = useRunMissionSearch();
   const missions = activeMissions ?? [];
   const archived = archivedMissions ?? [];
@@ -52,8 +44,8 @@ export function MissionsPage() {
       <div className="missions-toolbar">
         <h2 className="section-title">Mission list</h2>
         <div style={{ display: 'flex', gap: 12 }}>
-          <button type="button" className="select-control">
-            <ArrowUpDown /> Last activity <ChevronDown />
+          <button type="button" className="btn btn-outline">
+            <ArrowUpDown /> Last activity
           </button>
         </div>
       </div>
@@ -66,17 +58,7 @@ export function MissionsPage() {
             <MissionListItem
               key={mission.id}
               mission={mission}
-              onDelete={() => deleteMission.mutate(mission.id)}
               onRunSearch={() => runMissionSearch.mutate(mission.id)}
-              onArchive={() =>
-                updateMission.mutate({ id: mission.id, payload: { is_archived: true } })
-              }
-              isDeleting={
-                deleteMission.isPending && deleteMission.variables === mission.id
-              }
-              isArchiving={
-                updateMission.isPending && updateMission.variables?.id === mission.id
-              }
               isRunningSearch={
                 runMissionSearch.isPending && runMissionSearch.variables === mission.id
               }
@@ -111,11 +93,6 @@ export function MissionsPage() {
                   key={mission.id}
                   mission={mission}
                   archived
-                  onDelete={() => deleteMission.mutate(mission.id)}
-                  isDeleting={
-                    deleteMission.isPending && deleteMission.variables === mission.id
-                  }
-                  isArchiving={false}
                   isRunningSearch={false}
                 />
               ))}
