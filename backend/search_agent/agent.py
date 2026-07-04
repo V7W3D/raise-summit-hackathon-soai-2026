@@ -17,7 +17,7 @@ from .extraction import (
     get_domain,
     normalize_url,
 )
-from .fetching import BasicHttpPageFetcher, MockPageFetcher, PageFetcher
+from .fetching import BasicHttpPageFetcher, PageFetcher
 from .planning import build_fallback_plan, build_llm_plan, llm_planning_available
 from .providers import (
     ProviderSearchOptions,
@@ -153,9 +153,8 @@ def run_search_agent(
 ) -> SearchAgentOutput:
     """Run the full search agent pipeline.
 
-    `provider` and `fetcher` are injectable for tests; by default they are
-    resolved from providerOptions (mock provider pairs with the mock fetcher
-    so demos never hit the network).
+    `provider` and `fetcher` are injectable for tests; by default the provider
+    is resolved from providerOptions and pages are fetched over HTTP.
     """
     trace = TraceRecorder()
     warnings: list[SearchWarning] = []
@@ -205,19 +204,6 @@ def run_search_agent(
                 {"queries": len(plan.generated_queries)},
             )
 
-        if mission.goal_type == "find_hires":
-            warnings.append(
-                SearchWarning(
-                    code="hiring_limited_support",
-                    message=(
-                        "Hiring is a special workflow: only public company/"
-                        "professional pages are searched, never job platforms "
-                        "or candidate profiles."
-                    ),
-                    severity="info",
-                )
-            )
-
         context = build_scoring_context(mission, plan)
 
         if options.dry_run:
@@ -235,12 +221,9 @@ def run_search_agent(
         # 3. Resolve provider + fetcher --------------------------------------
         provider_name = agent_input.provider_options.provider
         if provider is None:
-            provider, provider_warnings = create_provider(provider_name)
-            warnings.extend(provider_warnings)
+            provider = create_provider(provider_name)
         if fetcher is None:
-            fetcher = (
-                MockPageFetcher() if provider.name == "mock" else BasicHttpPageFetcher()
-            )
+            fetcher = BasicHttpPageFetcher()
         trace.add("provider", f"Using search provider '{provider.name}'")
 
         # 4. Run queries -----------------------------------------------------

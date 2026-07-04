@@ -15,7 +15,8 @@
 .mission-card {
   display: flex;
   align-items: center;
-  gap: 18px;
+  justify-content: space-between;
+  gap: 24px;
   padding: 22px;
   margin-bottom: 12px;
   transition: border-color 0.18s ease;
@@ -25,12 +26,9 @@
   border-color: var(--border-strong);
 }
 
-.mission-id {
-  display: flex;
-  gap: 14px;
-  align-items: flex-start;
-  width: 250px;
-  flex-shrink: 0;
+.mission-main {
+  flex: 1;
+  min-width: 0;
 }
 
 .mission-name {
@@ -87,25 +85,142 @@
   letter-spacing: -0.02em;
 }
 
-.mission-right {
+.mission-actions {
   display: flex;
   align-items: center;
   gap: 18px;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
-.mission-status {
+.mission-menu {
+  position: relative;
+}
+
+.mission-menu-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  min-width: 168px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.mission-menu-item {
+  width: 100%;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 5px;
-  min-width: 74px;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: transparent;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
-.mission-last {
-  font-size: 0.6875rem;
-  color: var(--faint);
-  line-height: 1.3;
+.mission-menu-item:hover:not(:disabled) {
+  background: var(--surface-soft);
+}
+
+.mission-menu-item:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mission-menu-item-danger {
+  color: var(--red, #b91c1c);
+}
+
+.mission-menu-item-danger:hover:not(:disabled) {
+  background: var(--red-soft, #fef2f2);
+}
+
+.mission-detail-page {
+  width: 100%;
+}
+
+.mission-detail-panel {
+  width: 100%;
+  margin-top: 24px;
+  padding: 26px;
+}
+
+.mission-detail-panel .mission-form-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.mission-detail-panel .mission-field-full {
+  grid-column: 1 / -1;
+}
+
+.mission-detail-panel .profile-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 1100px) {
+  .mission-detail-panel .mission-form-grid,
+  .mission-detail-panel .profile-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .mission-detail-panel .mission-form-grid,
+  .mission-detail-panel .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mission-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.mission-detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.mission-detail-value {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink);
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.mission-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 18px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--muted);
+  transition: color 0.15s ease;
+}
+
+.mission-back-link:hover {
+  color: var(--ink);
 }
 
 .missions-archived {
@@ -367,6 +482,74 @@
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+}
+
+.mission-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.mission-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mission-field-full {
+  grid-column: 1 / -1;
+}
+
+.mission-field-label {
+  font-size: 0.6875rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 600;
+}
+
+.mission-field-required {
+  color: var(--accent);
+}
+
+.mission-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 0.8125rem;
+  color: var(--ink);
+  background: var(--surface);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.mission-input::placeholder {
+  color: var(--faint);
+}
+
+.mission-input:focus {
+  border-color: var(--accent);
+}
+
+.mission-textarea {
+  resize: vertical;
+  min-height: 72px;
+  line-height: 1.45;
+}
+
+.mission-select {
+  cursor: pointer;
+}
+
+.mission-form-error {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--red-soft, #fef2f2);
+  border: 1px solid var(--red, #ef4444);
+  color: var(--red, #b91c1c);
+  font-size: 0.8125rem;
 }
 
 @media (max-width: 1500px) {

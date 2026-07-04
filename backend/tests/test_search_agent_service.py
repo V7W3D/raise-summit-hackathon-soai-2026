@@ -8,19 +8,18 @@ from sqlalchemy.orm import Session
 from models.clients.missions import Mission
 from models.clients.user_mission_links import UserMissionLink
 from models.clients.users import User
-from search_agent.fetching import MockPageFetcher
-from search_agent.providers import MockSearchProvider
+from search_agent.schemas import ProviderOptions
 from services import business_profiles as business_profile_service
 from services import search_agent as search_agent_service
 from services.business_profiles import BusinessProfileNotFoundError
 from services.leads import list_leads
+from tests.search_agent.support.fakes import FakePageFetcher, FakeSearchProvider
 
 LYON_MISSION = {
 	"name": "Construction Clients – Lyon",
 	"target": "Target: small service businesses",
 	"location": "Lyon, France",
 	"status": "Active",
-	"goal_type": "find_clients",
 	"description": (
 		"Find small construction service businesses in Lyon likely to "
 		"need AI call reception."
@@ -28,6 +27,18 @@ LYON_MISSION = {
 	"target_industry": "construction",
 	"language": "fr",
 }
+
+
+@pytest.fixture(autouse=True)
+def _inject_fake_search(monkeypatch: pytest.MonkeyPatch):
+	original = search_agent_service.run_search_for_mission
+
+	def _wrapped(db, mission_id, **kwargs):
+		kwargs.setdefault("provider", FakeSearchProvider())
+		kwargs.setdefault("fetcher", FakePageFetcher())
+		return original(db, mission_id, **kwargs)
+
+	monkeypatch.setattr(search_agent_service, "run_search_for_mission", _wrapped)
 
 
 def _create_mission(db: Session, **overrides) -> Mission:
@@ -49,13 +60,15 @@ def test_mission_to_agent_input_maps_db_fields(db_session: Session) -> None:
 	assert profile is not None
 	agent_profile = business_profile_service.business_profile_to_agent(profile)
 	agent_input = search_agent_service.mission_to_agent_input(
-		mission, request_id="req_test", business_profile=agent_profile
+		mission,
+		request_id="req_test",
+		business_profile=agent_profile,
+		provider_options=ProviderOptions(provider="tavily"),
 	)
 
 	assert agent_input.request_id == "req_test"
 	assert agent_input.business_profile.business_name == "CallPilot AI"
 	assert agent_input.mission.mission_id == str(mission.id)
-	assert agent_input.mission.goal_type == "find_clients"
 	assert agent_input.mission.target_location == "Lyon, France"
 	assert agent_input.mission.target_industry == "construction"
 	assert agent_input.mission.language == "fr"
@@ -68,8 +81,8 @@ def test_run_search_for_mission_persists_leads(db_session: Session) -> None:
 	result = search_agent_service.run_search_for_mission(
 		db_session,
 		mission.id,
-		provider=MockSearchProvider(),
-		fetcher=MockPageFetcher(),
+		provider=FakeSearchProvider(),
+		fetcher=FakePageFetcher(),
 	)
 	assert result is not None
 
@@ -98,21 +111,24 @@ def test_run_search_for_mission_requires_business_profile(db_session: Session) -
 		target="Target: test",
 		location="Lyon, France",
 		status="Active",
-		goal_type="find_clients",
 		description="Test mission without user link.",
 	)
 	db_session.add(mission)
 	db_session.commit()
 
 	with pytest.raises(BusinessProfileNotFoundError):
-		search_agent_service.run_search_for_mission(db_session, mission.id)
+		search_agent_service.run_search_for_mission(
+			db_session,
+			mission.id,
+			provider=FakeSearchProvider(),
+			fetcher=FakePageFetcher(),
+		)
 
 
 def test_create_mission_runs_search_and_persists_leads(client: TestClient) -> None:
 	res = client.post("/missions", json=LYON_MISSION)
 	assert res.status_code == 201, res.text
 	mission_id = res.json()["id"]
-	assert res.json()["goal_type"] == "find_clients"
 	assert res.json()["target_industry"] == "construction"
 
 	leads = client.get("/leads", params={"mission_id": mission_id}).json()

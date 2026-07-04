@@ -25,14 +25,6 @@ def test_bad_fit_signals_include_profile_entries():
     assert "very large enterprises" in plan.bad_fit_signals
 
 
-def test_find_hires_generates_limited_queries():
-    agent_input = example_input()
-    agent_input.mission.goal_type = "find_hires"
-    plan = build_fallback_plan(agent_input)
-    # No job-platform scraping: a single conservative company-page query.
-    assert len(plan.generated_queries) == 1
-
-
 def test_unknown_industry_falls_back_to_ideal_customers():
     agent_input = example_input()
     agent_input.mission.description = "Find good prospects"
