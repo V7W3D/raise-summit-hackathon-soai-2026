@@ -45,7 +45,9 @@ function BrandDot({ bg, label }: { bg: string; label: string }) {
   );
 }
 import { ScoreRing, fitColor } from '../../components/ScoreRing';
-import { discoverLeads, evidenceSnippets, evidenceTimeline, type Lead } from '../../data/mock';
+import { useLeads } from '../../api/hooks';
+import { LEADS_FALLBACK } from '../../api/fallback';
+import type { LeadVM } from '../../api/models';
 import './discover.css';
 
 const TABS = ['High fit (18)', 'Promising but incomplete (16)', 'Needs verification (9)', 'Rejected (5)'];
@@ -56,16 +58,21 @@ const TOGGLES = ['Has contact info', 'Has website', 'Active / recently active'];
 const SIZES = ['1–10', '10–50', '50–200'];
 const ROLES = ['Owner', 'Operations', 'Office Manager'];
 
-const scorePill: Record<Lead['scoreTone'], string> = {
+const scorePill: Record<LeadVM['scoreTone'], string> = {
   green: 'pill-green',
   blue: 'pill-blue',
   orange: 'pill-orange',
 };
 
 export function DiscoverPage() {
-  const [selectedId, setSelectedId] = useState('rhone-plomberie');
   const [activeTab, setActiveTab] = useState(TABS[0]);
-  const selected = discoverLeads.find((lead) => lead.id === selectedId) ?? discoverLeads[0];
+  const { data } = useLeads();
+  const discoverLeads = data && data.length > 0 ? data : LEADS_FALLBACK;
+
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const effectiveSelectedId = selectedId ?? discoverLeads[0]?.id;
+  const selected =
+    discoverLeads.find((lead) => lead.id === effectiveSelectedId) ?? discoverLeads[0];
 
   return (
     <div>
@@ -245,7 +252,7 @@ export function DiscoverPage() {
           <div className="leads-count">18 results</div>
 
           {discoverLeads.map((lead) => {
-            const isSelected = lead.id === selectedId;
+            const isSelected = lead.id === effectiveSelectedId;
             return (
               <div
                 key={lead.id}
@@ -363,23 +370,34 @@ export function DiscoverPage() {
             </p>
 
             <div className="lead-panel-section-title">Key evidence snippets</div>
-            {evidenceSnippets.map((snippet) => (
-              <div key={snippet.quote} className="snippet">
-                <span className="snippet-quote">“</span>
-                <span>{snippet.quote}</span>
-                <span className="snippet-source">{snippet.source}</span>
-              </div>
-            ))}
+            {selected.evidence.length > 0 ? (
+              selected.evidence.map((snippet) => (
+                <div key={snippet.quote} className="snippet">
+                  <span className="snippet-quote">“</span>
+                  <span>{snippet.quote}</span>
+                  <span className="snippet-source">{snippet.source}</span>
+                </div>
+              ))
+            ) : (
+              <p className="lead-panel-text">No evidence snippets captured yet.</p>
+            )}
 
             <div className="lead-panel-section-title" style={{ marginTop: 16 }}>
               Contact information
             </div>
-            <div className="contact-row">
-              <Mail /> contact@rhoneplomberie.fr <span className="pill pill-neutral">Generic</span>
-            </div>
-            <div className="contact-row">
-              <Phone /> 04 78 123 456 <span className="pill pill-green">Primary</span>
-            </div>
+            {selected.email && (
+              <div className="contact-row">
+                <Mail /> {selected.email} <span className="pill pill-neutral">Generic</span>
+              </div>
+            )}
+            {selected.phone && (
+              <div className="contact-row">
+                <Phone /> {selected.phone} <span className="pill pill-green">Primary</span>
+              </div>
+            )}
+            {!selected.email && !selected.phone && (
+              <p className="lead-panel-text">No contact details found yet.</p>
+            )}
             <button className="btn btn-primary btn-sm" style={{ margin: '8px 0 16px', width: '100%' }}>
               Open source page <ExternalLink size={13} />
             </button>
@@ -397,21 +415,26 @@ export function DiscoverPage() {
               </span>
             </div>
 
-            <div className="ai-summary">
-              <div className="ai-summary-head">
-                <CheckCircle2 size={15} /> AI reasoning summary
+            {selected.aiSummary && (
+              <div className="ai-summary">
+                <div className="ai-summary-head">
+                  <CheckCircle2 size={15} /> AI reasoning summary
+                </div>
+                {selected.aiSummary}
               </div>
-              {selected.name} is a strong fit: clear local focus in Lyon, 24/7 emergency service, and phone-first
-              customer acquisition. Uncertainty: generic email (no named contact) and limited team info.
-            </div>
+            )}
 
-            <div className="lead-panel-section-title">Evidence timeline</div>
-            {evidenceTimeline.map((event) => (
-              <div key={event.label} className="timeline-item">
-                <CheckCircle2 /> {event.label}
-                <span className="time">{event.time}</span>
-              </div>
-            ))}
+            {selected.sourcesScanned.length > 0 && (
+              <>
+                <div className="lead-panel-section-title">Evidence timeline</div>
+                {selected.sourcesScanned.map((event) => (
+                  <div key={event.label} className="timeline-item">
+                    <CheckCircle2 /> {event.label}
+                    <span className="time">{event.time}</span>
+                  </div>
+                ))}
+              </>
+            )}
 
             <div className="lead-panel-foot">
               <a className="link" href="#sources">
