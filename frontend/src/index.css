@@ -556,22 +556,6 @@ p {
   background: var(--surface);
 }
 
-.notif-btn {
-  position: relative;
-}
-
-.notif-btn::after {
-  content: '';
-  position: absolute;
-  top: 7px;
-  right: 7px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--red);
-  border: 1.5px solid var(--surface);
-}
-
 .divider-v {
   width: 1px;
   align-self: stretch;

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useState, type FormEvent } from 'react';
-import { Bell, CheckCircle2, Info, Lock, Target } from 'lucide-react';
+import { CheckCircle2, Info, Lock, Target } from 'lucide-react';
 import {
   type MissionCreatePayload,
   type MissionUrgency,
@@ -108,9 +108,6 @@ export function CreateMissionPanel() {
       <form onSubmit={handleSubmit}>
         <div className="create-panel-head">
           <span className="create-panel-title">Create New Mission</span>
-          <button type="button" className="icon-btn notif-btn" aria-label="Notifications">
-            <Bell size={18} />
-          </button>
         </div>
 
         <div className="create-step">
