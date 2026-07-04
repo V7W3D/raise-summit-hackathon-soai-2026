@@ -26,10 +26,10 @@ export function AppLayout() {
           ))}
         </nav>
         <div className="sidebar-footer">
-          <button type="button" className="sidebar-user">
+          <NavLink to="/profile" className="sidebar-user">
             <span className="sidebar-user-avatar">AZ</span>
             <span className="sidebar-user-name">Azzedine</span>
-          </button>
+          </NavLink>
         </div>
       </aside>
       <main className="main">

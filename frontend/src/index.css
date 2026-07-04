@@ -188,6 +188,7 @@ p {
   cursor: pointer;
   color: inherit;
   font: inherit;
+  text-decoration: none;
   transition: opacity 0.15s ease;
 }
 
