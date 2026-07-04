@@ -1,16 +1,41 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+import models.clients  # noqa: F401  (register ORM models on Base.metadata)
+from database.base import Base
+from database.session import engine
+from routers import home, insights, leads, missions
 
-app = FastAPI(title="Raise Summit Backend", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+	# Create tables on startup for local/dev use. Alembic owns production schema.
+	Base.metadata.create_all(bind=engine)
+	yield
+
+
+app = FastAPI(title="Raise Summit Backend", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
 	CORSMiddleware,
-	allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+	allow_origins=[
+		"http://localhost:5173",
+		"http://127.0.0.1:5173",
+		"http://localhost:5174",
+		"http://127.0.0.1:5174",
+	],
+	allow_origin_regex=r"http://(localhost|127\.0\.0\.1):\d+",
 	allow_credentials=True,
 	allow_methods=["*"],
 	allow_headers=["*"],
 )
+
+app.include_router(home.router)
+app.include_router(missions.router)
+app.include_router(leads.router)
+app.include_router(insights.router)
 
 
 @app.get("/")
