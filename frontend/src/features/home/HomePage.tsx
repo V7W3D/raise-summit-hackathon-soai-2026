@@ -28,14 +28,9 @@ import {
   UtensilsCrossed,
   MessageCircle,
 } from 'lucide-react';
-import {
-  nextBestActions,
-  homeStats,
-  opportunityFeed,
-  recentMissions,
-  recentProspects,
-  type Priority,
-} from '../../data/mock';
+import { type Priority } from '../../data/mock';
+import { useDashboard } from '../../api/hooks';
+import { DASHBOARD_FALLBACK } from '../../api/fallback';
 import './home.css';
 
 const NBA_ICONS = {
@@ -75,13 +70,41 @@ const priorityClass: Record<Priority, string> = {
   Low: 'pill-low',
 };
 
+function nbaIcon(icon: string) {
+  return NBA_ICONS[icon as keyof typeof NBA_ICONS] ?? NBA_ICONS.leads;
+}
+
+function statIcon(icon: string) {
+  return STAT_ICONS[icon as keyof typeof STAT_ICONS] ?? STAT_ICONS.missions;
+}
+
+function feedIcon(icon: string) {
+  return FEED_ICONS[icon as keyof typeof FEED_ICONS] ?? FEED_ICONS.building;
+}
+
+function missionIcon(icon: string) {
+  return MISSION_ICONS[icon as keyof typeof MISSION_ICONS] ?? MISSION_ICONS.building;
+}
+
 export function HomePage() {
+  const { data } = useDashboard();
+  const dash = data ?? DASHBOARD_FALLBACK;
+  const {
+    greeting,
+    subtitle,
+    nextBestActions,
+    stats,
+    opportunityFeed,
+    recentMissions,
+    recentProspects,
+  } = dash;
+
   return (
     <div>
       <div className="home-header">
         <div>
-          <h1 className="page-title">Good morning, Azzedine 👋</h1>
-          <p className="page-subtitle">You have 3 prospects waiting for review and 2 follow-ups due today.</p>
+          <h1 className="page-title">{greeting}</h1>
+          <p className="page-subtitle">{subtitle}</p>
         </div>
         <button className="icon-btn notif-btn" aria-label="Notifications">
           <Bell size={19} />
@@ -112,7 +135,7 @@ export function HomePage() {
 
       <div className="nba-grid">
         {nextBestActions.map((action) => {
-          const { Icon, tone } = NBA_ICONS[action.icon];
+          const { Icon, tone } = nbaIcon(action.icon);
           return (
             <div key={action.title} className="card nba-card">
               <div className="nba-card-top">
@@ -132,8 +155,8 @@ export function HomePage() {
       </div>
 
       <div className="card home-stats">
-        {homeStats.map((stat) => {
-          const Icon = STAT_ICONS[stat.icon];
+        {stats.map((stat) => {
+          const Icon = statIcon(stat.icon);
           return (
             <div key={stat.label} className="home-stat">
               <span className="icon-tile blue">
@@ -159,7 +182,7 @@ export function HomePage() {
             </a>
           </div>
           {opportunityFeed.map((item) => {
-            const Icon = FEED_ICONS[item.icon];
+            const Icon = feedIcon(item.icon);
             return (
               <div key={item.text} className="feed-item">
                 <span className="feed-dot" style={{ background: item.dot }} />
@@ -183,9 +206,9 @@ export function HomePage() {
             </Link>
           </div>
           {recentMissions.map((mission) => {
-            const { Icon, tone, bar } = MISSION_ICONS[mission.icon];
+            const { Icon, tone, bar } = missionIcon(mission.icon);
             return (
-              <div key={mission.name} className="rm-item">
+              <div key={mission.id} className="rm-item">
                 <span className={`icon-tile ${tone}`}>
                   <Icon />
                 </span>
@@ -217,7 +240,7 @@ export function HomePage() {
             </Link>
           </div>
           {recentProspects.map((prospect) => (
-            <div key={prospect.name} className="rp-item">
+            <Link key={prospect.id} to={`/leads/${prospect.slug}`} className="rp-item">
               <span className="avatar-initials" style={{ background: `${prospect.color}1a`, color: prospect.color }}>
                 {prospect.initials}
               </span>
@@ -229,7 +252,7 @@ export function HomePage() {
                 <span className={`pill pill-${prospect.fitTone}`}>{prospect.fit}</span>
                 <span className="rp-time">{prospect.time}</span>
               </div>
-            </div>
+            </Link>
           ))}
         </section>
       </div>

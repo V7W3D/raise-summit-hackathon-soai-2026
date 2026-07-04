@@ -22,15 +22,8 @@ import {
   Trophy,
   ArrowRight,
 } from 'lucide-react';
-import {
-  missionPerformance,
-  funnelStages,
-  funnelDrops,
-  weeklyChanges,
-  bestPatterns,
-  sourceQuality,
-  recommendations,
-} from '../../data/mock';
+import { useInsights } from '../../api/hooks';
+import { INSIGHTS_FALLBACK } from '../../api/fallback';
 import './insights.css';
 
 const PERF_ICONS = {
@@ -70,7 +63,47 @@ const REC_ICONS = {
   mail: Mail,
 } as const;
 
+function perfIcon(icon: string) {
+  return PERF_ICONS[icon as keyof typeof PERF_ICONS] ?? PERF_ICONS.user;
+}
+
+function changeIcon(icon: string) {
+  return CHANGE_ICONS[icon as keyof typeof CHANGE_ICONS] ?? CHANGE_ICONS.trend;
+}
+
+function patternIcon(icon: string) {
+  return PATTERN_ICONS[icon as keyof typeof PATTERN_ICONS] ?? PATTERN_ICONS.user;
+}
+
+function sourceStyle(icon: string) {
+  return SOURCE_ICON_STYLE[icon] ?? SOURCE_ICON_STYLE.google;
+}
+
+function recIcon(icon: string) {
+  return REC_ICONS[icon as keyof typeof REC_ICONS] ?? REC_ICONS.target;
+}
+
 export function InsightsPage() {
+  const { data } = useInsights();
+  const insights = data ?? INSIGHTS_FALLBACK;
+  const {
+    missionPerformance,
+    funnelStages,
+    funnelDrops,
+    weeklyChanges,
+    bestPatterns,
+    sourceQuality,
+    recommendations,
+  } = {
+    missionPerformance: insights.performance,
+    funnelStages: insights.funnelStages,
+    funnelDrops: insights.funnelDrops,
+    weeklyChanges: insights.weeklyChanges,
+    bestPatterns: insights.bestPatterns,
+    sourceQuality: insights.sourceQuality,
+    recommendations: insights.recommendations,
+  };
+
   return (
     <div>
       <div className="ins-header">
@@ -88,7 +121,7 @@ export function InsightsPage() {
             <GitCompareArrows /> Compare missions
           </button>
           <button className="select-control">
-            <Calendar /> May 23 – May 30, 2025 <ChevronDown />
+            <Calendar /> {insights.dateRange} <ChevronDown />
           </button>
           <button className="icon-btn bordered" aria-label="More options">
             <MoreHorizontal size={17} />
@@ -124,7 +157,7 @@ export function InsightsPage() {
 
       <div className="perf-grid">
         {missionPerformance.map((metric) => {
-          const { Icon, tone } = PERF_ICONS[metric.icon];
+          const { Icon, tone } = perfIcon(metric.icon);
           return (
             <div key={metric.label} className="card perf-card">
               <span className={`icon-tile ${tone}`}>
@@ -169,7 +202,7 @@ export function InsightsPage() {
             <TrendingUp /> What changed this week
           </div>
           {weeklyChanges.map((change) => {
-            const { Icon, tone } = CHANGE_ICONS[change.icon];
+            const { Icon, tone } = changeIcon(change.icon);
             return (
               <div key={change.title} className="change-item">
                 <span className={`icon-tile ${tone}`}>
@@ -196,7 +229,7 @@ export function InsightsPage() {
             Best-performing patterns
           </h3>
           {bestPatterns.map((pattern) => {
-            const Icon = PATTERN_ICONS[pattern.icon];
+            const Icon = patternIcon(pattern.icon);
             return (
               <div key={pattern.title} className="pattern-item">
                 <span className="pattern-rank">{pattern.rank}</span>
@@ -228,7 +261,7 @@ export function InsightsPage() {
             <span>Reply rate</span>
           </div>
           {sourceQuality.map((source) => {
-            const style = SOURCE_ICON_STYLE[source.icon];
+            const style = sourceStyle(source.icon);
             return (
               <div key={source.name} className="source-row">
                 <span className="source-name">
@@ -275,7 +308,7 @@ export function InsightsPage() {
           </div>
           <div className="recs-sub">AI-powered suggestions to improve your next mission.</div>
           {recommendations.map((rec) => {
-            const Icon = REC_ICONS[rec.icon];
+            const Icon = recIcon(rec.icon);
             return (
               <div key={rec.title} className="rec-item">
                 <span className="rec-icon">

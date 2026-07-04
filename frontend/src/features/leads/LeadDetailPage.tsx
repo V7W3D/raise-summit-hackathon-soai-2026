@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import {
   Check,
   ChevronRight,
@@ -28,6 +28,8 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import type { CSSProperties } from 'react';
+import { useLead } from '../../api/hooks';
+import { LEADS_FALLBACK } from '../../api/fallback';
 import './lead-detail.css';
 
 function Linkedin({ size = 16, style, className }: { size?: number; style?: CSSProperties; className?: string }) {
@@ -109,16 +111,41 @@ const NEXT_STEPS = [
   { icon: XCircle, color: '#dc2626', title: 'Reject lead', text: 'Not a good fit right now.' },
 ];
 
-const FACTS = [
-  { label: 'Industry', value: 'Plumbing / Home Services' },
-  { label: 'Employees (est.)', value: '10 – 50' },
-  { label: 'Service area', value: 'Lyon & surrounding area' },
-  { label: 'Business type', value: 'Local service business' },
-  { label: 'Founded', value: '—' },
-  { label: 'Last scanned', value: 'May 28, 2025 • 10:32 AM' },
-];
+const CONFIDENCE_TONE: Record<string, string> = {
+  High: 'green',
+  Medium: 'blue',
+  Low: 'orange',
+};
+
+function scorePillClass(tone: string): string {
+  return `pill-${tone}`;
+}
 
 export function LeadDetailPage() {
+  const { leadId } = useParams<{ leadId: string }>();
+  const { data } = useLead(leadId);
+  const lead =
+    data ?? LEADS_FALLBACK.find((l) => l.id === leadId) ?? LEADS_FALLBACK[0];
+
+  const timeline =
+    lead.sourcesScanned.length > 0
+      ? lead.sourcesScanned.map((s) => ({ label: s.label.replace(/ scanned$/, ''), done: true }))
+      : TIMELINE;
+
+  const warnings =
+    lead.missing.length > 0
+      ? lead.missing.map((m) => ({ icon: AlertTriangle, title: m, text: '' }))
+      : WARNINGS;
+
+  const facts = [
+    { label: 'Industry', value: lead.industry || '—' },
+    { label: 'Employees (est.)', value: lead.employees || '—' },
+    { label: 'Service area', value: lead.serviceArea || '—' },
+    { label: 'Business type', value: lead.businessType || '—' },
+    { label: 'Founded', value: '—' },
+    { label: 'Last scanned', value: lead.sourcesScanned[0]?.time ?? '—' },
+  ];
+
   return (
     <div>
       <div className="ld-header">
@@ -130,7 +157,7 @@ export function LeadDetailPage() {
             <ChevronRight />
             <Link to="/discover">Construction Clients – Lyon</Link>
             <ChevronRight />
-            <span className="current">Rhône Plomberie</span>
+            <span className="current">{lead.name}</span>
           </nav>
         </div>
         <div className="discover-header-actions" style={{ display: 'flex', gap: 12 }}>
@@ -149,39 +176,47 @@ export function LeadDetailPage() {
       <div className="ld-layout">
         <div>
           <div className="card ld-company-card">
-            <span className="ld-logo">RP</span>
+            <span className="ld-logo">{lead.initials}</span>
             <div>
-              <div className="ld-company-name">Rhône Plomberie</div>
-              <div className="ld-company-desc">Local emergency plumbing and repair company</div>
+              <div className="ld-company-name">{lead.name}</div>
+              <div className="ld-company-desc">{lead.description}</div>
               <div className="ld-badges">
-                <span className="pill pill-green">
-                  <Check size={11} /> Email found
-                </span>
-                <span className="pill pill-green">
-                  <Check size={11} /> Phone found
-                </span>
-                <span className="pill pill-green">
-                  <Check size={11} /> Website active
-                </span>
+                {lead.email && (
+                  <span className="pill pill-green">
+                    <Check size={11} /> Email found
+                  </span>
+                )}
+                {lead.phone && (
+                  <span className="pill pill-green">
+                    <Check size={11} /> Phone found
+                  </span>
+                )}
+                {lead.website && (
+                  <span className="pill pill-green">
+                    <Check size={11} /> Website active
+                  </span>
+                )}
               </div>
             </div>
             <div className="ld-metrics">
               <div className="ld-metric">
-                <div className="ld-metric-value">84</div>
+                <div className="ld-metric-value">{lead.score}</div>
                 <div className="ld-metric-label">Fit score</div>
-                <span className="pill pill-green">High fit</span>
+                <span className={`pill ${scorePillClass(lead.scoreTone)}`}>{lead.scoreLabel}</span>
               </div>
               <div className="ld-metric">
-                <div className="ld-metric-value">72</div>
+                <div className="ld-metric-value">{lead.contactability}</div>
                 <div className="ld-metric-label">Contactability</div>
-                <span className="pill pill-blue">Good</span>
+                <span className="pill pill-blue">{lead.contactability >= 60 ? 'Good' : 'Fair'}</span>
               </div>
               <div className="ld-metric">
                 <div className="ld-metric-value" style={{ fontSize: '1.25rem' }}>
-                  High
+                  {lead.confidence}
                 </div>
                 <div className="ld-metric-label">Confidence</div>
-                <span className="pill pill-green">High confidence</span>
+                <span className={`pill pill-${CONFIDENCE_TONE[lead.confidence] ?? 'blue'}`}>
+                  {lead.confidence} confidence
+                </span>
               </div>
               <div className="ld-sources">
                 <div className="ld-source-row">
@@ -195,7 +230,7 @@ export function LeadDetailPage() {
                   <MapPin />
                   <span>
                     <span className="ld-source-label">Location</span>
-                    Lyon, France
+                    {lead.location}
                   </span>
                 </div>
                 <div className="ld-source-row">
@@ -203,7 +238,7 @@ export function LeadDetailPage() {
                   <span>
                     <span className="ld-source-label">Website</span>
                     <a href="#website" style={{ color: 'var(--blue)' }}>
-                      rhoneplomberie.fr
+                      {lead.website}
                     </a>
                   </span>
                 </div>
@@ -234,8 +269,8 @@ export function LeadDetailPage() {
               </div>
               <div>
                 <div className="evidence-title">Evidence from website</div>
-                {EVIDENCE.map((item) => (
-                  <div key={item.source} className="evidence-quote">
+                {(lead.evidence.length > 0 ? lead.evidence : EVIDENCE).map((item) => (
+                  <div key={item.source + item.quote} className="evidence-quote">
                     <span className="q">“</span>
                     <span>{item.quote}</span>
                     <button className="evidence-src-btn">
@@ -249,7 +284,7 @@ export function LeadDetailPage() {
               Evidence timeline (sources scanned)
             </div>
             <div className="ld-timeline">
-              {TIMELINE.map((node, i) => (
+              {timeline.map((node, i) => (
                 <span key={node.label} style={{ display: 'inline-flex', alignItems: 'center' }}>
                   {i > 0 && <span className="ld-timeline-line" />}
                   <span className={`ld-timeline-node${node.done ? '' : ' pending'}`}>
@@ -266,7 +301,7 @@ export function LeadDetailPage() {
               <AlertTriangle /> Missing or uncertain information
             </div>
             <div className="warn-grid">
-              {WARNINGS.map(({ icon: Icon, title, text }) => (
+              {warnings.map(({ icon: Icon, title, text }) => (
                 <div key={title} className="warn-item">
                   <Icon />
                   <span>
@@ -329,7 +364,7 @@ export function LeadDetailPage() {
               <Mail />
               <span>
                 <span className="side-field-label">Email</span>
-                contact@rhoneplomberie.fr
+                {lead.email || '—'}
               </span>
               <Copy size={14} className="copy" />
             </div>
@@ -337,7 +372,7 @@ export function LeadDetailPage() {
               <Phone />
               <span>
                 <span className="side-field-label">Phone</span>
-                04 78 123 456
+                {lead.phone || '—'}
               </span>
               <Copy size={14} className="copy" />
             </div>
@@ -346,7 +381,7 @@ export function LeadDetailPage() {
               <span>
                 <span className="side-field-label">Website</span>
                 <a href="#website" style={{ color: 'var(--blue)' }}>
-                  rhoneplomberie.fr
+                  {lead.website || '—'}
                 </a>
               </span>
               <ExternalLink size={14} className="copy" />
@@ -381,7 +416,7 @@ export function LeadDetailPage() {
           <div className="card side-card">
             <div className="side-title">Company facts</div>
             <dl style={{ margin: 0 }}>
-              {FACTS.map((fact) => (
+              {facts.map((fact) => (
                 <div key={fact.label} className="facts-row">
                   <dt>{fact.label}</dt>
                   <dd>{fact.value}</dd>
@@ -394,13 +429,11 @@ export function LeadDetailPage() {
             <div className="side-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Sparkles size={15} style={{ color: 'var(--green)' }} /> AI reasoning summary
             </div>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--text)', lineHeight: 1.55, marginBottom: 10 }}>
-              Strong local fit with emergency service positioning and phone-first workflow.
-            </p>
             <p style={{ fontSize: '0.8125rem', color: 'var(--text)', lineHeight: 1.55, marginBottom: 12 }}>
-              Main uncertainty: no named operations manager found.
+              {lead.aiSummary ||
+                'Strong local fit with emergency service positioning and phone-first workflow.'}
             </p>
-            <span className="pill pill-green">High fit potential</span>
+            <span className={`pill ${scorePillClass(lead.scoreTone)}`}>{lead.scoreLabel} potential</span>
           </div>
 
           <div className="ld-side-actions">

@@ -1,5 +1,52 @@
 # raise-summit-hackathon-soai-2026
 
+**ProspectPath** — an AI-assisted lead prospecting workspace. A FastAPI + SQLite
+backend serves a Vite + React frontend covering Home, Missions, Discover, Lead
+Verification, and Insights.
+
+## Quick start — run the full stack
+
+You need **two terminals**: one for the backend API, one for the frontend.
+
+### 1. Backend (terminal 1)
+
+```bash
+cd backend
+poetry install                       # first time only
+cp .env.example .env                 # first time only (skip if .env exists)
+mkdir -p data                        # first time only
+poetry run alembic upgrade head      # create the database schema
+poetry run python -m database.seed   # load demo data (missions + leads)
+./run-dev.sh                         # start API on http://127.0.0.1:8080
+```
+
+The API is now live at `http://127.0.0.1:8080` (interactive docs at `/docs`).
+
+> To reset the demo data at any time: `poetry run python -m database.seed --reset`
+
+### 2. Frontend (terminal 2)
+
+```bash
+cd frontend
+npm install                          # first time only
+cp .env.example .env                 # first time only (points at the API)
+npm run dev                          # start UI on http://localhost:5173
+```
+
+Open **http://localhost:5173**. The frontend reads its API URL from
+`frontend/.env` (`VITE_API_BASE_URL`, default `http://127.0.0.1:8080`) and falls
+back to bundled demo data if the backend is unreachable, so the UI always
+renders.
+
+### Ports at a glance
+
+| Service  | URL                       | Notes                          |
+| -------- | ------------------------- | ------------------------------ |
+| Backend  | `http://127.0.0.1:8080`   | FastAPI, OpenAPI docs at `/docs` |
+| Frontend | `http://localhost:5173`   | Vite dev server                |
+
+---
+
 ## Backend setup
 
 The backend lives in `backend/` and uses Poetry, FastAPI, and SQLAlchemy with a local SQLite database.

@@ -31,7 +31,8 @@ import {
   Info,
 } from 'lucide-react';
 import { ScoreRing } from '../../components/ScoreRing';
-import { missions } from '../../data/mock';
+import { useCreateMission, useMissions } from '../../api/hooks';
+import { MISSIONS_FALLBACK } from '../../api/fallback';
 import './missions.css';
 
 const MISSION_ICONS = {
@@ -41,6 +42,20 @@ const MISSION_ICONS = {
   handshake: Handshake,
   sprout: Sprout,
 } as const;
+
+function missionIcon(icon: string) {
+  return MISSION_ICONS[icon as keyof typeof MISSION_ICONS] ?? Building2;
+}
+
+// Maps a "What do you need?" choice to mission metadata for creation.
+const NEED_TO_MISSION: Record<string, { type: string; icon: string; color: string }> = {
+  'Find clients': { type: 'Clients', icon: 'building', color: 'blue' },
+  'Find suppliers': { type: 'Suppliers', icon: 'fish', color: 'blue' },
+  'Find consultants': { type: 'Consultants', icon: 'calculator', color: 'purple' },
+  'Find partners': { type: 'Partners', icon: 'handshake', color: 'green' },
+  'Find investors': { type: 'Investors', icon: 'sprout', color: 'orange' },
+  'Find hires': { type: 'Hires', icon: 'building', color: 'blue' },
+};
 
 const RING_COLORS: Record<string, string> = {
   blue: '#2563eb',
@@ -78,6 +93,22 @@ const SUMMARY_ITEMS = [
 
 export function MissionsPage() {
   const [selectedNeed, setSelectedNeed] = useState('Find clients');
+  const { data } = useMissions();
+  const missions = data ?? MISSIONS_FALLBACK;
+  const createMission = useCreateMission();
+
+  const handleCreate = () => {
+    const meta = NEED_TO_MISSION[selectedNeed] ?? NEED_TO_MISSION['Find clients'];
+    createMission.mutate({
+      name: `New ${meta.type} Mission`,
+      target: `Target: ${meta.type.toLowerCase()}`,
+      mission_type: meta.type,
+      location: 'France',
+      status: 'Draft',
+      icon: meta.icon,
+      color: meta.color,
+    });
+  };
 
   return (
     <div className="missions-layout">
@@ -86,8 +117,8 @@ export function MissionsPage() {
         <p className="page-subtitle">Create structured prospecting goals and manage your active missions.</p>
 
         <div className="missions-toolbar" style={{ justifyContent: 'flex-start' }}>
-          <button className="btn btn-primary">
-            <Plus /> New mission
+          <button className="btn btn-primary" onClick={handleCreate} disabled={createMission.isPending}>
+            <Plus /> {createMission.isPending ? 'Creating…' : 'New mission'}
           </button>
         </div>
 
@@ -104,9 +135,9 @@ export function MissionsPage() {
         </div>
 
         {missions.map((mission) => {
-          const Icon = MISSION_ICONS[mission.icon];
+          const Icon = missionIcon(mission.icon);
           return (
-            <div key={mission.name} className="card mission-card">
+            <div key={mission.id} className="card mission-card">
               <div className="mission-id">
                 <span className={`icon-tile ${mission.color}`}>
                   <Icon />
@@ -299,8 +330,8 @@ export function MissionsPage() {
 
         <div className="create-actions">
           <button className="btn btn-outline">Cancel</button>
-          <button className="btn btn-primary">
-            <Target size={16} /> Create mission
+          <button className="btn btn-primary" onClick={handleCreate} disabled={createMission.isPending}>
+            <Target size={16} /> {createMission.isPending ? 'Creating…' : 'Create mission'}
           </button>
         </div>
       </aside>
