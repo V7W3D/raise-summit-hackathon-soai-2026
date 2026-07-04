@@ -7,6 +7,7 @@ from models.clients.missions import Mission
 from services import search_agent as search_agent_service
 from services.mission_search import (
 	MissionSearchAlreadyRunningError,
+	MissionSearchNotActivatedError,
 	_execute_mission_search,
 	start_mission_search,
 )
@@ -35,6 +36,7 @@ def test_execute_mission_search_sets_ready(db_session: Session) -> None:
 
 	db_session.refresh(mission)
 	assert mission.search_status == "ready"
+	assert mission.search_activated is False
 
 
 def test_start_mission_search_sets_running_and_enqueues(
@@ -60,6 +62,15 @@ def test_start_mission_search_rejects_already_running(db_session: Session) -> No
 	db_session.commit()
 
 	with pytest.raises(MissionSearchAlreadyRunningError):
+		start_mission_search(db_session, mission.id, user_id=1)
+
+
+def test_start_mission_search_rejects_not_activated(db_session: Session) -> None:
+	mission = _create_mission(db_session)
+	mission.search_activated = False
+	db_session.commit()
+
+	with pytest.raises(MissionSearchNotActivatedError):
 		start_mission_search(db_session, mission.id, user_id=1)
 
 

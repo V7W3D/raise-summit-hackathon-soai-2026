@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
+from models.clients.missions import Mission
 
 
 def _create_mission(client: TestClient, **overrides) -> dict:
@@ -41,6 +44,7 @@ def test_create_and_list_missions(client: TestClient) -> None:
 	assert created["progress"] == 0
 	assert created["is_archived"] is False
 	assert created["search_status"] == "ready"
+	assert created["search_activated"] is True
 
 	res = client.get("/missions")
 	assert res.status_code == 200
@@ -105,6 +109,38 @@ def test_start_mission_search_conflict_when_already_running(client: TestClient) 
 
 	res = client.post(f"/missions/{created['id']}/search")
 	assert res.status_code == 409
+
+
+def test_start_mission_search_conflict_when_not_activated(
+	client: TestClient, db_session: Session
+) -> None:
+	created = _create_mission(client)
+	client.post(f"/missions/{created['id']}/search")
+	mission = db_session.get(Mission, created["id"])
+	assert mission is not None
+	mission.search_status = "ready"
+	mission.search_activated = False
+	db_session.commit()
+
+	res = client.post(f"/missions/{created['id']}/search")
+	assert res.status_code == 409
+
+
+def test_update_mission_reactivates_search(client: TestClient, db_session: Session) -> None:
+	created = _create_mission(client)
+	client.post(f"/missions/{created['id']}/search")
+	mission = db_session.get(Mission, created["id"])
+	assert mission is not None
+	mission.search_status = "ready"
+	mission.search_activated = False
+	db_session.commit()
+
+	res = client.patch(f"/missions/{created['id']}", json={"progress": 10})
+	assert res.status_code == 200
+	assert res.json()["search_activated"] is True
+
+	search_res = client.post(f"/missions/{created['id']}/search")
+	assert search_res.status_code == 200
 
 
 def test_delete_mission_cascades_leads(client: TestClient) -> None:

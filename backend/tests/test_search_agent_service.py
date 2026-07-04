@@ -141,10 +141,13 @@ def test_run_mission_search_persists_leads(client: TestClient) -> None:
 	mission_id = body["id"]
 	assert body["target_industry"] == "construction"
 	assert body["search_status"] == "ready"
+	assert body["search_activated"] is True
 
 	search_res = client.post(f"/missions/{mission_id}/search")
 	assert search_res.status_code == 200, search_res.text
-	assert search_res.json()["search_status"] == "ready"
+	search_body = search_res.json()
+	assert search_body["search_status"] == "ready"
+	assert search_body["search_activated"] is False
 
 	leads = client.get("/leads", params={"mission_id": mission_id}).json()
 	assert len(leads) > 0

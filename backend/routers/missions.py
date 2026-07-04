@@ -7,7 +7,11 @@ from models.schemas.missions import MissionCreate, MissionRead, MissionUpdate
 from services import missions as mission_service
 from services import users as user_service
 from services.business_profiles import BusinessProfileNotFoundError
-from services.mission_search import MissionSearchAlreadyRunningError, start_mission_search
+from services.mission_search import (
+	MissionSearchAlreadyRunningError,
+	MissionSearchNotActivatedError,
+	start_mission_search,
+)
 from search_agent.errors import ProviderNotConfiguredError
 
 router = APIRouter(prefix="/missions", tags=["missions"])
@@ -43,6 +47,11 @@ def run_mission_search(mission_id: int, db: DbSession):
 	try:
 		return start_mission_search(db, mission_id, user_id=user.id)
 	except MissionSearchAlreadyRunningError as exc:
+		raise HTTPException(
+			status_code=status.HTTP_409_CONFLICT,
+			detail=str(exc),
+		) from None
+	except MissionSearchNotActivatedError as exc:
 		raise HTTPException(
 			status_code=status.HTTP_409_CONFLICT,
 			detail=str(exc),

@@ -20,6 +20,9 @@ class Mission(Base):
 	search_status: Mapped[str] = mapped_column(
 		String(20), default="ready", server_default="ready", nullable=False
 	)
+	search_activated: Mapped[bool] = mapped_column(
+		Boolean, default=True, server_default="1", nullable=False
+	)
 	name: Mapped[str] = mapped_column(String(160), nullable=False)
 	target: Mapped[str] = mapped_column(String(255), default="", nullable=False)
 	location: Mapped[str] = mapped_column(String(120), default="", nullable=False)

@@ -17,6 +17,10 @@ class MissionSearchAlreadyRunningError(Exception):
 	"""Raised when a search is already in progress for the mission."""
 
 
+class MissionSearchNotActivatedError(Exception):
+	"""Raised when the mission must be updated before the agent can run again."""
+
+
 def start_mission_search(db: Session, mission_id: int, *, user_id: int) -> Mission:
 	"""Validate prerequisites, mark the mission as running, and enqueue search."""
 	from services.business_profiles import (
@@ -32,6 +36,11 @@ def start_mission_search(db: Session, mission_id: int, *, user_id: int) -> Missi
 	if mission.search_status == "running":
 		raise MissionSearchAlreadyRunningError(
 			f"Search is already running for mission {mission_id}"
+		)
+
+	if not mission.search_activated:
+		raise MissionSearchNotActivatedError(
+			f"Search is not activated for mission {mission_id}. Update the mission to run again."
 		)
 
 	if get_business_profile_for_user(db, user_id) is None:
@@ -93,4 +102,5 @@ def _set_search_status(db: Session, mission_id: int, status: str) -> None:
 	if mission is None:
 		return
 	mission.search_status = status
+	mission.search_activated = False
 	db.commit()
