@@ -23,7 +23,6 @@ class Mission(Base):
 	status: Mapped[str] = mapped_column(String(30), default="Draft", nullable=False)
 	progress: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
-	goal_type: Mapped[str] = mapped_column(String(30), default="find_clients", nullable=False)
 	description: Mapped[str] = mapped_column(String(500), default="", nullable=False)
 	target_industry: Mapped[str | None] = mapped_column(String(120), nullable=True)
 	target_business_size: Mapped[str | None] = mapped_column(String(120), nullable=True)

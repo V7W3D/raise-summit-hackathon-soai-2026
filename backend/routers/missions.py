@@ -7,6 +7,7 @@ from models.schemas.missions import MissionCreate, MissionRead, MissionUpdate
 from services import missions as mission_service
 from services import users as user_service
 from services.business_profiles import BusinessProfileNotFoundError
+from search_agent.errors import ProviderNotConfiguredError
 
 router = APIRouter(prefix="/missions", tags=["missions"])
 
@@ -38,6 +39,11 @@ def create_mission(payload: MissionCreate, db: DbSession):
 				"Business profile required before running search. "
 				"Run: python -m database.seed"
 			),
+		) from None
+	except ProviderNotConfiguredError as exc:
+		raise HTTPException(
+			status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+			detail=str(exc),
 		) from None
 
 

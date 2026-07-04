@@ -7,16 +7,6 @@ from models.schemas.home import (
 	Stat,
 	UserSummary,
 )
-from models.schemas.insights import (
-	BestPattern,
-	FunnelDrop,
-	FunnelStage,
-	InsightsReport,
-	PerformanceMetric,
-	Recommendation,
-	SourceQuality,
-	WeeklyChange,
-)
 from models.schemas.leads import LeadCreate, LeadRead, LeadUpdate
 from models.schemas.missions import MissionCreate, MissionRead, MissionUpdate
 
@@ -34,12 +24,4 @@ __all__ = [
 	"FeedItem",
 	"RecentMission",
 	"RecentProspect",
-	"InsightsReport",
-	"PerformanceMetric",
-	"FunnelStage",
-	"FunnelDrop",
-	"WeeklyChange",
-	"BestPattern",
-	"SourceQuality",
-	"Recommendation",
 ]
