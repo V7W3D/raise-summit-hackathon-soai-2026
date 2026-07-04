@@ -67,10 +67,22 @@ def test_list_archived_missions(client: TestClient) -> None:
 	assert [m["name"] for m in archived_res.json()] == ["Archived mission"]
 
 
-def test_get_archived_mission_returns_404(client: TestClient) -> None:
+def test_get_archived_mission(client: TestClient) -> None:
 	created = _create_mission(client)
 	client.patch(f"/missions/{created['id']}", json={"is_archived": True})
-	assert client.get(f"/missions/{created['id']}").status_code == 404
+
+	res = client.get(f"/missions/{created['id']}")
+	assert res.status_code == 200
+	assert res.json()["is_archived"] is True
+
+
+def test_unarchive_mission(client: TestClient) -> None:
+	created = _create_mission(client)
+	client.patch(f"/missions/{created['id']}", json={"is_archived": True})
+
+	res = client.patch(f"/missions/{created['id']}", json={"is_archived": False})
+	assert res.status_code == 200
+	assert res.json()["is_archived"] is False
 
 
 def test_get_mission_404(client: TestClient) -> None:

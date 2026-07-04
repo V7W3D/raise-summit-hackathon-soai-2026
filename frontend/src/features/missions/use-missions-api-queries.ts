@@ -192,9 +192,10 @@ export function useUpdateMission() {
   return useMutation({
     mutationFn: ({ id, payload }: { id: number; payload: MissionUpdatePayload }) =>
       updateMission(id, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['missions'] });
-      queryClient.invalidateQueries({ queryKey: dashboardQueryKey });
+    onSuccess: (mission, variables) => {
+      queryClient.setQueryData(missionQueryKey(variables.id), mission);
+      void queryClient.invalidateQueries({ queryKey: ['missions'] });
+      void queryClient.invalidateQueries({ queryKey: dashboardQueryKey });
     },
   });
 }
