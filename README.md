@@ -31,7 +31,13 @@ The backend lives in `backend/` and uses Poetry, FastAPI, and SQLAlchemy with a 
 	DATABASE_URL=sqlite:///./data/raise_summit.db
 	```
 
-4. Run the backend server:
+5. Apply database migrations:
+
+	```bash
+	poetry run alembic upgrade head
+	```
+
+6. Run the backend server:
 
 	```bash
 	poetry run uvicorn main:app --reload --host 127.0.0.1 --port 8080
@@ -85,16 +91,54 @@ def list_leads(db: DbSession):
 
 Each request gets its own session from the pool. The session is closed automatically after the request finishes.
 
+### Migrations (Alembic)
+
+Schema changes are managed with [Alembic](https://alembic.sqlalchemy.org/) in `backend/alembic/`.
+
+Apply migrations locally:
+
+```bash
+cd backend
+poetry run alembic upgrade head
+```
+
+Create a new migration after changing SQLAlchemy models in `models/clients/`:
+
+```bash
+cd backend
+poetry run alembic revision --autogenerate -m "describe your change"
+poetry run alembic upgrade head
+```
+
+Check that models and migration history are in sync:
+
+```bash
+./scripts/check-migrations.sh
+```
+
+Register ORM models in `models/clients/` and import them from `models/clients/__init__.py` so autogenerate can detect them.
+
+### Git hooks
+
+A pre-push hook verifies that migration history matches the current SQLAlchemy models before code is pushed.
+
+Enable it once after cloning:
+
+```bash
+./scripts/setup-git-hooks.sh
+```
+
+The hook runs `scripts/check-migrations.sh`, which:
+
+1. Applies migrations to a temporary SQLite database
+2. Runs `alembic check` to fail if a new autogenerate migration is needed
+3. Ensures there is a single migration head (no branched history)
+
 ### Notes
 
 - `backend/.env`, `backend/data/`, and `*.db` files are gitignored and stay local to your machine.
 - Do not commit the `.db` file; teammates recreate it locally with the steps above.
 - SQLite is included with Python, so no extra database install is required.
-- After pulling model or migration changes, apply them from `backend/` once Alembic is configured:
-
-	```bash
-	poetry run alembic upgrade head
-	```
 
 ## Frontend setup
 
