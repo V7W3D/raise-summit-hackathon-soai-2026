@@ -7,12 +7,12 @@ HOST="${HOST:-127.0.0.1}"
 PORT="${PORT:-8080}"
 
 if [[ ! -d .venv ]]; then
-  echo "Backend virtualenv not found. Run: ../.venv/bin/poetry install" >&2
+  echo "Backend virtualenv not found. Run: poetry install" >&2
   exit 1
 fi
 
 if ! .venv/bin/python -c "import uvicorn" 2>/dev/null; then
-  echo "Uvicorn is not installed in .venv. Run: ../.venv/bin/poetry install" >&2
+  echo "Uvicorn is not installed in .venv. Run: poetry install" >&2
   exit 1
 fi
 
