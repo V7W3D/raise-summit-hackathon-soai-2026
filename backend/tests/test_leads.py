@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 def _create_mission(client: TestClient) -> int:
 	res = client.post(
 		"/missions",
-		json={"name": "Construction Clients – Lyon", "status": "Active"},
+		json={"name": "Construction Clients – Lyon"},
 	)
 	assert res.status_code == 201, res.text
 	return res.json()["id"]

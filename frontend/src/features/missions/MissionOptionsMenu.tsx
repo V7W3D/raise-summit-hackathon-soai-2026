@@ -1,19 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, MoreVertical, Trash2 } from 'lucide-react';
+import { Archive, Eye, MoreVertical, Trash2 } from 'lucide-react';
 
 type MissionOptionsMenuProps = {
   missionId: number;
   missionName: string;
   onDelete: () => void;
+  onArchive?: () => void;
   isDeleting: boolean;
+  isArchiving: boolean;
 };
 
 export function MissionOptionsMenu({
   missionId,
   missionName,
   onDelete,
+  onArchive,
   isDeleting,
+  isArchiving,
 }: MissionOptionsMenuProps) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -47,6 +51,16 @@ export function MissionOptionsMenu({
     setOpen(false);
   };
 
+  const handleArchive = () => {
+    const confirmed = window.confirm(
+      `Archive "${missionName}"? It will be hidden from active missions.`,
+    );
+    if (!confirmed) return;
+
+    onArchive?.();
+    setOpen(false);
+  };
+
   return (
     <div className="mission-menu" ref={rootRef}>
       <button
@@ -66,6 +80,18 @@ export function MissionOptionsMenu({
             <Eye size={15} />
             View mission
           </button>
+          {onArchive ? (
+            <button
+              type="button"
+              role="menuitem"
+              className="mission-menu-item"
+              onClick={handleArchive}
+              disabled={isArchiving}
+            >
+              <Archive size={15} />
+              {isArchiving ? 'Archiving…' : 'Archive mission'}
+            </button>
+          ) : null}
           <button
             type="button"
             role="menuitem"

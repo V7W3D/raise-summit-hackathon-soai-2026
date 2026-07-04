@@ -61,7 +61,7 @@ export function HomePage() {
           </div>
 
           <nav className="home-actions" aria-label="Quick actions">
-            <Link to="/missions" className="home-btn home-btn-primary">
+            <Link to="/missions/new" className="home-btn home-btn-primary">
               <Plus /> Start new mission
             </Link>
             <Link to="/discover" className="home-btn home-btn-outline">

@@ -1,23 +1,32 @@
-import { useRef } from 'react';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Plus,
-  Filter,
   ArrowUpDown,
   ChevronDown,
-  MapPin,
   Archive,
+  ChevronUp,
 } from 'lucide-react';
-import { ScoreRing } from '@components/ScoreRing';
-import { CreateMissionPanel } from './CreateMissionPanel';
-import { MissionOptionsMenu } from './MissionOptionsMenu';
-import { useDeleteMission, useMissions } from './use-missions-api-queries';
+import { MissionListItem } from './MissionListItem';
+import {
+  useDeleteMission,
+  useMissions,
+  useUpdateMission,
+} from './use-missions-api-queries';
 import './missions.css';
 
 export function MissionsPage() {
-  const { data, isPending, isError } = useMissions();
+  const [showArchived, setShowArchived] = useState(false);
+  const { data: activeMissions, isPending, isError } = useMissions({ isArchived: false });
+  const {
+    data: archivedMissions,
+    isPending: isArchivedPending,
+    isError: isArchivedError,
+  } = useMissions({ isArchived: true, enabled: showArchived });
   const deleteMission = useDeleteMission();
-  const missions = data ?? [];
-  const createPanelRef = useRef<HTMLDivElement>(null);
+  const updateMission = useUpdateMission();
+  const missions = activeMissions ?? [];
+  const archived = archivedMissions ?? [];
 
   if (isPending) {
     return <p className="page-subtitle">Loading…</p>;
@@ -27,78 +36,86 @@ export function MissionsPage() {
     return <p className="page-subtitle">Unable to load missions.</p>;
   }
 
-  const scrollToCreateForm = () => {
-    createPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
   return (
-    <div className="missions-layout">
-      <div>
-        <h1 className="page-title">Prospecting Missions</h1>
-        <p className="page-subtitle">Create structured prospecting goals and manage your active missions.</p>
+    <div className="missions-page">
+      <h1 className="page-title">Prospecting Missions</h1>
+      <p className="page-subtitle">Create structured prospecting goals and manage your active missions.</p>
 
-        <div className="missions-toolbar" style={{ justifyContent: 'flex-start' }}>
-          <button type="button" className="btn btn-primary" onClick={scrollToCreateForm}>
-            <Plus /> New mission
+      <div className="missions-toolbar" style={{ justifyContent: 'flex-start' }}>
+        <Link to="/missions/new" className="btn btn-primary">
+          <Plus /> New mission
+        </Link>
+      </div>
+
+      <div className="missions-toolbar">
+        <h2 className="section-title">Mission list</h2>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button type="button" className="select-control">
+            <ArrowUpDown /> Last activity <ChevronDown />
           </button>
         </div>
+      </div>
 
-        <div className="missions-toolbar">
-          <h2 className="section-title">Mission list</h2>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <button type="button" className="select-control">
-              <Filter /> All statuses <ChevronDown />
-            </button>
-            <button type="button" className="select-control">
-              <ArrowUpDown /> Last activity <ChevronDown />
-            </button>
-          </div>
+      <div className="missions-list-scroll">
+        {missions.length === 0 ? (
+          <p className="missions-list-empty">No active missions yet.</p>
+        ) : (
+          missions.map((mission) => (
+            <MissionListItem
+              key={mission.id}
+              mission={mission}
+              onDelete={() => deleteMission.mutate(mission.id)}
+              onArchive={() =>
+                updateMission.mutate({ id: mission.id, payload: { is_archived: true } })
+              }
+              isDeleting={
+                deleteMission.isPending && deleteMission.variables === mission.id
+              }
+              isArchiving={
+                updateMission.isPending && updateMission.variables?.id === mission.id
+              }
+            />
+          ))
+        )}
+      </div>
+
+      <button
+        type="button"
+        className="missions-archived"
+        onClick={() => setShowArchived((current) => !current)}
+        aria-expanded={showArchived}
+      >
+        {showArchived ? <ChevronUp size={16} /> : <Archive size={16} />}
+        {showArchived ? 'Hide archived missions' : 'View archived missions'}
+      </button>
+
+      {showArchived ? (
+        <div className="missions-archived-section">
+          <h3 className="missions-archived-title">Archived missions</h3>
+          {isArchivedPending ? (
+            <p className="missions-list-empty">Loading archived missions…</p>
+          ) : isArchivedError ? (
+            <p className="missions-list-empty">Unable to load archived missions.</p>
+          ) : archived.length === 0 ? (
+            <p className="missions-list-empty">No archived missions.</p>
+          ) : (
+            <div className="missions-list-scroll">
+              {archived.map((mission) => (
+                <MissionListItem
+                  key={mission.id}
+                  mission={mission}
+                  archived
+                  onDelete={() => deleteMission.mutate(mission.id)}
+                  isDeleting={
+                    deleteMission.isPending && deleteMission.variables === mission.id
+                  }
+                  isArchiving={false}
+                />
+              ))}
+            </div>
+          )}
         </div>
-
-        {missions.map((mission) => (
-          <div key={mission.id} className="card mission-card">
-            <div className="mission-main">
-              <div className="mission-name">{mission.name}</div>
-              {mission.target ? <div className="mission-target">{mission.target}</div> : null}
-              {mission.location ? (
-                <div className="mission-tags">
-                  <span className="mission-tag">
-                    <MapPin /> {mission.location}
-                  </span>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="mission-actions">
-              <span className={`pill pill-${mission.statusTone}`}>{mission.status}</span>
-              <ScoreRing
-                value={mission.progress}
-                size={54}
-                stroke={5}
-                color="var(--accent)"
-                fontSize={13}
-                label={`${mission.progress}%`}
-              />
-              <MissionOptionsMenu
-                missionId={mission.id}
-                missionName={mission.name}
-                onDelete={() => deleteMission.mutate(mission.id)}
-                isDeleting={
-                  deleteMission.isPending && deleteMission.variables === mission.id
-                }
-              />
-            </div>
-          </div>
-        ))}
-
-        <button type="button" className="missions-archived">
-          <Archive size={16} /> View archived missions
-        </button>
-      </div>
-
-      <div ref={createPanelRef}>
-        <CreateMissionPanel />
-      </div>
+      ) : null}
     </div>
   );
 }

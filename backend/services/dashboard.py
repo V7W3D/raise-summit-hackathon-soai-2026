@@ -48,7 +48,7 @@ def build_dashboard(db: Session, user: User) -> HomeDashboard:
 		db.scalar(
 			select(func.count(Mission.id)).where(
 				Mission.id.in_(user_mission_ids),
-				Mission.status == "Active",
+				Mission.is_archived.is_(False),
 			)
 		)
 		or 0
@@ -71,7 +71,10 @@ def build_dashboard(db: Session, user: User) -> HomeDashboard:
 		db.scalars(
 			select(Mission)
 			.join(UserMissionLink, UserMissionLink.mission_id == Mission.id)
-			.where(UserMissionLink.user_id == user.id)
+			.where(
+				UserMissionLink.user_id == user.id,
+				Mission.is_archived.is_(False),
+			)
 			.order_by(Mission.last_activity_at.desc())
 			.limit(3)
 		).all()

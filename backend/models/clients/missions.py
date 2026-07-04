@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Integer, String, func
+from sqlalchemy import Boolean, DateTime, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database.base import Base
@@ -20,8 +20,8 @@ class Mission(Base):
 	name: Mapped[str] = mapped_column(String(160), nullable=False)
 	target: Mapped[str] = mapped_column(String(255), default="", nullable=False)
 	location: Mapped[str] = mapped_column(String(120), default="", nullable=False)
-	status: Mapped[str] = mapped_column(String(30), default="Draft", nullable=False)
 	progress: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+	is_archived: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
 	description: Mapped[str] = mapped_column(String(500), default="", nullable=False)
 	target_industry: Mapped[str | None] = mapped_column(String(120), nullable=True)
