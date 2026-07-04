@@ -34,14 +34,8 @@ const missionSchema = z
     id: z.number(),
     name: z.string(),
     target: z.string(),
-    mission_type: z.string(),
     location: z.string(),
     status: z.string(),
-    icon: z.string(),
-    color: z.string(),
-    leads_found: z.number(),
-    qualified: z.number(),
-    outreach_sent: z.number(),
     progress: z.number(),
     created_at: z.string(),
     updated_at: z.string(),
@@ -49,15 +43,9 @@ const missionSchema = z
   })
   .transform((dto) => ({
     id: dto.id,
-    icon: dto.icon,
-    color: dto.color,
     name: dto.name,
     target: dto.target,
-    type: dto.mission_type,
     location: dto.location,
-    leadsFound: dto.leads_found,
-    qualified: dto.qualified,
-    outreach: dto.outreach_sent,
     progress: dto.progress,
     status: dto.status,
     statusTone: statusTone(dto.status),
@@ -71,11 +59,8 @@ export const missionsQueryKey = ['missions'] as const;
 type MissionCreatePayload = {
   name: string;
   target?: string;
-  mission_type?: string;
   location?: string;
   status?: string;
-  icon?: string;
-  color?: string;
 };
 
 async function fetchMissions(signal?: AbortSignal) {

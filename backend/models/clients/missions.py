@@ -19,15 +19,8 @@ class Mission(Base):
 	id: Mapped[int] = mapped_column(primary_key=True)
 	name: Mapped[str] = mapped_column(String(160), nullable=False)
 	target: Mapped[str] = mapped_column(String(255), default="", nullable=False)
-	mission_type: Mapped[str] = mapped_column(String(60), default="Clients", nullable=False)
 	location: Mapped[str] = mapped_column(String(120), default="", nullable=False)
 	status: Mapped[str] = mapped_column(String(30), default="Draft", nullable=False)
-	icon: Mapped[str] = mapped_column(String(40), default="building", nullable=False)
-	color: Mapped[str] = mapped_column(String(20), default="blue", nullable=False)
-
-	leads_found: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-	qualified: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-	outreach_sent: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 	progress: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
 	user_id: Mapped[int] = mapped_column(

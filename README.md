@@ -17,10 +17,10 @@ cp .env.example .env                 # first time only (skip if .env exists)
 mkdir -p data                        # first time only
 poetry run alembic upgrade head      # create the database schema
 poetry run python -m database.seed   # load demo data (missions + leads)
-./run-dev.sh                         # start API on http://127.0.0.1:8080
+poetry run uvicorn main:app --reload # start API on http://127.0.0.1:8000
 ```
 
-The API is now live at `http://127.0.0.1:8080` (interactive docs at `/docs`).
+The API is now live at `http://127.0.0.1:8000` (interactive docs at `/docs`).
 
 > To reset the demo data at any time: `poetry run python -m database.seed --reset`
 
@@ -34,7 +34,7 @@ npm run dev                          # start UI on http://localhost:5173
 ```
 
 Open **http://localhost:5173**. The frontend reads its API URL from
-`frontend/.env` (`VITE_API_BASE_URL`, default `http://127.0.0.1:8080`) and falls
+`frontend/.env` (`VITE_API_BASE_URL`, default `http://127.0.0.1:8000`) and falls
 back to bundled demo data if the backend is unreachable, so the UI always
 renders.
 
@@ -42,7 +42,7 @@ renders.
 
 | Service  | URL                       | Notes                          |
 | -------- | ------------------------- | ------------------------------ |
-| Backend  | `http://127.0.0.1:8080`   | FastAPI, OpenAPI docs at `/docs` |
+| Backend  | `http://127.0.0.1:8000`   | FastAPI, OpenAPI docs at `/docs` |
 | Frontend | `http://localhost:5173`   | Vite dev server                |
 
 ---
@@ -87,16 +87,10 @@ The backend lives in `backend/` and uses Poetry, FastAPI, and SQLAlchemy with a 
 5. Run the backend server:
 
 	```bash
-	poetry run uvicorn main:app --reload --host 127.0.0.1 --port 8080
+	poetry run uvicorn main:app --reload
 	```
 
-	Or use the helper script:
-
-	```bash
-	./run-dev.sh
-	```
-
-The server will start on `http://127.0.0.1:8080` by default.
+The server will start on `http://127.0.0.1:8000` by default.
 
 ## Database setup (SQLite)
 
@@ -326,6 +320,6 @@ The frontend lives in `frontend/` and uses Vite with React, axios, and TanStack 
 	npm run dev
 	```
 
-The app will start on `http://localhost:5173` by default and is configured to talk to the backend at `http://127.0.0.1:8080`.
+The app will start on `http://localhost:5173` by default and is configured to talk to the backend at `http://127.0.0.1:8000`.
 
 `frontend/node_modules/` is gitignored. After cloning the repo, run `npm install` to recreate it locally.

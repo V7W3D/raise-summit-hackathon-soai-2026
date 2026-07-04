@@ -5,16 +5,12 @@ import {
   ArrowUpDown,
   ChevronDown,
   MoreVertical,
-  Users,
   MapPin,
   Archive,
   Building2,
-  Fish,
-  Calculator,
-  Handshake,
-  Sprout,
   Truck,
   UserCheck,
+  Handshake,
   Landmark,
   UserPlus,
   CheckCircle2,
@@ -33,35 +29,6 @@ import {
 import { ScoreRing } from '@components/ScoreRing';
 import { useCreateMission, useMissions } from './use-missions-api-queries';
 import './missions.css';
-
-const MISSION_ICONS = {
-  building: Building2,
-  fish: Fish,
-  calculator: Calculator,
-  handshake: Handshake,
-  sprout: Sprout,
-} as const;
-
-function missionIcon(icon: string) {
-  return MISSION_ICONS[icon as keyof typeof MISSION_ICONS] ?? Building2;
-}
-
-// Maps a "What do you need?" choice to mission metadata for creation.
-const NEED_TO_MISSION: Record<string, { type: string; icon: string; color: string }> = {
-  'Find clients': { type: 'Clients', icon: 'building', color: 'blue' },
-  'Find suppliers': { type: 'Suppliers', icon: 'fish', color: 'blue' },
-  'Find consultants': { type: 'Consultants', icon: 'calculator', color: 'purple' },
-  'Find partners': { type: 'Partners', icon: 'handshake', color: 'green' },
-  'Find investors': { type: 'Investors', icon: 'sprout', color: 'orange' },
-  'Find hires': { type: 'Hires', icon: 'building', color: 'blue' },
-};
-
-const RING_COLORS: Record<string, string> = {
-  blue: '#2563eb',
-  green: '#16a34a',
-  purple: '#7c5cf0',
-  orange: '#ea8a1f',
-};
 
 const NEED_OPTIONS = [
   { label: 'Find clients', icon: Building2 },
@@ -105,15 +72,12 @@ export function MissionsPage() {
   }
 
   const handleCreate = () => {
-    const meta = NEED_TO_MISSION[selectedNeed] ?? NEED_TO_MISSION['Find clients'];
+    const need = selectedNeed.replace(/^Find /, '');
     createMission.mutate({
-      name: `New ${meta.type} Mission`,
-      target: `Target: ${meta.type.toLowerCase()}`,
-      mission_type: meta.type,
+      name: `New ${need} Mission`,
+      target: `Target: ${need.toLowerCase()}`,
       location: 'France',
       status: 'Draft',
-      icon: meta.icon,
-      color: meta.color,
     });
   };
 
@@ -141,40 +105,17 @@ export function MissionsPage() {
           </div>
         </div>
 
-        {missions.map((mission) => {
-          const Icon = missionIcon(mission.icon);
-          return (
+        {missions.map((mission) => (
             <div key={mission.id} className="card mission-card">
               <div className="mission-id">
-                <span className={`icon-tile ${mission.color}`}>
-                  <Icon />
-                </span>
                 <div>
                   <div className="mission-name">{mission.name}</div>
                   <div className="mission-target">{mission.target}</div>
                   <div className="mission-tags">
                     <span className="mission-tag">
-                      <Users /> {mission.type}
-                    </span>
-                    <span className="mission-tag">
                       <MapPin /> {mission.location}
                     </span>
                   </div>
-                </div>
-              </div>
-
-              <div className="mission-stats">
-                <div>
-                  <div className="mission-stat-label">Leads found</div>
-                  <div className="mission-stat-value">{mission.leadsFound}</div>
-                </div>
-                <div>
-                  <div className="mission-stat-label">Qualified</div>
-                  <div className="mission-stat-value">{mission.qualified}</div>
-                </div>
-                <div>
-                  <div className="mission-stat-label">Outreach sent</div>
-                  <div className="mission-stat-value">{mission.outreach}</div>
                 </div>
               </div>
 
@@ -183,7 +124,7 @@ export function MissionsPage() {
                   value={mission.progress}
                   size={54}
                   stroke={5}
-                  color={RING_COLORS[mission.color]}
+                  color="#2563eb"
                   fontSize={13}
                   label={`${mission.progress}%`}
                 />
@@ -200,8 +141,7 @@ export function MissionsPage() {
                 </button>
               </div>
             </div>
-          );
-        })}
+        ))}
 
         <button className="missions-archived">
           <Archive size={16} /> View archived missions (4)

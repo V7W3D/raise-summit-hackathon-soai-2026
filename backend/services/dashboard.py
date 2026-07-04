@@ -23,8 +23,6 @@ _FIT_TONE = {
 	"Low fit": "blue",
 }
 
-_MISSION_ICON_FALLBACK = {"building", "leaf", "sushi"}
-
 
 def _fit_from_score(score: int) -> tuple[str, str]:
 	if score >= 75:
@@ -44,15 +42,16 @@ def build_dashboard(db: Session, user: User) -> HomeDashboard:
 	active_missions = db.scalar(
 		select(func.count(Mission.id)).where(Mission.status == "Active")
 	) or 0
-	total_leads = db.scalar(select(func.coalesce(func.sum(Mission.leads_found), 0))) or 0
-	total_qualified = db.scalar(select(func.coalesce(func.sum(Mission.qualified), 0))) or 0
-	total_outreach = db.scalar(select(func.coalesce(func.sum(Mission.outreach_sent), 0))) or 0
+	total_leads = db.scalar(select(func.count(Lead.id))) or 0
+	total_qualified = (
+		db.scalar(select(func.count(Lead.id)).where(Lead.score >= 75)) or 0
+	)
 
 	stats = [
 		Stat(icon="missions", label="Missions active", value=str(active_missions)),
 		Stat(icon="search", label="New leads found this week", value=str(total_leads)),
 		Stat(icon="user", label="Qualified leads", value=str(total_qualified)),
-		Stat(icon="send", label="Outreach sent", value=str(total_outreach)),
+		Stat(icon="send", label="Outreach sent", value="0"),
 		Stat(icon="smile", label="Positive replies", value="3"),
 		Stat(icon="calendar", label="Meetings booked", value="1"),
 	]
@@ -65,12 +64,9 @@ def build_dashboard(db: Session, user: User) -> HomeDashboard:
 	recent_missions = [
 		RecentMission(
 			id=m.id,
-			icon=m.icon if m.icon in _MISSION_ICON_FALLBACK else "building",
-			color=m.color,
 			name=m.name,
 			updated=f"Updated {_rel_time(i)}",
 			progress=m.progress,
-			leads=m.leads_found,
 		)
 		for i, m in enumerate(recent_missions_rows)
 	]

@@ -10,6 +10,16 @@ from services import users as user_service
 router = APIRouter(prefix="/missions", tags=["missions"])
 
 
+def _require_default_user(db: DbSession):
+	user = user_service.get_default_user(db)
+	if user is None:
+		raise HTTPException(
+			status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+			detail="Database not seeded. Run: python -m database.seed",
+		)
+	return user
+
+
 @router.get("", response_model=list[MissionRead])
 def list_missions(db: DbSession, status: str | None = Query(default=None)):
 	return mission_service.list_missions(db, status=status)
@@ -17,7 +27,7 @@ def list_missions(db: DbSession, status: str | None = Query(default=None)):
 
 @router.post("", response_model=MissionRead, status_code=status.HTTP_201_CREATED)
 def create_mission(payload: MissionCreate, db: DbSession):
-	user = user_service.get_or_create_default_user(db)
+	user = _require_default_user(db)
 	return mission_service.create_mission(db, payload, user_id=user.id)
 
 

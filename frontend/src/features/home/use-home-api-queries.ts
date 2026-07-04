@@ -40,12 +40,9 @@ const dashboardSchema = z
     recent_missions: z.array(
       z.object({
         id: z.number(),
-        icon: z.string(),
-        color: z.string(),
         name: z.string(),
         updated: z.string(),
         progress: z.number(),
-        leads: z.number(),
       }),
     ),
     recent_prospects: z.array(

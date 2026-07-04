@@ -7,11 +7,8 @@ def _create_mission(client: TestClient, **overrides) -> dict:
 	payload = {
 		"name": "Construction Clients – Lyon",
 		"target": "Target: small service businesses",
-		"mission_type": "Clients",
 		"location": "Lyon, France",
 		"status": "Active",
-		"icon": "building",
-		"color": "blue",
 	}
 	payload.update(overrides)
 	res = client.post("/missions", json=payload)

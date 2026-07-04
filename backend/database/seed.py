@@ -17,70 +17,47 @@ from models.clients.leads import Lead
 from models.clients.missions import Mission
 from models.clients.users import User
 
+DEFAULT_USER = {
+	"name": "Azzedine",
+	"email": "azzedine@prospectpath.com",
+	"plan": "Enterprise Plan",
+	"initials": "AZ",
+}
+
 MISSIONS = [
 	{
 		"name": "Construction Clients – Lyon",
 		"target": "Target: small service businesses",
-		"mission_type": "Clients",
 		"location": "Lyon, France",
 		"status": "Active",
-		"icon": "building",
-		"color": "blue",
-		"leads_found": 25,
-		"qualified": 9,
-		"outreach_sent": 4,
 		"progress": 36,
 	},
 	{
 		"name": "Seafood Suppliers – Paris",
 		"target": "Target: premium seafood suppliers",
-		"mission_type": "Suppliers",
 		"location": "Paris, France",
 		"status": "Active",
-		"icon": "fish",
-		"color": "blue",
-		"leads_found": 18,
-		"qualified": 6,
-		"outreach_sent": 2,
 		"progress": 33,
 	},
 	{
 		"name": "Accounting Consultants – Bakery Network",
 		"target": "Target: small business accounting advisors",
-		"mission_type": "Consultants",
 		"location": "France",
 		"status": "Draft",
-		"icon": "calculator",
-		"color": "purple",
-		"leads_found": 12,
-		"qualified": 5,
-		"outreach_sent": 1,
 		"progress": 22,
 	},
 	{
 		"name": "Strategic Partners – E-commerce",
 		"target": "Target: logistics & payment partners",
-		"mission_type": "Partners",
 		"location": "France & Europe",
 		"status": "Active",
-		"icon": "handshake",
-		"color": "green",
-		"leads_found": 31,
-		"qualified": 11,
-		"outreach_sent": 7,
 		"progress": 46,
 	},
 	{
 		"name": "Investors – Food Tech Startups",
 		"target": "Target: early-stage impact investors",
-		"mission_type": "Investors",
 		"location": "Europe",
 		"status": "Paused",
-		"icon": "sprout",
-		"color": "orange",
-		"leads_found": 14,
-		"qualified": 4,
-		"outreach_sent": 1,
 		"progress": 20,
 	},
 ]
@@ -119,11 +96,11 @@ LEADS = [
 		"recommended": ["Short email + phone follow-up"],
 		"evidence": [
 			{
-				"quote": "Intervention d’urgence 24h/24 et 7j/7 pour tous vos problèmes de plomberie à Lyon et ses environs.",
+				"quote": "Intervention d'urgence 24h/24 et 7j/7 pour tous vos problèmes de plomberie à Lyon et ses environs.",
 				"source": "Homepage",
 			},
 			{
-				"quote": "Plombier à Lyon — dépannage rapide, installation, fuite d’eau, débouchage, chauffe-eau…",
+				"quote": "Plombier à Lyon — dépannage rapide, installation, fuite d'eau, débouchage, chauffe-eau…",
 				"source": "Homepage",
 			},
 			{
@@ -271,12 +248,7 @@ def seed(reset: bool = False) -> None:
 	with SessionLocal() as db:
 		user = db.scalar(select(User).limit(1))
 		if user is None:
-			user = User(
-				name="Azzedine",
-				email="azzedine@prospectpath.com",
-				plan="Enterprise Plan",
-				initials="AZ",
-			)
+			user = User(**DEFAULT_USER)
 			db.add(user)
 			db.flush()
 			print(f"Created user: {user.name}")
