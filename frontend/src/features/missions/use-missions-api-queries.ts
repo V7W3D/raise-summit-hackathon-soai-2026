@@ -97,6 +97,15 @@ export type MissionCreatePayload = {
 };
 
 export type MissionUpdatePayload = {
+  name?: string;
+  target?: string;
+  location?: string;
+  description?: string;
+  target_industry?: string | null;
+  target_business_size?: string | null;
+  desired_lead_count?: number | null;
+  urgency?: MissionUrgency | null;
+  language?: string | null;
   is_archived?: boolean;
   progress?: number;
 };
