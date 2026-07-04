@@ -1,6 +1,7 @@
 """Seed the database with demo data matching the ProspectPath mockups.
 
-Run with:  python -m database.seed        (from the backend directory)
+Run with (from the backend directory):
+  poetry run python -m database.seed
 Pass --reset to drop and recreate all tables first.
 """
 
