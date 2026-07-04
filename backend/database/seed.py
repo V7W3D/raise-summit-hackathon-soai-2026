@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import sys
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 import models.clients  # noqa: F401  (register ORM models)
 from database.base import Base
@@ -18,10 +18,24 @@ from models.clients.leads import Lead
 from models.clients.missions import Mission
 from models.clients.user_mission_links import UserMissionLink
 from models.clients.users import User
+from models.clients.business_profiles import BusinessProfile
 
 DEFAULT_USER = {
 	"name": "Azzedine",
 	"email": "azzedine@prospectpath.com",
+}
+
+DEFAULT_BUSINESS_PROFILE = {
+	"business_name": "CallPilot AI",
+	"business_type": "B2B SaaS",
+	"what_we_sell": "AI phone receptionist for small service businesses",
+	"target_geographies": ["France"],
+	"ideal_customers": ["small local service companies that receive many calls"],
+	"bad_fit_customers": [
+		"very large enterprises",
+		"businesses with no phone-based workflow",
+	],
+	"languages": ["fr"],
 }
 
 MISSIONS = [
@@ -31,6 +45,13 @@ MISSIONS = [
 		"location": "Lyon, France",
 		"status": "Active",
 		"progress": 36,
+		"goal_type": "find_clients",
+		"description": (
+			"Find small construction service businesses in Lyon likely to "
+			"need AI call reception."
+		),
+		"target_industry": "construction",
+		"language": "fr",
 	},
 	{
 		"name": "Seafood Suppliers – Paris",
@@ -38,6 +59,10 @@ MISSIONS = [
 		"location": "Paris, France",
 		"status": "Active",
 		"progress": 33,
+		"goal_type": "find_suppliers",
+		"description": "Find premium seafood suppliers serving Paris restaurants.",
+		"target_industry": "seafood",
+		"language": "fr",
 	},
 	{
 		"name": "Accounting Consultants – Bakery Network",
@@ -45,6 +70,10 @@ MISSIONS = [
 		"location": "France",
 		"status": "Draft",
 		"progress": 22,
+		"goal_type": "find_consultants",
+		"description": "Find accounting consultants for a bakery owner network.",
+		"target_industry": "accounting",
+		"language": "fr",
 	},
 	{
 		"name": "Strategic Partners – E-commerce",
@@ -52,6 +81,9 @@ MISSIONS = [
 		"location": "France & Europe",
 		"status": "Active",
 		"progress": 46,
+		"goal_type": "find_partners",
+		"description": "Find logistics and payment partners for e-commerce brands.",
+		"target_industry": "e-commerce",
 	},
 	{
 		"name": "Investors – Food Tech Startups",
@@ -59,6 +91,9 @@ MISSIONS = [
 		"location": "Europe",
 		"status": "Paused",
 		"progress": 20,
+		"goal_type": "find_investors",
+		"description": "Find early-stage impact investors in food tech.",
+		"target_industry": "food tech",
 	},
 ]
 
@@ -161,11 +196,23 @@ LEADS = [
 
 
 
+def _apply_migrations() -> None:
+	from pathlib import Path
+
+	from alembic import command
+	from alembic.config import Config
+
+	cfg = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
+	command.upgrade(cfg, "head")
+
+
 def seed(reset: bool = False) -> None:
 	if reset:
 		print("Dropping all tables…")
 		Base.metadata.drop_all(bind=engine)
-	Base.metadata.create_all(bind=engine)
+		with engine.begin() as conn:
+			conn.execute(text("DROP TABLE IF EXISTS alembic_version"))
+	_apply_migrations()
 
 	with SessionLocal() as db:
 		user = db.scalar(select(User).limit(1))
@@ -174,6 +221,12 @@ def seed(reset: bool = False) -> None:
 			db.add(user)
 			db.flush()
 			print(f"Created user: {user.name}")
+
+		profile = db.scalar(select(BusinessProfile).limit(1))
+		if profile is None:
+			db.add(BusinessProfile(**DEFAULT_BUSINESS_PROFILE, user_id=user.id))
+			db.flush()
+			print(f"Created business profile: {DEFAULT_BUSINESS_PROFILE['business_name']}")
 
 		existing = db.scalar(select(Mission).limit(1))
 		if existing is not None and not reset:

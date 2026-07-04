@@ -9,6 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database.base import Base
 
 if TYPE_CHECKING:
+	from models.clients.business_profiles import BusinessProfile
 	from models.clients.user_mission_links import UserMissionLink
 
 
@@ -24,4 +25,7 @@ class User(Base):
 
 	mission_links: Mapped[list["UserMissionLink"]] = relationship(
 		back_populates="user", cascade="all, delete-orphan"
+	)
+	business_profile: Mapped["BusinessProfile | None"] = relationship(
+		back_populates="user", cascade="all, delete-orphan", uselist=False
 	)

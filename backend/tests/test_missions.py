@@ -9,11 +9,32 @@ def _create_mission(client: TestClient, **overrides) -> dict:
 		"target": "Target: small service businesses",
 		"location": "Lyon, France",
 		"status": "Active",
+		"goal_type": "find_clients",
+		"description": "Find small construction service businesses in Lyon.",
+		"target_industry": "construction",
+		"language": "fr",
 	}
 	payload.update(overrides)
 	res = client.post("/missions", json=payload)
 	assert res.status_code == 201, res.text
 	return res.json()
+
+
+def test_create_mission_defaults_description_from_name_and_target(client: TestClient) -> None:
+	res = client.post(
+		"/missions",
+		json={
+			"name": "Construction Clients – Lyon",
+			"target": "Target: small service businesses",
+			"location": "Lyon, France",
+		},
+	)
+	assert res.status_code == 201, res.text
+	body = res.json()
+	assert body["goal_type"] == "find_clients"
+	assert body["description"] == (
+		"Construction Clients – Lyon: Target: small service businesses"
+	)
 
 
 def test_create_and_list_missions(client: TestClient) -> None:

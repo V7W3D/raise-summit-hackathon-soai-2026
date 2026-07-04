@@ -1,8 +1,29 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+from typing_extensions import Self
+
+MissionGoalType = Literal[
+	"find_clients",
+	"find_suppliers",
+	"find_consultants",
+	"find_partners",
+	"find_investors",
+	"find_hires",
+]
+
+MissionUrgency = Literal["low", "medium", "high"]
+
+
+def _default_description(name: str, target: str) -> str:
+	name = name.strip()
+	target = target.strip()
+	if target and target.lower() not in name.lower():
+		return f"{name}: {target}"
+	return target or name
 
 
 class MissionBase(BaseModel):
@@ -10,10 +31,21 @@ class MissionBase(BaseModel):
 	target: str = ""
 	location: str = ""
 	status: str = "Draft"
+	goal_type: MissionGoalType = "find_clients"
+	description: str = ""
+	target_industry: str | None = Field(default=None, max_length=120)
+	target_business_size: str | None = Field(default=None, max_length=120)
+	desired_lead_count: int | None = Field(default=None, ge=1)
+	urgency: MissionUrgency | None = None
+	language: str | None = Field(default=None, max_length=10)
 
 
 class MissionCreate(MissionBase):
-	pass
+	@model_validator(mode="after")
+	def fill_description_if_missing(self) -> Self:
+		if not self.description.strip():
+			self.description = _default_description(self.name, self.target)
+		return self
 
 
 class MissionUpdate(BaseModel):
@@ -22,6 +54,13 @@ class MissionUpdate(BaseModel):
 	location: str | None = None
 	status: str | None = None
 	progress: int | None = None
+	goal_type: MissionGoalType | None = None
+	description: str | None = Field(default=None, max_length=500)
+	target_industry: str | None = Field(default=None, max_length=120)
+	target_business_size: str | None = Field(default=None, max_length=120)
+	desired_lead_count: int | None = Field(default=None, ge=1)
+	urgency: MissionUrgency | None = None
+	language: str | None = Field(default=None, max_length=10)
 
 
 class MissionRead(MissionBase):

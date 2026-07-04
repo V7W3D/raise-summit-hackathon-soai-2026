@@ -26,6 +26,17 @@ def create_lead(db: Session, payload: LeadCreate) -> Lead:
 	return lead
 
 
+def create_leads(db: Session, payloads: list[LeadCreate]) -> list[Lead]:
+	if not payloads:
+		return []
+	leads = [Lead(**payload.model_dump()) for payload in payloads]
+	db.add_all(leads)
+	db.commit()
+	for lead in leads:
+		db.refresh(lead)
+	return leads
+
+
 def update_lead(db: Session, lead: Lead, payload: LeadUpdate) -> Lead:
 	for field, value in payload.model_dump(exclude_unset=True).items():
 		setattr(lead, field, value)

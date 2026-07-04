@@ -23,6 +23,14 @@ class Mission(Base):
 	status: Mapped[str] = mapped_column(String(30), default="Draft", nullable=False)
 	progress: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
+	goal_type: Mapped[str] = mapped_column(String(30), default="find_clients", nullable=False)
+	description: Mapped[str] = mapped_column(String(500), default="", nullable=False)
+	target_industry: Mapped[str | None] = mapped_column(String(120), nullable=True)
+	target_business_size: Mapped[str | None] = mapped_column(String(120), nullable=True)
+	desired_lead_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+	urgency: Mapped[str | None] = mapped_column(String(10), nullable=True)
+	language: Mapped[str | None] = mapped_column(String(10), nullable=True)
+
 	created_at: Mapped[datetime] = mapped_column(
 		DateTime(timezone=True), server_default=func.now(), nullable=False
 	)

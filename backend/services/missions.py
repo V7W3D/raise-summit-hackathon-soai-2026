@@ -22,13 +22,19 @@ def get_mission(db: Session, mission_id: int) -> Mission | None:
 	return db.get(Mission, mission_id)
 
 
-def create_mission(db: Session, payload: MissionCreate, *, user_id: int) -> Mission:
+def create_mission(
+	db: Session, payload: MissionCreate, *, user_id: int, run_search: bool = True
+) -> Mission:
 	mission = Mission(**payload.model_dump())
 	db.add(mission)
 	db.flush()
 	db.add(UserMissionLink(user_id=user_id, mission_id=mission.id))
 	db.commit()
 	db.refresh(mission)
+	if run_search:
+		from services import search_agent as search_agent_service
+
+		search_agent_service.run_search_for_mission(db, mission.id, user_id=user_id)
 	return mission
 
 
