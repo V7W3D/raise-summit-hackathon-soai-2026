@@ -1,13 +1,13 @@
 export type ScoreTone = 'green' | 'blue' | 'orange';
 
 const LOGO_COLORS = [
-  '#475569',
-  '#0ea5e9',
-  '#16a34a',
-  '#6366f1',
-  '#f43f5e',
-  '#2563eb',
-  '#7c5cf0',
+  '#57534e',
+  '#4a6278',
+  '#4d7c5c',
+  '#6b5f7a',
+  '#78716c',
+  '#5c6b7a',
+  '#6b6560',
 ] as const;
 
 export function leadInitials(name: string): string {

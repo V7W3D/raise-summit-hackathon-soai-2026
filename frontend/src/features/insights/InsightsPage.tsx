@@ -49,10 +49,10 @@ const PATTERN_ICONS = {
 } as const;
 
 const SOURCE_ICON_STYLE: Record<string, { bg: string; color: string; letter: string }> = {
-  google: { bg: '#fdeaea', color: '#dc2626', letter: 'G' },
-  directory: { bg: '#eaf1fe', color: '#2563eb', letter: 'D' },
-  referral: { bg: '#e8f7ee', color: '#16a34a', letter: 'R' },
-  feed: { bg: '#f3f0fd', color: '#7c5cf0', letter: 'F' },
+  google: { bg: 'var(--red-soft)', color: 'var(--red)', letter: 'G' },
+  directory: { bg: 'var(--blue-soft)', color: 'var(--blue)', letter: 'D' },
+  referral: { bg: 'var(--green-soft)', color: 'var(--green)', letter: 'R' },
+  feed: { bg: 'var(--purple-soft)', color: 'var(--purple)', letter: 'F' },
 };
 
 const REC_ICONS = {
@@ -282,7 +282,7 @@ export function InsightsPage() {
                   <span className="source-bar">
                     <span
                       className="source-bar-fill"
-                      style={{ width: `${source.qualified}%`, background: '#16a34a', display: 'block' }}
+                      style={{ width: `${source.qualified}%`, background: 'var(--green)', display: 'block' }}
                     />
                   </span>
                 </span>
@@ -291,10 +291,10 @@ export function InsightsPage() {
                   <span className="source-bar">
                     <span
                       className="source-bar-fill"
-                      style={{ width: `${source.reply * 3}%`, background: '#2563eb', display: 'block' }}
+                      style={{ width: `${source.reply * 3}%`, background: 'var(--accent)', display: 'block' }}
                     />
                   </span>
-                  {source.starred && <Star size={13} style={{ color: '#eab308', fill: '#eab308' }} />}
+                  {source.starred && <Star size={13} style={{ color: 'var(--orange)', fill: 'var(--orange)' }} />}
                 </span>
               </div>
             );

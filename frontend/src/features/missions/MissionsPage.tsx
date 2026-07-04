@@ -124,7 +124,7 @@ export function MissionsPage() {
                   value={mission.progress}
                   size={54}
                   stroke={5}
-                  color="#2563eb"
+                  color="var(--accent)"
                   fontSize={13}
                   label={`${mission.progress}%`}
                 />

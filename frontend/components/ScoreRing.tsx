@@ -12,8 +12,8 @@ export function ScoreRing({
   value,
   size = 56,
   stroke = 5,
-  color = '#16a34a',
-  track = '#e9edf4',
+  color = '#4d7c5c',
+  track = '#e8e8e6',
   fontSize = 16,
   label,
 }: ScoreRingProps) {
@@ -45,7 +45,7 @@ export function ScoreRing({
 }
 
 export function fitColor(score: number): string {
-  if (score >= 75) return '#16a34a';
-  if (score >= 65) return '#2563eb';
-  return '#ea8a1f';
+  if (score >= 75) return '#4d7c5c';
+  if (score >= 65) return '#4a6278';
+  return '#9a6b3c';
 }

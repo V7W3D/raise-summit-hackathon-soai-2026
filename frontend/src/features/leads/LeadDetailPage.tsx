@@ -39,7 +39,7 @@ function Linkedin({ size = 16, style, className }: { size?: number; style?: CSSP
         width: size,
         height: size,
         borderRadius: 4,
-        background: style?.color ?? '#0a66c2',
+        background: style?.color ?? '#4a6278',
         color: '#fff',
         display: 'inline-grid',
         placeItems: 'center',
@@ -103,11 +103,11 @@ const WARNINGS = [
 ];
 
 const NEXT_STEPS = [
-  { icon: Mail, color: '#2563eb', title: 'Draft email', text: 'Create a short, value-first outreach email.' },
-  { icon: Linkedin, color: '#0a66c2', title: 'Search LinkedIn', text: 'Find decision-makers on LinkedIn.' },
-  { icon: Phone, color: '#16a34a', title: 'Call directly', text: 'Call the main number (04 78 123 456).' },
-  { icon: Bookmark, color: '#7c5cf0', title: 'Save for later', text: 'Add to a list and follow up later.' },
-  { icon: XCircle, color: '#dc2626', title: 'Reject lead', text: 'Not a good fit right now.' },
+  { icon: Mail, color: '#4a6278', title: 'Draft email', text: 'Create a short, value-first outreach email.' },
+  { icon: Linkedin, color: '#4a6278', title: 'Search LinkedIn', text: 'Find decision-makers on LinkedIn.' },
+  { icon: Phone, color: '#4d7c5c', title: 'Call directly', text: 'Call the main number (04 78 123 456).' },
+  { icon: Bookmark, color: '#6b5f7a', title: 'Save for later', text: 'Add to a list and follow up later.' },
+  { icon: XCircle, color: '#9b4d4d', title: 'Reject lead', text: 'Not a good fit right now.' },
 ];
 
 const CONFIDENCE_TONE: Record<string, string> = {
@@ -349,7 +349,7 @@ export function LeadDetailPage() {
             </div>
             <div>
               <div className="notes-label">Assign status</div>
-              <button className="select-control" style={{ background: 'var(--green-soft)', borderColor: '#cdebd8', color: 'var(--green)', fontWeight: 600 }}>
+              <button className="select-control" style={{ background: 'var(--green-soft)', borderColor: 'var(--border)', color: 'var(--green)', fontWeight: 600 }}>
                 High fit <ChevronDown />
               </button>
             </div>
@@ -396,13 +396,13 @@ export function LeadDetailPage() {
               <span>
                 <span className="side-field-label">Social</span>
                 <span style={{ display: 'inline-flex', gap: 10, marginTop: 4 }}>
-                  <Linkedin size={17} style={{ color: '#0a66c2' }} />
+                  <Linkedin size={17} style={{ color: 'var(--blue)' }} />
                   <span
                     style={{
                       width: 17,
                       height: 17,
                       borderRadius: '50%',
-                      background: '#1877f2',
+                      background: 'var(--muted)',
                       color: '#fff',
                       display: 'inline-grid',
                       placeItems: 'center',
@@ -412,7 +412,21 @@ export function LeadDetailPage() {
                   >
                     f
                   </span>
-                  <span style={{ color: '#e4405f', fontWeight: 700, fontSize: 13 }}>◎</span>
+                  <span
+                    style={{
+                      width: 17,
+                      height: 17,
+                      borderRadius: 4,
+                      background: 'var(--faint)',
+                      color: '#fff',
+                      display: 'inline-grid',
+                      placeItems: 'center',
+                      fontSize: 9,
+                      fontWeight: 700,
+                    }}
+                  >
+                    ig
+                  </span>
                 </span>
               </span>
             </div>
@@ -430,7 +444,7 @@ export function LeadDetailPage() {
             </dl>
           </div>
 
-          <div className="card side-card" style={{ background: '#f2fbf5', borderColor: '#cdebd8' }}>
+          <div className="card side-card" style={{ background: 'var(--green-soft)', borderColor: 'var(--border)' }}>
             <div className="side-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Sparkles size={15} style={{ color: 'var(--green)' }} /> AI reasoning summary
             </div>
