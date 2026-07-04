@@ -31,13 +31,13 @@ The backend lives in `backend/` and uses Poetry, FastAPI, and SQLAlchemy with a 
 	DATABASE_URL=sqlite:///./data/raise_summit.db
 	```
 
-5. Apply database migrations:
+4. Apply database migrations (see [Apply Alembic migrations](#apply-alembic-migrations)):
 
 	```bash
 	poetry run alembic upgrade head
 	```
 
-6. Run the backend server:
+5. Run the backend server:
 
 	```bash
 	poetry run uvicorn main:app --reload --host 127.0.0.1 --port 8080
@@ -93,16 +93,55 @@ Each request gets its own session from the pool. The session is closed automatic
 
 ### Migrations (Alembic)
 
-Schema changes are managed with [Alembic](https://alembic.sqlalchemy.org/) in `backend/alembic/`.
+Schema changes are managed with [Alembic](https://alembic.sqlalchemy.org/) in `backend/alembic/`. Migration files live in `backend/alembic/versions/` and are committed to the repo.
 
-Apply migrations locally:
+#### Apply Alembic migrations
+
+Run this from `backend/` whenever you set up the project or pull migration changes from git.
+
+1. Make sure your env and data folder exist:
+
+	```bash
+	cd backend
+	cp .env.example .env   # skip if you already have .env
+	mkdir -p data
+	```
+
+2. Apply every pending migration up to the latest revision:
+
+	```bash
+	poetry run alembic upgrade head
+	```
+
+	`upgrade head` runs all migrations that have not been applied yet and updates `backend/data/raise_summit.db` to match the current schema.
+
+3. Confirm the database is at the latest revision:
+
+	```bash
+	poetry run alembic current
+	```
+
+	You should see the most recent revision id from `backend/alembic/versions/`.
+
+**When to run it**
+
+- First time setting up the backend locally
+- After `git pull` when new files appear in `backend/alembic/versions/`
+- Before starting the API if schema changes were merged but not applied yet
+
+**After pulling changes**
 
 ```bash
 cd backend
-poetry run alembic upgrade head
+poetry install                  # if dependencies changed
+poetry run alembic upgrade head # apply new migrations
 ```
 
-Create a new migration after changing SQLAlchemy models in `models/clients/`:
+If `upgrade head` succeeds, your local SQLite file matches the migration history in the repo.
+
+#### Create a new migration
+
+After changing SQLAlchemy models in `models/clients/`:
 
 ```bash
 cd backend
@@ -110,29 +149,101 @@ poetry run alembic revision --autogenerate -m "describe your change"
 poetry run alembic upgrade head
 ```
 
-Check that models and migration history are in sync:
+Register ORM models in `models/clients/` and import them from `models/clients/__init__.py` so autogenerate can detect them.
+
+#### Check migration history
+
+Verify that models and migration history are in sync:
 
 ```bash
 ./scripts/check-migrations.sh
 ```
 
-Register ORM models in `models/clients/` and import them from `models/clients/__init__.py` so autogenerate can detect them.
-
 ### Git hooks
 
-A pre-push hook verifies that migration history matches the current SQLAlchemy models before code is pushed.
+A **pre-push** hook blocks `git push` when migration history is out of sync with the SQLAlchemy models.
 
-Enable it once after cloning:
+#### Install the pre-push hook
+
+Run this once from the repo root after cloning:
 
 ```bash
 ./scripts/setup-git-hooks.sh
 ```
 
-The hook runs `scripts/check-migrations.sh`, which:
+That command configures git to use the hooks in `.githooks/`:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+**Before installing**, make sure the backend environment is ready:
+
+```bash
+cd backend
+poetry install
+```
+
+The hook needs `backend/.venv/bin/alembic` to run migration checks.
+
+#### Verify the hook is installed
+
+From the repo root:
+
+```bash
+git config --get core.hooksPath
+```
+
+Expected output:
+
+```text
+.githooks
+```
+
+You can also run the check manually without pushing:
+
+```bash
+./scripts/check-migrations.sh
+```
+
+#### What happens on push
+
+When you run `git push`, the pre-push hook runs `scripts/check-migrations.sh`, which:
 
 1. Applies migrations to a temporary SQLite database
 2. Runs `alembic check` to fail if a new autogenerate migration is needed
 3. Ensures there is a single migration head (no branched history)
+
+If any step fails, the push is blocked. Fix the issue, commit any missing migration files, and push again.
+
+**Common fixes when the hook fails**
+
+- Model changes exist but no migration was created:
+
+	```bash
+	cd backend
+	poetry run alembic revision --autogenerate -m "describe your change"
+	poetry run alembic upgrade head
+	git add alembic/versions/
+	git commit -m "Add migration for model changes"
+	```
+
+- Backend dependencies are missing:
+
+	```bash
+	cd backend
+	poetry install
+	```
+
+#### Skip the hook (emergency only)
+
+To push without running the hook:
+
+```bash
+git push --no-verify
+```
+
+Use this only when you intentionally need to bypass the check.
 
 ### Notes
 
