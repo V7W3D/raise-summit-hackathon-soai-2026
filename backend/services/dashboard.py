@@ -164,7 +164,7 @@ def build_dashboard(db: Session, user: User) -> HomeDashboard:
 	return HomeDashboard(
 		user=UserSummary(name=user.name),
 		greeting=f"Good morning, {first_name} 👋",
-		subtitle="You have 3 prospects waiting for review and 2 follow-ups due today.",
+		subtitle="",
 		next_best_actions=next_best_actions,
 		stats=stats,
 		opportunity_feed=opportunity_feed,
