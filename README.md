@@ -10,19 +10,27 @@ The backend lives in `backend/` and uses Poetry to manage its virtual environmen
 	cd backend
 	```
 
-2. Install the dependencies and create the virtual environment:
+2. Install the dependencies and create the local virtual environment (`.venv/`):
 
 	```bash
-	poetry install
+	../.venv/bin/poetry install
 	```
+
+	> **Note:** If `poetry install` fails with a `canonicalize_version` / `strip_trailing_zero` error, your system Poetry is conflicting with packages in `~/.local`. Use the repo Poetry above, or run `PYTHONNOUSERSITE=1 poetry install` if you have Poetry 2.x installed separately.
 
 3. Run the backend server with Uvicorn:
 
 	```bash
-	poetry run uvicorn main:app --reload
+	./run-dev.sh
 	```
 
-The server will start on `http://127.0.0.1:8000` by default.
+	Or without the helper script:
+
+	```bash
+	.venv/bin/uvicorn main:app --reload
+	```
+
+The server will start on `http://127.0.0.1:8080` by default.
 
 ## Frontend setup
 
@@ -52,4 +60,4 @@ The frontend lives in `frontend/` and uses Vite with React.
 	npm run dev
 	```
 
-The app will start on `http://localhost:5173` by default and will check the FastAPI backend at `http://127.0.0.1:8000/health`.
+The app will start on `http://localhost:5173` by default and will check the FastAPI backend at `http://127.0.0.1:8080/health`.

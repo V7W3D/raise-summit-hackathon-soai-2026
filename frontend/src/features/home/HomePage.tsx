@@ -1,10 +1,8 @@
 import { StatusPill } from '@components/StatusPill';
 import { useCurrentYear } from '@hooks/useCurrentYear';
-import { useBackendHealth } from './useBackendHealth';
 
 export function HomePage() {
   const currentYear = useCurrentYear();
-  const backendHealth = useBackendHealth();
 
   return (
     <main className="page">
@@ -14,8 +12,7 @@ export function HomePage() {
           <h1 className="title">A clean React base for the summit experience.</h1>
           <p className="subtitle">
             This frontend is wired with Vite, React, TypeScript, and path aliases that match the existing folder
-            structure so features, shared components, and hooks stay organized from day one. It also checks the
-            FastAPI backend directly from the browser.
+            structure so features, shared components, and hooks stay organized from day one.
           </p>
           <div className="grid">
             <article className="card">
@@ -29,10 +26,6 @@ export function HomePage() {
             <article className="card">
               <h2>Hooks</h2>
               <p>Store reusable logic in the root <strong>hooks</strong> folder.</p>
-            </article>
-            <article className="card">
-              <h2>Backend status</h2>
-              <p>{backendHealth.message}</p>
             </article>
           </div>
         </div>
