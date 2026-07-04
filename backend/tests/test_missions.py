@@ -9,7 +9,6 @@ def _create_mission(client: TestClient, **overrides) -> dict:
 		"target": "Target: small service businesses",
 		"location": "Lyon, France",
 		"status": "Active",
-		"goal_type": "find_clients",
 		"description": "Find small construction service businesses in Lyon.",
 		"target_industry": "construction",
 		"language": "fr",
@@ -31,7 +30,6 @@ def test_create_mission_defaults_description_from_name_and_target(client: TestCl
 	)
 	assert res.status_code == 201, res.text
 	body = res.json()
-	assert body["goal_type"] == "find_clients"
 	assert body["description"] == (
 		"Construction Clients – Lyon: Target: small service businesses"
 	)
@@ -80,3 +78,27 @@ def test_delete_mission(client: TestClient) -> None:
 	created = _create_mission(client)
 	assert client.delete(f"/missions/{created['id']}").status_code == 204
 	assert client.get(f"/missions/{created['id']}").status_code == 404
+
+
+def test_delete_mission_cascades_leads(client: TestClient) -> None:
+	created = _create_mission(client)
+	mission_id = created["id"]
+
+	res = client.post(
+		"/leads",
+		json={
+			"mission_id": mission_id,
+			"name": "Rhône Plomberie",
+			"description": "Local emergency plumbing company",
+			"location": "Lyon, France",
+			"website": "rhoneplomberie.fr",
+			"score": 84,
+		},
+	)
+	assert res.status_code == 201, res.text
+
+	leads = client.get("/leads", params={"mission_id": mission_id}).json()
+	assert len(leads) == 1
+
+	assert client.delete(f"/missions/{mission_id}").status_code == 204
+	assert client.get("/leads", params={"mission_id": mission_id}).json() == []

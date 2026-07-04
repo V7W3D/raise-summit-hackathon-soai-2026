@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import uuid
 from typing import TYPE_CHECKING
 
@@ -9,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from models.schemas.leads import LeadCreate
 from search_agent import run_search_agent
+from search_agent.errors import ProviderNotConfiguredError
 from search_agent.fetching import PageFetcher
 from search_agent.providers import SearchProvider
 from search_agent.schemas import (
@@ -31,13 +33,26 @@ if TYPE_CHECKING:
 	from models.clients.missions import Mission
 
 
+def resolve_provider_options(
+	provider_options: ProviderOptions | None = None,
+) -> ProviderOptions:
+	if provider_options is not None:
+		return provider_options
+
+	provider = os.environ.get("SEARCH_PROVIDER", "").strip()
+	if not provider:
+		raise ProviderNotConfiguredError(
+			"SEARCH_PROVIDER is not set. Configure one of: tavily, exa, brave, serper"
+		)
+	return ProviderOptions(provider=provider)  # type: ignore[arg-type]
+
+
 def mission_to_agent_mission(mission: Mission) -> AgentMission:
 	"""Map a DB mission row to the search agent mission contract."""
 	location = mission.location.strip()
 	return AgentMission(
 		mission_id=str(mission.id),
 		title=mission.name,
-		goal_type=mission.goal_type,  # type: ignore[arg-type]
 		description=mission.description,
 		target_location=location or None,
 		target_industry=mission.target_industry,
@@ -62,7 +77,7 @@ def mission_to_agent_input(
 		business_profile=business_profile,
 		mission=mission_to_agent_mission(mission),
 		search_options=search_options or SearchOptions(),
-		provider_options=provider_options or ProviderOptions(),
+		provider_options=provider_options,
 	)
 
 
@@ -159,6 +174,12 @@ def run_search_for_mission(
 		)
 
 	resolved_request_id = request_id or f"req_{uuid.uuid4().hex[:12]}"
+	if provider_options is None and provider is None:
+		provider_options = resolve_provider_options(None)
+	elif provider_options is None:
+		# Placeholder only; an injected provider bypasses create_provider().
+		provider_options = ProviderOptions(provider="tavily")
+
 	agent_input = mission_to_agent_input(
 		mission,
 		request_id=resolved_request_id,

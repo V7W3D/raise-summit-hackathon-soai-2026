@@ -27,7 +27,6 @@ def example_input(**overrides) -> SearchAgentInput:
         ),
         mission=Mission(
             mission_id="mission_lyon",
-            goal_type="find_clients",
             description=(
                 "Find small construction service businesses in Lyon likely to "
                 "need AI call reception."
@@ -37,6 +36,6 @@ def example_input(**overrides) -> SearchAgentInput:
             language="fr",
         ),
         search_options=SearchOptions(max_queries=6),
-        provider_options=ProviderOptions(provider="mock"),
+        provider_options=ProviderOptions(provider="tavily"),
     )
     return base.model_copy(update=overrides) if overrides else base

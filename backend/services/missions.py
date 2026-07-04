@@ -25,6 +25,17 @@ def get_mission(db: Session, mission_id: int) -> Mission | None:
 def create_mission(
 	db: Session, payload: MissionCreate, *, user_id: int, run_search: bool = True
 ) -> Mission:
+	if run_search:
+		from services.business_profiles import (
+			BusinessProfileNotFoundError,
+			get_business_profile_for_user,
+		)
+
+		if get_business_profile_for_user(db, user_id) is None:
+			raise BusinessProfileNotFoundError(
+				"Business profile not found for this user or mission"
+			)
+
 	mission = Mission(**payload.model_dump())
 	db.add(mission)
 	db.flush()

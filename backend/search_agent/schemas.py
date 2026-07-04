@@ -18,18 +18,9 @@ class CamelModel(BaseModel):
 # Input contract
 # ---------------------------------------------------------------------------
 
-GoalType = Literal[
-    "find_clients",
-    "find_suppliers",
-    "find_consultants",
-    "find_partners",
-    "find_investors",
-    "find_hires",
-]
-
 SourceKind = Literal["web", "maps", "directories", "linkedin_public", "user_urls"]
 
-ProviderName = Literal["mock", "exa", "tavily", "brave", "serper", "custom"]
+ProviderName = Literal["exa", "tavily", "brave", "serper", "custom"]
 
 
 class BusinessProfile(CamelModel):
@@ -49,7 +40,6 @@ class BusinessProfile(CamelModel):
 class Mission(CamelModel):
     mission_id: str
     title: Optional[str] = None
-    goal_type: GoalType
     description: str
     target_location: Optional[str] = None
     target_industry: Optional[str] = None
@@ -73,7 +63,7 @@ class SearchOptions(CamelModel):
 
 
 class ProviderOptions(CamelModel):
-    provider: ProviderName = "mock"
+    provider: ProviderName
 
 
 class SearchAgentInput(CamelModel):

@@ -45,7 +45,6 @@ MISSIONS = [
 		"location": "Lyon, France",
 		"status": "Active",
 		"progress": 36,
-		"goal_type": "find_clients",
 		"description": (
 			"Find small construction service businesses in Lyon likely to "
 			"need AI call reception."
@@ -59,7 +58,6 @@ MISSIONS = [
 		"location": "Paris, France",
 		"status": "Active",
 		"progress": 33,
-		"goal_type": "find_suppliers",
 		"description": "Find premium seafood suppliers serving Paris restaurants.",
 		"target_industry": "seafood",
 		"language": "fr",
@@ -70,7 +68,6 @@ MISSIONS = [
 		"location": "France",
 		"status": "Draft",
 		"progress": 22,
-		"goal_type": "find_consultants",
 		"description": "Find accounting consultants for a bakery owner network.",
 		"target_industry": "accounting",
 		"language": "fr",
@@ -81,7 +78,6 @@ MISSIONS = [
 		"location": "France & Europe",
 		"status": "Active",
 		"progress": 46,
-		"goal_type": "find_partners",
 		"description": "Find logistics and payment partners for e-commerce brands.",
 		"target_industry": "e-commerce",
 	},
@@ -91,7 +87,6 @@ MISSIONS = [
 		"location": "Europe",
 		"status": "Paused",
 		"progress": 20,
-		"goal_type": "find_investors",
 		"description": "Find early-stage impact investors in food tech.",
 		"target_industry": "food tech",
 	},
@@ -222,7 +217,9 @@ def seed(reset: bool = False) -> None:
 			db.flush()
 			print(f"Created user: {user.name}")
 
-		profile = db.scalar(select(BusinessProfile).limit(1))
+		profile = db.scalar(
+			select(BusinessProfile).where(BusinessProfile.user_id == user.id)
+		)
 		if profile is None:
 			db.add(BusinessProfile(**DEFAULT_BUSINESS_PROFILE, user_id=user.id))
 			db.flush()
@@ -230,6 +227,7 @@ def seed(reset: bool = False) -> None:
 
 		existing = db.scalar(select(Mission).limit(1))
 		if existing is not None and not reset:
+			db.commit()
 			print("Missions already present — skipping seed. Use --reset to reseed.")
 			return
 

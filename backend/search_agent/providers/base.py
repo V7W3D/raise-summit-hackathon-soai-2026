@@ -1,7 +1,7 @@
 """Search provider abstraction.
 
-Every provider (mock or real) implements SearchProvider so the agent never
-depends on a specific search API.
+Every provider implements SearchProvider so the agent never depends on a
+specific search API.
 """
 
 import json

@@ -1,46 +1,27 @@
 """Deterministic search plan generator (no LLM).
 
 Good enough for demos: expands well-known sectors into concrete segments,
-picks personas per goal type, and builds query templates (French templates
+picks default buyer personas, and builds query templates (French templates
 when the mission targets France / French).
 """
 
 from ..schemas import Mission, BusinessProfile, SearchAgentInput, SearchPlan
 from ..utils import normalize_text
 
-PERSONAS_BY_GOAL = {
-    "find_clients": ["owner", "founder", "operations manager", "office manager", "director"],
-    "find_suppliers": ["sales manager", "supplier manager", "distributor", "owner"],
-    "find_consultants": ["independent consultant", "agency owner", "expert", "partner"],
-    "find_partners": ["founder", "business development manager", "partner"],
-    "find_investors": ["partner", "analyst", "principal", "angel"],
-    "find_hires": ["hiring manager"],
-}
+DEFAULT_PERSONAS = [
+    "owner",
+    "founder",
+    "operations manager",
+    "office manager",
+    "director",
+]
 
-GOOD_FIT_BY_GOAL = {
-    "find_clients": [
-        "local service business",
-        "phone-first workflow",
-        "emergency service",
-        "active website",
-    ],
-    "find_suppliers": [
-        "product availability",
-        "delivery zone",
-        "B2B",
-        "certifications",
-        "active website",
-    ],
-    "find_consultants": [
-        "case studies",
-        "service pages",
-        "testimonials",
-        "clear expertise",
-    ],
-    "find_partners": ["complementary offering", "shared audience", "active website"],
-    "find_investors": ["sector thesis", "region match", "stage match", "portfolio fit"],
-    "find_hires": [],
-}
+DEFAULT_GOOD_FIT = [
+    "local service business",
+    "phone-first workflow",
+    "emergency service",
+    "active website",
+]
 
 DEFAULT_BAD_FIT = [
     "very large enterprise",
@@ -111,28 +92,24 @@ def build_fallback_plan(agent_input: SearchAgentInput) -> SearchPlan:
     mission = agent_input.mission
     options = agent_input.search_options
 
-    goal = mission.goal_type
     location = mission.target_location or (
         profile.target_geographies[0] if profile.target_geographies else ""
     )
     french = _is_french_market(profile, mission)
     segments = _expand_segments(profile, mission)
 
-    good_fit = list(GOOD_FIT_BY_GOAL.get(goal, []))
+    good_fit = list(DEFAULT_GOOD_FIT)
     bad_fit = list(dict.fromkeys(profile.bad_fit_customers + DEFAULT_BAD_FIT))
 
     queries: list[str] = []
-    if goal == "find_hires":
-        # Candidate scraping from job platforms is out of scope on purpose.
-        queries = [f"{mission.description} company website {location}".strip()]
-    else:
-        for segment in segments:
-            queries.append(f"{segment} {location} contact".strip())
-            if french:
-                queries.append(f"{segment} {location} téléphone devis".strip())
-                queries.append(f"{segment} urgence {location}".strip())
-            else:
-                queries.append(f"{segment} {location} phone quote".strip())
+    for segment in segments:
+        queries.append(f"{segment} {location} contact".strip())
+        if french:
+            queries.append(f"{segment} {location} téléphone devis".strip())
+            queries.append(f"{segment} urgence {location}".strip())
+        else:
+            queries.append(f"{segment} {location} phone quote".strip())
+    if segments:
         if french:
             queries.append(f"annuaire {segments[0]} {location}".strip())
         else:
@@ -140,10 +117,7 @@ def build_fallback_plan(agent_input: SearchAgentInput) -> SearchPlan:
 
     queries = list(dict.fromkeys(q for q in queries if q))[: options.max_queries]
 
-    interpreted = (
-        f"{goal.replace('_', ' ').capitalize()} for {profile.business_name}: "
-        f"{mission.description}"
-    )
+    interpreted = f"Prospecting for {profile.business_name}: {mission.description}"
 
     assumptions = [
         "Search plan generated deterministically (no LLM).",
@@ -154,7 +128,7 @@ def build_fallback_plan(agent_input: SearchAgentInput) -> SearchPlan:
 
     return SearchPlan(
         interpreted_goal=interpreted,
-        target_personas=PERSONAS_BY_GOAL.get(goal, ["owner"]),
+        target_personas=list(DEFAULT_PERSONAS),
         target_segments=segments,
         good_fit_signals=good_fit,
         bad_fit_signals=bad_fit,
