@@ -1,5 +1,4 @@
 import { Loader2, MapPin, Sparkles } from 'lucide-react';
-import { ScoreRing } from '@components/ScoreRing';
 import { MissionOptionsMenu } from './MissionOptionsMenu';
 import type { MissionVM } from './use-missions-api-queries';
 
@@ -76,14 +75,6 @@ export function MissionListItem({
                 )}
               </button>
             ) : null}
-            <ScoreRing
-              value={mission.progress}
-              size={54}
-              stroke={5}
-              color="var(--accent)"
-              fontSize={13}
-              label={`${mission.progress}%`}
-            />
             <MissionOptionsMenu
               missionId={mission.id}
               missionName={mission.name}
