@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { z } from 'zod';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { API_BASE_URL } from '../../api/config';
 
 const businessProfileSchema = z
@@ -44,9 +44,37 @@ async function fetchBusinessProfile(signal?: AbortSignal) {
   return businessProfileSchema.parse(data);
 }
 
+export type BusinessProfileUpdatePayload = {
+  business_name?: string;
+  business_type?: string | null;
+  description?: string | null;
+  what_we_sell?: string;
+  value_proposition?: string | null;
+  target_geographies?: string[];
+  ideal_customers?: string[];
+  bad_fit_customers?: string[];
+  preferred_tone?: string | null;
+  languages?: string[];
+};
+
+async function updateBusinessProfile(payload: BusinessProfileUpdatePayload) {
+  const { data } = await axios.patch(`${API_BASE_URL}/business-profile`, payload);
+  return businessProfileSchema.parse(data);
+}
+
 export function useBusinessProfile() {
   return useQuery({
     queryKey: businessProfileQueryKey,
     queryFn: ({ signal }) => fetchBusinessProfile(signal),
+  });
+}
+
+export function useUpdateBusinessProfile() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateBusinessProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: businessProfileQueryKey });
+    },
   });
 }
