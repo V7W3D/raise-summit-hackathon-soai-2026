@@ -126,6 +126,14 @@
   height: 15px;
 }
 
+.mission-run-search-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  border-color: var(--border);
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+
 .mission-card-searching {
   background: var(--surface-soft);
   border-color: var(--border);

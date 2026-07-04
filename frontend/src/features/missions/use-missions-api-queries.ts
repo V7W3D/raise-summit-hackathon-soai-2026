@@ -62,13 +62,17 @@ function missionIsSearchRunning(mission: MissionVM | undefined) {
   return mission?.searchStatus === 'running';
 }
 
-function useRefetchLeadsWhenSearchCompletes(searchStatuses: MissionSearchStatus[] | undefined) {
+function useRefetchWhenSearchCompletes(
+  searchStatuses: MissionSearchStatus[] | undefined,
+) {
   const queryClient = useQueryClient();
   const wasRunningRef = useRef(false);
 
   useEffect(() => {
     const isRunning = searchStatuses?.some((status) => status === 'running') ?? false;
     if (wasRunningRef.current && !isRunning) {
+      void queryClient.invalidateQueries({ queryKey: ['missions'] });
+      void queryClient.invalidateQueries({ queryKey: ['mission'] });
       void queryClient.invalidateQueries({ queryKey: ['leads'] });
       void queryClient.invalidateQueries({ queryKey: dashboardQueryKey });
     }
@@ -134,7 +138,7 @@ export function useMissions(options: { isArchived?: boolean; enabled?: boolean }
       missionListHasRunningSearch(query.state.data) ? SEARCH_POLL_INTERVAL_MS : false,
   });
 
-  useRefetchLeadsWhenSearchCompletes(query.data?.map((mission) => mission.searchStatus));
+  useRefetchWhenSearchCompletes(query.data?.map((mission) => mission.searchStatus));
 
   return query;
 }
@@ -148,7 +152,7 @@ export function useMission(id: number) {
       missionIsSearchRunning(query.state.data) ? SEARCH_POLL_INTERVAL_MS : false,
   });
 
-  useRefetchLeadsWhenSearchCompletes(
+  useRefetchWhenSearchCompletes(
     query.data ? [query.data.searchStatus] : undefined,
   );
 
