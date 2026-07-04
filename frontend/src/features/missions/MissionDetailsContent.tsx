@@ -1,6 +1,8 @@
-import { CheckCircle2, Info, Lock } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { ScoreRing } from '@components/ScoreRing';
+import { BusinessProfileCard } from './BusinessProfileCard';
 import type { MissionUrgency, MissionVM } from './use-missions-api-queries';
+import { useBusinessProfile } from './use-business-profile-api-queries';
 
 const URGENCY_LABELS: Record<MissionUrgency, string> = {
   low: 'Low',
@@ -35,12 +37,14 @@ type MissionDetailsContentProps = {
 };
 
 export function MissionDetailsContent({ mission, title = 'Mission details' }: MissionDetailsContentProps) {
+  const { data: businessProfile, isPending: isProfilePending, isError: isProfileError } =
+    useBusinessProfile();
+
   return (
     <>
       <div className="mission-detail-header">
         <span className="create-panel-title">{title}</span>
         <div className="mission-detail-meta">
-          <span className={`pill pill-${mission.statusTone}`}>{mission.status}</span>
           <ScoreRing
             value={mission.progress}
             size={54}
@@ -56,37 +60,13 @@ export function MissionDetailsContent({ mission, title = 'Mission details' }: Mi
         <div className="create-step-head">
           <span className="step-num">1</span> Use saved business profile
         </div>
-        <div className="profile-card">
-          <div className="profile-card-head">
-            <CheckCircle2 size={16} /> Using your saved business profile
-          </div>
-          <div className="profile-grid">
-            <div>
-              <div className="profile-field-label">Business type</div>
-              <div className="profile-field-value">B2B SaaS</div>
-            </div>
-            <div>
-              <div className="profile-field-label">Target market</div>
-              <div className="profile-field-value">Small local service companies</div>
-            </div>
-            <div>
-              <div className="profile-field-label">What you sell</div>
-              <div className="profile-field-value">AI phone receptionist</div>
-            </div>
-            <div>
-              <div className="profile-field-label">Location</div>
-              <div className="profile-field-value">France</div>
-            </div>
-          </div>
-          <div className="profile-foot">
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <Lock size={12} /> Configured once during onboarding and reused across missions.
-            </span>
-            <a className="link" href="#profile" style={{ fontSize: '0.75rem' }}>
-              Edit profile
-            </a>
-          </div>
-        </div>
+        {isProfilePending ? (
+          <p className="mission-form-error">Loading business profile…</p>
+        ) : isProfileError || !businessProfile ? (
+          <p className="mission-form-error">Business profile not available.</p>
+        ) : (
+          <BusinessProfileCard profile={businessProfile} />
+        )}
       </div>
 
       <div className="create-step">

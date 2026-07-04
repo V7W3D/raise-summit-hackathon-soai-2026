@@ -54,55 +54,6 @@ export const recentProspects = [
   { initials: 'ES', color: '#16a34a', name: 'EcoBuild Solutions', meta: 'Construction • Grenoble, France', fit: 'Low fit', fitTone: 'blue', time: '3h ago' },
 ] as const;
 
-/* ---------- Missions ---------- */
-export const missions = [
-  {
-    name: 'Construction Clients – Lyon',
-    target: 'Target: small service businesses',
-    location: 'Lyon, France',
-    progress: 36,
-    status: 'Active',
-    statusTone: 'green',
-    lastActivity: '1h ago',
-  },
-  {
-    name: 'Seafood Suppliers – Paris',
-    target: 'Target: premium seafood suppliers',
-    location: 'Paris, France',
-    progress: 33,
-    status: 'Active',
-    statusTone: 'green',
-    lastActivity: '3h ago',
-  },
-  {
-    name: 'Accounting Consultants – Bakery Network',
-    target: 'Target: small business accounting advisors',
-    location: 'France',
-    progress: 22,
-    status: 'Draft',
-    statusTone: 'neutral',
-    lastActivity: 'Yesterday',
-  },
-  {
-    name: 'Strategic Partners – E-commerce',
-    target: 'Target: logistics & payment partners',
-    location: 'France & Europe',
-    progress: 46,
-    status: 'Active',
-    statusTone: 'green',
-    lastActivity: '5h ago',
-  },
-  {
-    name: 'Investors – Food Tech Startups',
-    target: 'Target: early-stage impact investors',
-    location: 'Europe',
-    progress: 20,
-    status: 'Paused',
-    statusTone: 'orange',
-    lastActivity: '2d ago',
-  },
-] as const;
-
 /* ---------- Discover ---------- */
 export type Lead = {
   id: string;

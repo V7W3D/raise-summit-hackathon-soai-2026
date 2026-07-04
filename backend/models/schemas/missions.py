@@ -21,7 +21,6 @@ class MissionBase(BaseModel):
 	name: str = Field(..., min_length=1, max_length=160)
 	target: str = ""
 	location: str = ""
-	status: str = "Draft"
 	description: str = ""
 	target_industry: str | None = Field(default=None, max_length=120)
 	target_business_size: str | None = Field(default=None, max_length=120)
@@ -42,7 +41,6 @@ class MissionUpdate(BaseModel):
 	name: str | None = Field(default=None, max_length=160)
 	target: str | None = None
 	location: str | None = None
-	status: str | None = None
 	progress: int | None = None
 	description: str | None = Field(default=None, max_length=500)
 	target_industry: str | None = Field(default=None, max_length=120)
@@ -50,6 +48,7 @@ class MissionUpdate(BaseModel):
 	desired_lead_count: int | None = Field(default=None, ge=1)
 	urgency: MissionUrgency | None = None
 	language: str | None = Field(default=None, max_length=10)
+	is_archived: bool | None = None
 
 
 class MissionRead(MissionBase):
@@ -57,6 +56,7 @@ class MissionRead(MissionBase):
 
 	id: int
 	progress: int
+	is_archived: bool
 	created_at: datetime
 	updated_at: datetime
 	last_activity_at: datetime
