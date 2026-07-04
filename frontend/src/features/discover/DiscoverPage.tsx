@@ -135,7 +135,7 @@ export function DiscoverPage() {
             <div className="mb-stat-label">Contacted</div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <ScoreRing value={33} size={52} stroke={5} color="#2563eb" fontSize={12} label="33%" />
+            <ScoreRing value={33} size={52} stroke={5} color="var(--accent)" fontSize={12} label="33%" />
             <div className="mb-stat-label" style={{ marginTop: 4 }}>
               Mission progress
             </div>
@@ -413,13 +413,13 @@ export function DiscoverPage() {
             <div className="lead-panel-section-title">Social presence</div>
             <div className="social-row">
               <span className="social-chip">
-                <BrandDot bg="#0a66c2" label="in" /> LinkedIn
+                <BrandDot bg="var(--blue)" label="in" /> LinkedIn
               </span>
               <span className="social-chip">
-                <BrandDot bg="#1877f2" label="f" /> Facebook
+                <BrandDot bg="var(--muted)" label="f" /> Facebook
               </span>
               <span className="social-chip">
-                <BrandDot bg="#e4405f" label="◎" /> Instagram
+                <BrandDot bg="var(--faint)" label="ig" /> Instagram
               </span>
             </div>
 
