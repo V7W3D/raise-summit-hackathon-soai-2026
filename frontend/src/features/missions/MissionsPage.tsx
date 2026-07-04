@@ -30,9 +30,8 @@ import {
   Link2,
   Info,
 } from 'lucide-react';
-import { ScoreRing } from '../../components/ScoreRing';
-import { useCreateMission, useMissions } from '../../api/hooks';
-import { MISSIONS_FALLBACK } from '../../api/fallback';
+import { ScoreRing } from '@components/ScoreRing';
+import { useCreateMission, useMissions } from './use-missions-api-queries';
 import './missions.css';
 
 const MISSION_ICONS = {
@@ -93,9 +92,17 @@ const SUMMARY_ITEMS = [
 
 export function MissionsPage() {
   const [selectedNeed, setSelectedNeed] = useState('Find clients');
-  const { data } = useMissions();
-  const missions = data ?? MISSIONS_FALLBACK;
+  const { data, isPending, isError } = useMissions();
+  const missions = data ?? [];
   const createMission = useCreateMission();
+
+  if (isPending) {
+    return <p className="page-subtitle">Loading…</p>;
+  }
+
+  if (isError) {
+    return <p className="page-subtitle">Unable to load missions.</p>;
+  }
 
   const handleCreate = () => {
     const meta = NEED_TO_MISSION[selectedNeed] ?? NEED_TO_MISSION['Find clients'];

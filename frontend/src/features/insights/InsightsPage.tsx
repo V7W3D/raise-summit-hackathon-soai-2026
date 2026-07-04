@@ -22,8 +22,7 @@ import {
   Trophy,
   ArrowRight,
 } from 'lucide-react';
-import { useInsights } from '../../api/hooks';
-import { INSIGHTS_FALLBACK } from '../../api/fallback';
+import { useInsights } from './use-insights-api-queries';
 import './insights.css';
 
 const PERF_ICONS = {
@@ -84,8 +83,16 @@ function recIcon(icon: string) {
 }
 
 export function InsightsPage() {
-  const { data } = useInsights();
-  const insights = data ?? INSIGHTS_FALLBACK;
+  const { data: insights, isPending, isError } = useInsights();
+
+  if (isPending) {
+    return <p className="page-subtitle">Loading…</p>;
+  }
+
+  if (isError || !insights) {
+    return <p className="page-subtitle">Unable to load insights.</p>;
+  }
+
   const {
     missionPerformance,
     funnelStages,

@@ -44,10 +44,9 @@ function BrandDot({ bg, label }: { bg: string; label: string }) {
     </span>
   );
 }
-import { ScoreRing, fitColor } from '../../components/ScoreRing';
-import { useLeads } from '../../api/hooks';
-import { LEADS_FALLBACK } from '../../api/fallback';
-import type { LeadVM } from '../../api/models';
+import { ScoreRing, fitColor } from '@components/ScoreRing';
+import { useLeads } from './use-discover-api-queries';
+import type { LeadVM } from '../leads/use-leads-api-queries';
 import './discover.css';
 
 const TABS = ['High fit (18)', 'Promising but incomplete (16)', 'Needs verification (9)', 'Rejected (5)'];
@@ -66,13 +65,21 @@ const scorePill: Record<LeadVM['scoreTone'], string> = {
 
 export function DiscoverPage() {
   const [activeTab, setActiveTab] = useState(TABS[0]);
-  const { data } = useLeads();
-  const discoverLeads = data && data.length > 0 ? data : LEADS_FALLBACK;
+  const { data, isPending, isError } = useLeads();
+  const discoverLeads = data ?? [];
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const effectiveSelectedId = selectedId ?? discoverLeads[0]?.id;
   const selected =
     discoverLeads.find((lead) => lead.id === effectiveSelectedId) ?? discoverLeads[0];
+
+  if (isPending) {
+    return <p className="page-subtitle">Loading…</p>;
+  }
+
+  if (isError) {
+    return <p className="page-subtitle">Unable to load leads.</p>;
+  }
 
   return (
     <div>
@@ -338,6 +345,7 @@ export function DiscoverPage() {
         </div>
 
         <div className="lead-panel-wrap">
+          {selected ? (
           <aside className="card lead-panel">
             <div className="lead-panel-head">
               <span className="pill pill-blue">Selected lead</span>
@@ -442,6 +450,11 @@ export function DiscoverPage() {
               </a>
             </div>
           </aside>
+          ) : (
+            <aside className="card lead-panel">
+              <p className="lead-panel-text">No leads to display.</p>
+            </aside>
+          )}
         </div>
       </div>
     </div>
