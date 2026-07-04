@@ -1,28 +1,22 @@
+import type { KeyboardEvent } from 'react';
 import { Loader2, MapPin, Sparkles } from 'lucide-react';
-import { MissionOptionsMenu } from './MissionOptionsMenu';
+import { useNavigate } from 'react-router-dom';
 import type { MissionVM } from './use-missions-api-queries';
 
 type MissionListItemProps = {
   mission: MissionVM;
-  onDelete: () => void;
-  onArchive?: () => void;
   onRunSearch?: () => void;
-  isDeleting: boolean;
-  isArchiving: boolean;
   isRunningSearch: boolean;
   archived?: boolean;
 };
 
 export function MissionListItem({
   mission,
-  onDelete,
-  onArchive,
   onRunSearch,
-  isDeleting,
-  isArchiving,
   isRunningSearch,
   archived = false,
 }: MissionListItemProps) {
+  const navigate = useNavigate();
   const isSearching = mission.searchStatus === 'running';
   const canRunSearch = !archived && !isSearching && onRunSearch;
   const isRunSearchEnabled = mission.searchActivated && !isRunningSearch;
@@ -32,8 +26,26 @@ export function MissionListItem({
     ? undefined
     : 'Update the mission to run the agent again';
 
+  const handleCardClick = () => {
+    navigate(`/missions/${mission.id}`);
+  };
+
+  const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      handleCardClick();
+    }
+  };
+
   return (
-    <div className={`card mission-card${isSearching ? ' mission-card-searching' : ''}`}>
+    <div
+      className={`card mission-card mission-card-clickable${isSearching ? ' mission-card-searching' : ''}`}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+      role="link"
+      tabIndex={0}
+      aria-label={`View mission: ${mission.name}`}
+    >
       <div className="mission-main">
         <div className="mission-name">{mission.name}</div>
         {isSearching ? (
@@ -58,37 +70,30 @@ export function MissionListItem({
         {isSearching ? (
           <span className="mission-search-badge">Fetching</span>
         ) : (
-          <>
-            {canRunSearch ? (
-              <button
-                type="button"
-                className="btn btn-outline mission-run-search-btn"
-                onClick={onRunSearch}
-                disabled={!isRunSearchEnabled}
-                title={runSearchTitle}
-              >
-                {isRunningSearch ? (
-                  <>
-                    <Loader2 className="mission-search-spinner" size={15} aria-hidden />
-                    Starting…
-                  </>
-                ) : (
-                  <>
-                    <Sparkles size={15} />
-                    {runSearchLabel}
-                  </>
-                )}
-              </button>
-            ) : null}
-            <MissionOptionsMenu
-              missionId={mission.id}
-              missionName={mission.name}
-              onDelete={onDelete}
-              onArchive={archived ? undefined : onArchive}
-              isDeleting={isDeleting}
-              isArchiving={isArchiving}
-            />
-          </>
+          canRunSearch ? (
+            <button
+              type="button"
+              className="btn btn-outline mission-run-search-btn"
+              onClick={(event) => {
+                event.stopPropagation();
+                onRunSearch?.();
+              }}
+              disabled={!isRunSearchEnabled}
+              title={runSearchTitle}
+            >
+              {isRunningSearch ? (
+                <>
+                  <Loader2 className="mission-search-spinner" size={15} aria-hidden />
+                  Starting…
+                </>
+              ) : (
+                <>
+                  <Sparkles size={15} />
+                  {runSearchLabel}
+                </>
+              )}
+            </button>
+          ) : null
         )}
       </div>
     </div>
