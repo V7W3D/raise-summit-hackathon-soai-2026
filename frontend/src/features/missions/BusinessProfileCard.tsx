@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { CheckCircle2, Lock } from 'lucide-react';
 import type { BusinessProfileVM } from './use-business-profile-api-queries';
 
@@ -37,9 +38,9 @@ export function BusinessProfileCard({ profile }: BusinessProfileCardProps) {
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
           <Lock size={12} /> Configured once during onboarding and reused across missions.
         </span>
-        <a className="link" href="#profile" style={{ fontSize: '0.75rem' }}>
+        <Link className="link" to="/profile" style={{ fontSize: '0.75rem' }}>
           Edit profile
-        </a>
+        </Link>
       </div>
     </div>
   );
