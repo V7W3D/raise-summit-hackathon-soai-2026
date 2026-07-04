@@ -222,7 +222,9 @@ def seed(reset: bool = False) -> None:
 			db.flush()
 			print(f"Created user: {user.name}")
 
-		profile = db.scalar(select(BusinessProfile).limit(1))
+		profile = db.scalar(
+			select(BusinessProfile).where(BusinessProfile.user_id == user.id)
+		)
 		if profile is None:
 			db.add(BusinessProfile(**DEFAULT_BUSINESS_PROFILE, user_id=user.id))
 			db.flush()
@@ -230,6 +232,7 @@ def seed(reset: bool = False) -> None:
 
 		existing = db.scalar(select(Mission).limit(1))
 		if existing is not None and not reset:
+			db.commit()
 			print("Missions already present — skipping seed. Use --reset to reseed.")
 			return
 

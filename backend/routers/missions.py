@@ -6,6 +6,7 @@ from database.dependencies import DbSession
 from models.schemas.missions import MissionCreate, MissionRead, MissionUpdate
 from services import missions as mission_service
 from services import users as user_service
+from services.business_profiles import BusinessProfileNotFoundError
 
 router = APIRouter(prefix="/missions", tags=["missions"])
 
@@ -28,7 +29,16 @@ def list_missions(db: DbSession, status: str | None = Query(default=None)):
 @router.post("", response_model=MissionRead, status_code=status.HTTP_201_CREATED)
 def create_mission(payload: MissionCreate, db: DbSession):
 	user = _require_default_user(db)
-	return mission_service.create_mission(db, payload, user_id=user.id)
+	try:
+		return mission_service.create_mission(db, payload, user_id=user.id)
+	except BusinessProfileNotFoundError:
+		raise HTTPException(
+			status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+			detail=(
+				"Business profile required before running search. "
+				"Run: python -m database.seed"
+			),
+		) from None
 
 
 @router.get("/{mission_id}", response_model=MissionRead)
