@@ -1,22 +1,21 @@
 .home {
-  max-width: 1080px;
-  margin: 0 auto;
+  margin: 0;
 }
 
 /* ─── Welcome header ─── */
 .home-header {
-  margin-bottom: 40px;
+  margin-bottom: 24px;
 }
 
 /* ─── Top intro ─── */
 .home-top {
-  margin-bottom: 48px;
+  margin-bottom: 24px;
 }
 
 .home-intro {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 18px;
   padding-top: 4px;
 }
 
@@ -24,21 +23,21 @@
 .home-kpi-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 20px;
 }
 
 .home-kpi-widget {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 24px;
+  gap: 6px;
+  padding: 18px;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--surface);
 }
 
 .home-kpi-value {
-  font-size: 2.25rem;
+  font-size: 2rem;
   font-weight: 600;
   color: var(--ink);
   line-height: 1;
@@ -107,7 +106,7 @@
 }
 
 .home-panel {
-  padding: 24px;
+  padding: 20px;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--surface);
@@ -117,7 +116,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 
 .home-panel-title {
@@ -155,7 +154,7 @@
 }
 
 .home-mission {
-  padding: 16px 0;
+  padding: 12px 0;
   border-bottom: 1px solid var(--border);
 }
 
@@ -220,7 +219,7 @@
 
 .home-prospect {
   display: block;
-  padding: 16px 0;
+  padding: 12px 0;
   border-bottom: 1px solid var(--border);
   transition: opacity 0.15s ease;
 }
