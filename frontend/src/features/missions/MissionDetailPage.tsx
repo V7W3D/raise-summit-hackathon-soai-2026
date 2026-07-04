@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Archive, ArchiveRestore, ChevronLeft, Loader2, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, ChevronLeft, Loader2, Pencil, Trash2 } from 'lucide-react';
 import { MissionDetailsContent } from './MissionDetailsContent';
 import { useDeleteMission, useMission, useUpdateMission } from './use-missions-api-queries';
 import './missions.css';
@@ -76,6 +76,16 @@ export function MissionDetailPage() {
 
       <div className="mission-detail-panel-wrapper">
         <div className="mission-detail-actions">
+          <button
+            type="button"
+            className="btn btn-outline mission-detail-action"
+            onClick={() => navigate(`/missions/${id}/edit`)}
+            disabled={isSearching || isArchiving || isDeleting}
+            title={isSearching ? 'Wait until the current search finishes' : undefined}
+          >
+            <Pencil size={15} />
+            Edit mission
+          </button>
           <button
             type="button"
             className="btn btn-outline mission-detail-action"
