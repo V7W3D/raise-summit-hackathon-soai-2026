@@ -29,8 +29,7 @@ import {
   MessageCircle,
 } from 'lucide-react';
 import { type Priority } from '../../data/mock';
-import { useDashboard } from '../../api/hooks';
-import { DASHBOARD_FALLBACK } from '../../api/fallback';
+import { useDashboard } from './use-home-api-queries';
 import './home.css';
 
 const NBA_ICONS = {
@@ -87,8 +86,16 @@ function missionIcon(icon: string) {
 }
 
 export function HomePage() {
-  const { data } = useDashboard();
-  const dash = data ?? DASHBOARD_FALLBACK;
+  const { data, isPending, isError } = useDashboard();
+
+  if (isPending) {
+    return <p className="page-subtitle">Loading…</p>;
+  }
+
+  if (isError || !data) {
+    return <p className="page-subtitle">Unable to load dashboard.</p>;
+  }
+
   const {
     greeting,
     subtitle,
@@ -97,7 +104,7 @@ export function HomePage() {
     opportunityFeed,
     recentMissions,
     recentProspects,
-  } = dash;
+  } = data;
 
   return (
     <div>

@@ -28,8 +28,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import type { CSSProperties } from 'react';
-import { useLead } from '../../api/hooks';
-import { LEADS_FALLBACK } from '../../api/fallback';
+import { useLead } from './use-leads-api-queries';
 import './lead-detail.css';
 
 function Linkedin({ size = 16, style, className }: { size?: number; style?: CSSProperties; className?: string }) {
@@ -123,9 +122,15 @@ function scorePillClass(tone: string): string {
 
 export function LeadDetailPage() {
   const { leadId } = useParams<{ leadId: string }>();
-  const { data } = useLead(leadId);
-  const lead =
-    data ?? LEADS_FALLBACK.find((l) => l.id === leadId) ?? LEADS_FALLBACK[0];
+  const { data: lead, isPending, isError } = useLead(leadId);
+
+  if (isPending) {
+    return <p className="page-subtitle">Loading…</p>;
+  }
+
+  if (isError || !lead) {
+    return <p className="page-subtitle">Lead not found.</p>;
+  }
 
   const timeline =
     lead.sourcesScanned.length > 0
