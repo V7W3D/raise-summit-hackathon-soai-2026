@@ -2,7 +2,7 @@
 
 ## Backend setup
 
-The backend lives in `backend/` and uses Poetry to manage its virtual environment and dependencies.
+The backend lives in `backend/` and uses Poetry, FastAPI, and SQLAlchemy with a local SQLite database.
 
 1. Go to the backend folder:
 
@@ -18,7 +18,20 @@ The backend lives in `backend/` and uses Poetry to manage its virtual environmen
 
 	Poetry creates `backend/.venv/` on your machine. That folder is gitignored and is not pushed to the remote repo.
 
-3. Run the backend server:
+3. Configure the database environment:
+
+	```bash
+	cp .env.example .env
+	mkdir -p data
+	```
+
+	Your `backend/.env` should contain:
+
+	```bash
+	DATABASE_URL=sqlite:///./data/raise_summit.db
+	```
+
+4. Run the backend server:
 
 	```bash
 	poetry run uvicorn main:app --reload --host 127.0.0.1 --port 8080
@@ -32,9 +45,60 @@ The backend lives in `backend/` and uses Poetry to manage its virtual environmen
 
 The server will start on `http://127.0.0.1:8080` by default.
 
+## Database setup (SQLite)
+
+The backend uses a local **SQLite** database through **SQLAlchemy**. SQLite is file-based, so you do not need to install or run a separate database server.
+
+### Local setup
+
+From `backend/`:
+
+```bash
+cp .env.example .env
+mkdir -p data
+```
+
+The first time the backend writes to the database, SQLite creates `backend/data/raise_summit.db` on your machine.
+
+### Database client
+
+Database access lives in `backend/database/`:
+
+- `config.py` — loads `DATABASE_URL` from `backend/.env`
+- `session.py` — SQLAlchemy engine with a connection pool and `SessionLocal` session factory
+- `dependencies.py` — `get_db()` FastAPI dependency and `DbSession` type alias
+- `base.py` — shared SQLAlchemy `Base` class for ORM models
+
+Use the dependency in routers to inject a database session per request:
+
+```python
+from fastapi import APIRouter
+
+from database import DbSession
+
+router = APIRouter()
+
+@router.get("/leads")
+def list_leads(db: DbSession):
+	...
+```
+
+Each request gets its own session from the pool. The session is closed automatically after the request finishes.
+
+### Notes
+
+- `backend/.env`, `backend/data/`, and `*.db` files are gitignored and stay local to your machine.
+- Do not commit the `.db` file; teammates recreate it locally with the steps above.
+- SQLite is included with Python, so no extra database install is required.
+- After pulling model or migration changes, apply them from `backend/` once Alembic is configured:
+
+	```bash
+	poetry run alembic upgrade head
+	```
+
 ## Frontend setup
 
-The frontend lives in `frontend/` and uses Vite with React.
+The frontend lives in `frontend/` and uses Vite with React, axios, and TanStack Query.
 
 1. Go to the frontend folder:
 
@@ -48,7 +112,7 @@ The frontend lives in `frontend/` and uses Vite with React.
 	npm install
 	```
 
-3. If you want the frontend to talk to the backend, set the API base URL in a local env file:
+3. Set the API base URL in a local env file:
 
 	```bash
 	cp .env.example .env
@@ -61,3 +125,5 @@ The frontend lives in `frontend/` and uses Vite with React.
 	```
 
 The app will start on `http://localhost:5173` by default and is configured to talk to the backend at `http://127.0.0.1:8080`.
+
+`frontend/node_modules/` is gitignored. After cloning the repo, run `npm install` to recreate it locally.

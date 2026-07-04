@@ -21,6 +21,7 @@ build/
 .env.*
 !.env.example
 !frontend/.env
+!backend/.env.example
 
 # Logs
 *.log
@@ -47,6 +48,11 @@ htmlcov/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+
+# SQLite
+backend/data/
+*.db
+*.sqlite3
 
 # Misc
 *.local
