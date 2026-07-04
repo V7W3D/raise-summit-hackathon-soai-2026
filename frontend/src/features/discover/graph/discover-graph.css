@@ -1,0 +1,359 @@
+.discover-graph {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.discover-graph-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 14px;
+  flex-wrap: wrap;
+}
+
+.discover-graph-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.discover-graph-toolbar-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.discover-graph-seg {
+  min-width: 0;
+}
+
+.discover-graph-seg .seg-option {
+  padding: 7px 10px;
+  font-size: 0.6875rem;
+  white-space: nowrap;
+}
+
+.discover-graph-toolbar-center {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.discover-graph-insight {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.discover-graph-insight strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.discover-graph-insight-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.discover-graph-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.discover-graph-canvas {
+  position: relative;
+  min-height: 520px;
+  height: calc(100vh - 340px);
+  max-height: 720px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.discover-graph-svg {
+  display: block;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.discover-graph-svg:active {
+  cursor: grabbing;
+}
+
+.discover-graph-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 420px;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.discover-graph-empty svg {
+  color: var(--faint);
+}
+
+.discover-graph-cluster-zone {
+  fill: rgba(255, 255, 255, 0.72);
+  stroke-width: 1.5;
+  stroke-opacity: 0.45;
+  transition: fill 0.15s ease, stroke-opacity 0.15s ease;
+  cursor: pointer;
+}
+
+.discover-graph-cluster-zone.hovered,
+.discover-graph-cluster-zone.selected {
+  fill: rgba(255, 255, 255, 0.92);
+  stroke-opacity: 0.85;
+}
+
+.discover-graph-cluster-zone.selected {
+  stroke-width: 2;
+}
+
+.discover-graph-cluster-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.discover-graph-cluster-count {
+  font-size: 0.6875rem;
+  fill: var(--muted);
+  pointer-events: none;
+}
+
+.discover-graph-link {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+  stroke-opacity: 0.35;
+  pointer-events: none;
+}
+
+.discover-graph-link.highlighted {
+  stroke: var(--blue);
+  stroke-opacity: 0.55;
+  stroke-width: 1.5;
+}
+
+.discover-graph-node {
+  cursor: pointer;
+}
+
+.discover-graph-node-ring {
+  fill: none;
+  stroke-width: 2;
+  stroke-opacity: 0.85;
+  pointer-events: none;
+}
+
+.discover-graph-node-circle {
+  stroke-width: 2.5;
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.discover-graph-node-circle.hovered {
+  filter: brightness(1.06);
+}
+
+.discover-graph-node-initials {
+  text-anchor: middle;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  fill: #fff;
+  pointer-events: none;
+}
+
+.discover-graph-node-score {
+  text-anchor: middle;
+  font-size: 0.625rem;
+  font-weight: 600;
+  fill: var(--muted);
+  pointer-events: none;
+}
+
+.discover-graph-legend {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(6px);
+  font-size: 0.6875rem;
+  color: var(--muted);
+}
+
+.discover-graph-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.discover-graph-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+
+.discover-graph-legend-dot.high {
+  border-color: var(--green);
+}
+
+.discover-graph-legend-dot.promising {
+  border-color: var(--blue);
+}
+
+.discover-graph-legend-dot.review {
+  border-color: var(--orange);
+}
+
+.discover-graph-legend-hint {
+  margin-left: auto;
+  color: var(--faint);
+  font-size: 0.625rem;
+}
+
+.discover-graph-tooltip {
+  position: fixed;
+  z-index: 30;
+  pointer-events: none;
+  min-width: 180px;
+  max-width: 260px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.discover-graph-tooltip-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.discover-graph-tooltip-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.6875rem;
+  color: var(--muted);
+  margin-bottom: 3px;
+}
+
+.discover-graph-tooltip-industry {
+  margin-top: 4px;
+  font-size: 0.6875rem;
+  color: var(--text);
+}
+
+.discover-graph-bulk {
+  position: sticky;
+  bottom: 8px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 16px;
+  border: 1.5px solid var(--accent);
+  box-shadow: var(--shadow-lg);
+  flex-wrap: wrap;
+}
+
+.discover-graph-bulk-count {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.discover-graph-bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.leads-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+}
+
+.leads-view-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--muted);
+  background: transparent;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.leads-view-toggle-btn.active {
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+
+.leads-view-toggle-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+@media (max-width: 1100px) {
+  .discover-graph-toolbar-center {
+    order: 3;
+    width: 100%;
+  }
+
+  .discover-graph-legend-hint {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 1000px) {
+  .discover-graph-canvas {
+    height: 480px;
+    min-height: 420px;
+  }
+}

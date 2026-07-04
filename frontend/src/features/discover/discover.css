@@ -290,7 +290,8 @@
 }
 
 .leads-tabs .sort-btn {
-  margin-left: auto;
+  margin-left: 0;
+  flex-shrink: 0;
 }
 
 .leads-count {

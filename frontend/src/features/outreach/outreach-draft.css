@@ -1,0 +1,675 @@
+.outreach-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(28, 28, 26, 0.42);
+  backdrop-filter: blur(4px);
+}
+
+.outreach-panel {
+  width: min(1180px, 100%);
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+
+.outreach-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.outreach-panel-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--purple);
+  margin-bottom: 6px;
+}
+
+.outreach-panel-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.outreach-panel-subtitle {
+  margin-top: 4px;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.outreach-panel-body {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 0;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.outreach-intel {
+  border-right: 1px solid var(--border);
+  background: var(--surface-soft);
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.outreach-intel-hero {
+  padding: 16px;
+  background: var(--surface);
+}
+
+.outreach-intel-identity {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.outreach-intel-name {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--ink);
+}
+
+.outreach-intel-desc {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.outreach-intel-loc {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6875rem;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.outreach-intel-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.outreach-intel-summary {
+  margin-top: 12px;
+  font-size: 0.75rem;
+  color: var(--text);
+  line-height: 1.55;
+}
+
+.outreach-intel-metrics {
+  display: flex;
+  gap: 18px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.outreach-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.outreach-metric-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.outreach-metric-label {
+  font-size: 0.625rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.outreach-intel-section {
+  padding: 14px;
+  background: var(--surface);
+}
+
+.outreach-intel-warn {
+  background: var(--orange-soft);
+  border-color: var(--border);
+}
+
+.outreach-section-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+
+.outreach-check-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.outreach-check {
+  display: flex;
+  gap: 9px;
+  font-size: 0.75rem;
+  color: var(--text);
+}
+
+.outreach-check-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.outreach-check.passed .outreach-check-icon {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.outreach-check-label {
+  display: block;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.outreach-check-detail {
+  display: block;
+  color: var(--muted);
+  margin-top: 1px;
+  line-height: 1.4;
+}
+
+.outreach-facts {
+  margin: 0;
+}
+
+.outreach-fact {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.75rem;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.outreach-fact:last-child {
+  border-bottom: none;
+}
+
+.outreach-fact dt {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.outreach-fact dd {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 500;
+  text-align: right;
+}
+
+.outreach-contact-rows {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.outreach-contact-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: var(--text);
+}
+
+.outreach-signal {
+  display: flex;
+  gap: 7px;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  margin-bottom: 6px;
+}
+
+.outreach-signal.why svg {
+  color: var(--green);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.outreach-signal.missing svg {
+  color: var(--orange);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.outreach-evidence {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: var(--surface-soft);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.outreach-evidence-quote {
+  color: var(--text);
+}
+
+.outreach-evidence-source {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.625rem;
+  color: var(--faint);
+}
+
+.outreach-timeline-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: var(--text);
+  padding: 4px 0;
+}
+
+.outreach-timeline-item svg {
+  color: var(--green);
+  flex-shrink: 0;
+}
+
+.outreach-timeline-item span {
+  margin-left: auto;
+  color: var(--faint);
+  font-size: 0.6875rem;
+}
+
+/* ---- Editor column ---- */
+.outreach-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 24px 24px;
+  overflow-y: auto;
+  min-height: 0;
+  background: var(--bg);
+}
+
+.outreach-channel-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  width: fit-content;
+  flex-shrink: 0;
+}
+
+.outreach-channel-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--muted);
+  background: transparent;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.outreach-channel-tab.active {
+  background: var(--surface-soft);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+
+.outreach-recommended {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--blue-soft);
+  font-size: 0.8125rem;
+  color: var(--text);
+  line-height: 1.5;
+  flex-shrink: 0;
+}
+
+.outreach-recommended svg {
+  color: var(--blue);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.outreach-compose {
+  padding: 0;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.outreach-compose-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-soft);
+}
+
+.outreach-compose-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.outreach-compose-meta {
+  font-size: 0.6875rem;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+.outreach-compose-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+}
+
+.outreach-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.outreach-field-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.outreach-input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.outreach-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-muted);
+}
+
+.outreach-message-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.outreach-message-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-muted);
+}
+
+.outreach-textarea {
+  display: block;
+  width: 100%;
+  height: 240px;
+  min-height: 240px;
+  max-height: 320px;
+  padding: 16px;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.875rem;
+  line-height: 1.65;
+  resize: vertical;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.outreach-textarea:focus {
+  outline: none;
+}
+
+.outreach-score-card {
+  padding: 18px;
+  flex-shrink: 0;
+}
+
+.outreach-score-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.outreach-score-desc {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.outreach-score-ring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.outreach-score-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.outreach-tips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.outreach-tip {
+  display: flex;
+  gap: 10px;
+  padding: 11px 13px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  border: 1px solid transparent;
+}
+
+.outreach-tip.good {
+  background: var(--green-soft);
+  border-color: rgba(77, 124, 92, 0.15);
+  color: var(--text);
+}
+
+.outreach-tip.good svg {
+  color: var(--green);
+}
+
+.outreach-tip.warning {
+  background: var(--orange-soft);
+  border-color: rgba(154, 107, 60, 0.15);
+  color: var(--text);
+}
+
+.outreach-tip.warning svg {
+  color: var(--orange);
+}
+
+.outreach-tip.improve {
+  background: var(--blue-soft);
+  border-color: rgba(74, 98, 120, 0.15);
+  color: var(--text);
+}
+
+.outreach-tip.improve svg {
+  color: var(--blue);
+}
+
+.outreach-tip svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.outreach-tip-title {
+  display: block;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.outreach-tip-detail {
+  display: block;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.outreach-panel-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-soft);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.outreach-foot-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.outreach-mission-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.outreach-send-to {
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.outreach-send-to strong {
+  color: var(--ink);
+}
+
+.outreach-foot-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 960px) {
+  .outreach-overlay {
+    padding: 12px;
+  }
+
+  .outreach-panel-body {
+    grid-template-columns: 1fr;
+  }
+
+  .outreach-intel {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    max-height: 280px;
+  }
+}
+
+@media (max-width: 640px) {
+  .outreach-panel-head {
+    padding: 16px;
+  }
+
+  .outreach-editor {
+    padding: 16px;
+  }
+
+  .outreach-compose-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .outreach-panel-foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .outreach-foot-actions {
+    flex-direction: column;
+  }
+
+  .outreach-foot-actions .btn {
+    width: 100%;
+  }
+}

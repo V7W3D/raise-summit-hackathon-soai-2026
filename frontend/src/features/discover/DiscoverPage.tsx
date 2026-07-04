@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Sparkles,
@@ -22,6 +22,8 @@ import {
   Phone,
   ExternalLink,
   CheckCircle2,
+  LayoutList,
+  Network,
 } from 'lucide-react';
 
 function BrandDot({ bg, label }: { bg: string; label: string }) {
@@ -47,9 +49,24 @@ function BrandDot({ bg, label }: { bg: string; label: string }) {
 import { ScoreRing, fitColor } from '@components/ScoreRing';
 import { useLeads } from './use-discover-api-queries';
 import type { LeadVM } from '../leads/use-leads-api-queries';
+import {
+  countByCategory,
+  filterLeadsByCategory,
+  tabLabel,
+  type DiscoverViewMode,
+  type FitCategory,
+} from './discover-utils';
+import { DiscoverGraphView } from './graph/DiscoverGraphView';
+import { OutreachDraftPanel } from '../outreach/OutreachDraftPanel';
 import './discover.css';
+import './graph/discover-graph.css';
 
-const TABS = ['High fit (18)', 'Promising but incomplete (16)', 'Needs verification (9)', 'Rejected (5)'];
+const FIT_CATEGORIES: FitCategory[] = [
+  'high_fit',
+  'promising',
+  'needs_verification',
+  'rejected',
+];
 
 const SOURCES = ['Websites', 'Directories', 'LinkedIn', 'Maps'];
 const INDUSTRIES = ['Construction', 'Plumbing', 'Renovation', 'Roofing'];
@@ -64,14 +81,25 @@ const scorePill: Record<LeadVM['scoreTone'], string> = {
 };
 
 export function DiscoverPage() {
-  const [activeTab, setActiveTab] = useState(TABS[0]);
+  const [activeCategory, setActiveCategory] = useState<FitCategory>('high_fit');
+  const [viewMode, setViewMode] = useState<DiscoverViewMode>('list');
   const { data, isPending, isError } = useLeads();
   const discoverLeads = data ?? [];
 
+  const categoryCounts = useMemo(() => countByCategory(discoverLeads), [discoverLeads]);
+  const filteredLeads = useMemo(
+    () => filterLeadsByCategory(discoverLeads, activeCategory),
+    [discoverLeads, activeCategory],
+  );
+
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const effectiveSelectedId = selectedId ?? discoverLeads[0]?.id;
+  const [outreachLeadId, setOutreachLeadId] = useState<number | null>(null);
+  const effectiveSelectedId = selectedId ?? filteredLeads[0]?.id ?? discoverLeads[0]?.id;
   const selected =
-    discoverLeads.find((lead) => lead.id === effectiveSelectedId) ?? discoverLeads[0];
+    discoverLeads.find((lead) => lead.id === effectiveSelectedId) ??
+    filteredLeads[0] ??
+    discoverLeads[0];
+  const outreachLead = discoverLeads.find((lead) => lead.id === outreachLeadId);
 
   if (isPending) {
     return <p className="page-subtitle">Loading…</p>;
@@ -123,12 +151,12 @@ export function DiscoverPage() {
         </div>
         <div className="mission-banner-stats">
           <div>
-            <div className="mb-stat-value">48</div>
+            <div className="mb-stat-value">{discoverLeads.length}</div>
             <div className="mb-stat-label">Leads discovered</div>
           </div>
           <div>
-            <div className="mb-stat-value">16</div>
-            <div className="mb-stat-label">Shortlisted</div>
+            <div className="mb-stat-value">{categoryCounts.high_fit}</div>
+            <div className="mb-stat-label">High fit</div>
           </div>
           <div>
             <div className="mb-stat-value">7</div>
@@ -247,18 +275,57 @@ export function DiscoverPage() {
 
         <div className="leads-column">
           <div className="leads-tabs">
-            {TABS.map((tab) => (
-              <button key={tab} className={`leads-tab${tab === activeTab ? ' active' : ''}`} onClick={() => setActiveTab(tab)}>
-                {tab}
+            {FIT_CATEGORIES.map((category) => {
+              const label = tabLabel(category, categoryCounts[category]);
+              return (
+                <button
+                  key={category}
+                  className={`leads-tab${category === activeCategory ? ' active' : ''}`}
+                  onClick={() => {
+                    setActiveCategory(category);
+                    setSelectedId(null);
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+            <div className="leads-view-toggle">
+              <button
+                type="button"
+                className={`leads-view-toggle-btn${viewMode === 'list' ? ' active' : ''}`}
+                onClick={() => setViewMode('list')}
+                aria-pressed={viewMode === 'list'}
+              >
+                <LayoutList /> List
               </button>
-            ))}
+              <button
+                type="button"
+                className={`leads-view-toggle-btn${viewMode === 'graph' ? ' active' : ''}`}
+                onClick={() => setViewMode('graph')}
+                aria-pressed={viewMode === 'graph'}
+              >
+                <Network /> Graph
+              </button>
+            </div>
             <button className="select-control sort-btn" style={{ padding: '7px 12px', fontSize: '0.7813rem' }}>
               <ArrowUpDown /> Sort by fit score <ChevronDown />
             </button>
           </div>
-          <div className="leads-count">18 results</div>
+          <div className="leads-count">
+            {filteredLeads.length} result{filteredLeads.length === 1 ? '' : 's'}
+            {viewMode === 'graph' ? ' · graph view' : ''}
+          </div>
 
-          {discoverLeads.map((lead) => {
+          {viewMode === 'graph' ? (
+            <DiscoverGraphView
+              leads={filteredLeads}
+              selectedId={effectiveSelectedId ?? null}
+              onSelectLead={setSelectedId}
+              onDraftOutreach={setOutreachLeadId}
+            />
+          ) : (
+            filteredLeads.map((lead) => {
             const isSelected = lead.id === effectiveSelectedId;
             return (
               <div
@@ -334,14 +401,22 @@ export function DiscoverPage() {
                     <Link to={`/leads/${lead.id}`} className="btn btn-outline btn-sm">
                       <Eye size={14} /> Open details
                     </Link>
-                    <button className="btn btn-primary btn-sm">
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setOutreachLeadId(lead.id);
+                      }}
+                    >
                       <Send size={14} /> Draft outreach
                     </button>
                   </div>
                 )}
               </div>
             );
-          })}
+          })
+          )}
         </div>
 
         <div className="lead-panel-wrap">
@@ -444,6 +519,14 @@ export function DiscoverPage() {
             )}
 
             <div className="lead-panel-foot">
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                style={{ width: '100%', marginBottom: 10 }}
+                onClick={() => setOutreachLeadId(selected.id)}
+              >
+                <Send size={14} /> Draft outreach
+              </button>
               <a className="link" href="#sources">
                 View all sources
               </a>
@@ -456,6 +539,14 @@ export function DiscoverPage() {
           )}
         </div>
       </div>
+
+      {outreachLead && (
+        <OutreachDraftPanel
+          lead={outreachLead}
+          missionName="Construction Clients – Lyon"
+          onClose={() => setOutreachLeadId(null)}
+        />
+      )}
     </div>
   );
 }

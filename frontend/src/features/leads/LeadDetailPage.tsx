@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   Check,
@@ -29,6 +30,7 @@ import {
 } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { useLead } from './use-leads-api-queries';
+import { OutreachDraftPanel } from '../outreach/OutreachDraftPanel';
 import './lead-detail.css';
 
 function Linkedin({ size = 16, style, className }: { size?: number; style?: CSSProperties; className?: string }) {
@@ -123,6 +125,7 @@ function scorePillClass(tone: string): string {
 export function LeadDetailPage() {
   const { leadId } = useParams<{ leadId: string }>();
   const { data: lead, isPending, isError } = useLead(leadId);
+  const [showOutreach, setShowOutreach] = useState(false);
 
   if (isPending) {
     return <p className="page-subtitle">Loading…</p>;
@@ -166,7 +169,10 @@ export function LeadDetailPage() {
           </nav>
         </div>
         <div className="discover-header-actions" style={{ display: 'flex', gap: 12 }}>
-          <button className="btn btn-primary">
+          <button type="button" className="btn btn-primary" onClick={() => setShowOutreach(true)}>
+            <Mail /> Draft outreach
+          </button>
+          <button className="btn btn-outline">
             <Check /> Approve lead
           </button>
           <button className="btn btn-outline">
@@ -330,7 +336,14 @@ export function LeadDetailPage() {
             </div>
             <div className="next-grid">
               {NEXT_STEPS.map(({ icon: Icon, color, title, text }) => (
-                <button key={title} className="next-option">
+                <button
+                  key={title}
+                  type="button"
+                  className="next-option"
+                  onClick={() => {
+                    if (title === 'Draft email') setShowOutreach(true);
+                  }}
+                >
                   <Icon className="opt-icon" style={{ color }} />
                   <span className="next-option-title">{title}</span>
                   <span className="next-option-text">{text}</span>
@@ -456,7 +469,10 @@ export function LeadDetailPage() {
 
           <div className="ld-side-actions">
             <div className="row">
-              <button className="btn btn-primary">
+              <button type="button" className="btn btn-primary" onClick={() => setShowOutreach(true)}>
+                <Mail /> Draft outreach
+              </button>
+              <button className="btn btn-outline">
                 <Check /> Approve
               </button>
               <button className="btn btn-outline">
@@ -472,6 +488,14 @@ export function LeadDetailPage() {
           </div>
         </aside>
       </div>
+
+      {showOutreach && (
+        <OutreachDraftPanel
+          lead={lead}
+          missionName="Construction Clients – Lyon"
+          onClose={() => setShowOutreach(false)}
+        />
+      )}
     </div>
   );
 }
