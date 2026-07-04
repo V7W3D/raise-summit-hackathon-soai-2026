@@ -25,8 +25,12 @@ export function MissionListItem({
 }: MissionListItemProps) {
   const isSearching = mission.searchStatus === 'running';
   const canRunSearch = !archived && !isSearching && onRunSearch;
+  const isRunSearchEnabled = mission.searchActivated && !isRunningSearch;
   const runSearchLabel =
     mission.searchStatus === 'failed' ? 'Retry agent' : 'Run agent';
+  const runSearchTitle = mission.searchActivated
+    ? undefined
+    : 'Update the mission to run the agent again';
 
   return (
     <div className={`card mission-card${isSearching ? ' mission-card-searching' : ''}`}>
@@ -60,7 +64,8 @@ export function MissionListItem({
                 type="button"
                 className="btn btn-outline mission-run-search-btn"
                 onClick={onRunSearch}
-                disabled={isRunningSearch}
+                disabled={!isRunSearchEnabled}
+                title={runSearchTitle}
               >
                 {isRunningSearch ? (
                   <>

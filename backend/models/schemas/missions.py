@@ -57,6 +57,7 @@ class MissionRead(MissionBase):
 
 	id: int
 	search_status: MissionSearchStatus
+	search_activated: bool
 	progress: int
 	is_archived: bool
 	created_at: datetime

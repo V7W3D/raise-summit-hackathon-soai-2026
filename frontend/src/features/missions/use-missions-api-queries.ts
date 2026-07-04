@@ -17,6 +17,7 @@ const missionSchema = z
   .object({
     id: z.number(),
     search_status: z.enum(missionSearchStatuses),
+    search_activated: z.boolean(),
     name: z.string(),
     target: z.string(),
     location: z.string(),
@@ -35,6 +36,7 @@ const missionSchema = z
   .transform((dto) => ({
     id: dto.id,
     searchStatus: dto.search_status,
+    searchActivated: dto.search_activated,
     name: dto.name,
     target: dto.target,
     location: dto.location,

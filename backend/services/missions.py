@@ -39,6 +39,7 @@ def create_mission(db: Session, payload: MissionCreate, *, user_id: int) -> Miss
 def update_mission(db: Session, mission: Mission, payload: MissionUpdate) -> Mission:
 	for field, value in payload.model_dump(exclude_unset=True).items():
 		setattr(mission, field, value)
+	mission.search_activated = True
 	db.commit()
 	db.refresh(mission)
 	return mission
