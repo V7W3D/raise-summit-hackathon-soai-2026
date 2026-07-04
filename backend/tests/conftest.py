@@ -12,6 +12,7 @@ import models.clients  # noqa: F401  (register ORM models)
 from database.base import Base
 from database.dependencies import get_db
 from main import app
+from models.clients.users import User
 
 
 @pytest.fixture()
@@ -25,6 +26,15 @@ def db_session() -> Generator[Session, None, None]:
 	Base.metadata.create_all(bind=engine)
 	TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 	session = TestingSessionLocal()
+	session.add(
+		User(
+			name="Azzedine",
+			email="azzedine@prospectpath.com",
+			plan="Enterprise Plan",
+			initials="AZ",
+		)
+	)
+	session.commit()
 	try:
 		yield session
 	finally:

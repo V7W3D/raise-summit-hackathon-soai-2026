@@ -24,8 +24,6 @@ import {
   Globe,
   Star,
   Target,
-  Leaf,
-  UtensilsCrossed,
   MessageCircle,
 } from 'lucide-react';
 import { type Priority } from '../../data/mock';
@@ -57,12 +55,6 @@ const FEED_ICONS = {
   star: Star,
 } as const;
 
-const MISSION_ICONS = {
-  building: { Icon: Building2, tone: 'blue', bar: '#2563eb' },
-  leaf: { Icon: Leaf, tone: 'green', bar: '#16a34a' },
-  sushi: { Icon: UtensilsCrossed, tone: 'orange', bar: '#ea8a1f' },
-} as const;
-
 const priorityClass: Record<Priority, string> = {
   High: 'pill-high',
   Medium: 'pill-medium',
@@ -79,10 +71,6 @@ function statIcon(icon: string) {
 
 function feedIcon(icon: string) {
   return FEED_ICONS[icon as keyof typeof FEED_ICONS] ?? FEED_ICONS.building;
-}
-
-function missionIcon(icon: string) {
-  return MISSION_ICONS[icon as keyof typeof MISSION_ICONS] ?? MISSION_ICONS.building;
 }
 
 export function HomePage() {
@@ -212,12 +200,10 @@ export function HomePage() {
               View all missions <ArrowRight />
             </Link>
           </div>
-          {recentMissions.map((mission) => {
-            const { Icon, tone, bar } = missionIcon(mission.icon);
-            return (
+          {recentMissions.map((mission) => (
               <div key={mission.id} className="rm-item">
-                <span className={`icon-tile ${tone}`}>
-                  <Icon />
+                <span className="icon-tile blue">
+                  <Building2 />
                 </span>
                 <div className="rm-body">
                   <div className="rm-top">
@@ -226,15 +212,13 @@ export function HomePage() {
                   </div>
                   <div className="rm-meta">
                     <span>{mission.updated}</span>
-                    <span>{mission.leads} leads</span>
                   </div>
                   <div className="rm-bar">
-                    <div className="rm-bar-fill" style={{ width: `${mission.progress}%`, background: bar }} />
+                    <div className="rm-bar-fill" style={{ width: `${mission.progress}%`, background: '#2563eb' }} />
                   </div>
                 </div>
               </div>
-            );
-          })}
+          ))}
         </section>
 
         <section className="card panel">

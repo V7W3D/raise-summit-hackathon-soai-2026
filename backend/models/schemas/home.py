@@ -31,12 +31,9 @@ class FeedItem(BaseModel):
 
 class RecentMission(BaseModel):
 	id: int
-	icon: str
-	color: str
 	name: str
 	updated: str
 	progress: int
-	leads: int
 
 
 class RecentProspect(BaseModel):
