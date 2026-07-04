@@ -9,8 +9,6 @@ const dashboardSchema = z
   .object({
     user: z.object({
       name: z.string(),
-      plan: z.string(),
-      initials: z.string(),
     }),
     greeting: z.string(),
     subtitle: z.string(),
@@ -48,7 +46,6 @@ const dashboardSchema = z
     recent_prospects: z.array(
       z.object({
         id: z.number(),
-        slug: z.string(),
         initials: z.string(),
         color: z.string(),
         name: z.string(),
@@ -74,7 +71,6 @@ const dashboardSchema = z
     recentMissions: dto.recent_missions,
     recentProspects: dto.recent_prospects.map((p) => ({
       id: p.id,
-      slug: p.slug,
       initials: p.initials,
       color: p.color,
       name: p.name,

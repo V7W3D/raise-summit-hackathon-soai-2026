@@ -3,8 +3,10 @@ from __future__ import annotations
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from services.lead_display import lead_initials, lead_logo_color
 from models.clients.leads import Lead
 from models.clients.missions import Mission
+from models.clients.user_mission_links import UserMissionLink
 from models.clients.users import User
 from models.schemas.home import (
 	FeedItem,
@@ -39,9 +41,18 @@ def _rel_time(index: int) -> str:
 
 
 def build_dashboard(db: Session, user: User) -> HomeDashboard:
-	active_missions = db.scalar(
-		select(func.count(Mission.id)).where(Mission.status == "Active")
-	) or 0
+	user_mission_ids = select(UserMissionLink.mission_id).where(
+		UserMissionLink.user_id == user.id
+	)
+	active_missions = (
+		db.scalar(
+			select(func.count(Mission.id)).where(
+				Mission.id.in_(user_mission_ids),
+				Mission.status == "Active",
+			)
+		)
+		or 0
+	)
 	total_leads = db.scalar(select(func.count(Lead.id))) or 0
 	total_qualified = (
 		db.scalar(select(func.count(Lead.id)).where(Lead.score >= 75)) or 0
@@ -58,7 +69,11 @@ def build_dashboard(db: Session, user: User) -> HomeDashboard:
 
 	recent_missions_rows = list(
 		db.scalars(
-			select(Mission).order_by(Mission.last_activity_at.desc()).limit(3)
+			select(Mission)
+			.join(UserMissionLink, UserMissionLink.mission_id == Mission.id)
+			.where(UserMissionLink.user_id == user.id)
+			.order_by(Mission.last_activity_at.desc())
+			.limit(3)
 		).all()
 	)
 	recent_missions = [
@@ -80,11 +95,10 @@ def build_dashboard(db: Session, user: User) -> HomeDashboard:
 		recent_prospects.append(
 			RecentProspect(
 				id=lead.id,
-				slug=lead.slug,
-				initials=lead.initials or lead.name[:2].upper(),
-				color=lead.logo_color,
+				initials=lead_initials(lead.name),
+				color=lead_logo_color(lead.name),
 				name=lead.name,
-				meta=f"{lead.industry or lead.business_type} • {lead.location}".strip(" •"),
+				meta=lead.location or lead.description,
 				fit=fit,
 				fit_tone=tone,
 				time=_rel_time(i),
@@ -145,7 +159,7 @@ def build_dashboard(db: Session, user: User) -> HomeDashboard:
 
 	first_name = user.name.split()[0] if user.name else "there"
 	return HomeDashboard(
-		user=UserSummary(name=user.name, plan=user.plan, initials=user.initials),
+		user=UserSummary(name=user.name),
 		greeting=f"Good morning, {first_name} 👋",
 		subtitle="You have 3 prospects waiting for review and 2 follow-ups due today.",
 		next_best_actions=next_best_actions,

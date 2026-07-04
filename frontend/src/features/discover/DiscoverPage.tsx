@@ -68,7 +68,7 @@ export function DiscoverPage() {
   const { data, isPending, isError } = useLeads();
   const discoverLeads = data ?? [];
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const effectiveSelectedId = selectedId ?? discoverLeads[0]?.id;
   const selected =
     discoverLeads.find((lead) => lead.id === effectiveSelectedId) ?? discoverLeads[0];
@@ -423,14 +423,13 @@ export function DiscoverPage() {
               </span>
             </div>
 
-            {selected.aiSummary && (
-              <div className="ai-summary">
-                <div className="ai-summary-head">
-                  <CheckCircle2 size={15} /> AI reasoning summary
-                </div>
-                {selected.aiSummary}
+            <div className="ai-summary">
+              <div className="ai-summary-head">
+                <CheckCircle2 size={15} /> AI reasoning summary
               </div>
-            )}
+              We scanned {selected.website} and found strong signals of local activity, emergency
+              service, and phone-first operations.
+            </div>
 
             {selected.sourcesScanned.length > 0 && (
               <>

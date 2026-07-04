@@ -30,8 +30,6 @@ def db_session() -> Generator[Session, None, None]:
 		User(
 			name="Azzedine",
 			email="azzedine@prospectpath.com",
-			plan="Enterprise Plan",
-			initials="AZ",
 		)
 	)
 	session.commit()

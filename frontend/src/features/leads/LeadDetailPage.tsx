@@ -435,8 +435,7 @@ export function LeadDetailPage() {
               <Sparkles size={15} style={{ color: 'var(--green)' }} /> AI reasoning summary
             </div>
             <p style={{ fontSize: '0.8125rem', color: 'var(--text)', lineHeight: 1.55, marginBottom: 12 }}>
-              {lead.aiSummary ||
-                'Strong local fit with emergency service positioning and phone-first workflow.'}
+              Strong local fit with emergency service positioning and phone-first workflow.
             </p>
             <span className={`pill ${scorePillClass(lead.scoreTone)}`}>{lead.scoreLabel} potential</span>
           </div>

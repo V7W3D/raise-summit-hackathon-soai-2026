@@ -3,14 +3,14 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, func
+from sqlalchemy import DateTime, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database.base import Base
 
 if TYPE_CHECKING:
 	from models.clients.leads import Lead
-	from models.clients.users import User
+	from models.clients.user_mission_links import UserMissionLink
 
 
 class Mission(Base):
@@ -23,10 +23,6 @@ class Mission(Base):
 	status: Mapped[str] = mapped_column(String(30), default="Draft", nullable=False)
 	progress: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
-	user_id: Mapped[int] = mapped_column(
-		ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
-	)
-
 	created_at: Mapped[datetime] = mapped_column(
 		DateTime(timezone=True), server_default=func.now(), nullable=False
 	)
@@ -37,7 +33,9 @@ class Mission(Base):
 		DateTime(timezone=True), server_default=func.now(), nullable=False
 	)
 
-	owner: Mapped["User"] = relationship(back_populates="missions")
+	user_links: Mapped[list["UserMissionLink"]] = relationship(
+		back_populates="mission", cascade="all, delete-orphan"
+	)
 	leads: Mapped[list["Lead"]] = relationship(
 		back_populates="mission", cascade="all, delete-orphan"
 	)

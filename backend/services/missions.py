@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from models.clients.missions import Mission
+from models.clients.user_mission_links import UserMissionLink
 from models.schemas.missions import MissionCreate, MissionUpdate
 
 # Status values that count as "active" for dashboards.
@@ -22,8 +23,10 @@ def get_mission(db: Session, mission_id: int) -> Mission | None:
 
 
 def create_mission(db: Session, payload: MissionCreate, *, user_id: int) -> Mission:
-	mission = Mission(**payload.model_dump(), user_id=user_id)
+	mission = Mission(**payload.model_dump())
 	db.add(mission)
+	db.flush()
+	db.add(UserMissionLink(user_id=user_id, mission_id=mission.id))
 	db.commit()
 	db.refresh(mission)
 	return mission

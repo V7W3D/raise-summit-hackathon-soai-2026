@@ -15,13 +15,12 @@ from database.base import Base
 from database.session import SessionLocal, engine
 from models.clients.leads import Lead
 from models.clients.missions import Mission
+from models.clients.user_mission_links import UserMissionLink
 from models.clients.users import User
 
 DEFAULT_USER = {
 	"name": "Azzedine",
 	"email": "azzedine@prospectpath.com",
-	"plan": "Enterprise Plan",
-	"initials": "AZ",
 }
 
 MISSIONS = [
@@ -65,27 +64,13 @@ MISSIONS = [
 # Leads belong to the first mission (Construction Clients – Lyon).
 LEADS = [
 	{
-		"slug": "rhone-plomberie",
-		"initials": "RP",
-		"logo_color": "#475569",
 		"name": "Rhône Plomberie",
 		"description": "Local emergency plumbing and repair company",
 		"location": "Lyon, France",
 		"website": "rhoneplomberie.fr",
 		"email": "contact@rhoneplomberie.fr",
 		"phone": "04 78 123 456",
-		"contact_badge": "Generic email + phone found",
 		"score": 84,
-		"score_label": "High fit",
-		"score_tone": "green",
-		"contactability": 72,
-		"confidence": "High",
-		"status": "High fit",
-		"category": "high_fit",
-		"industry": "Plumbing / Home Services",
-		"employees": "10 – 50",
-		"service_area": "Lyon & surrounding area",
-		"business_type": "Local service business",
 		"why": [
 			"Local plumbing company in Lyon",
 			"Emergency service mentioned",
@@ -114,129 +99,65 @@ LEADS = [
 			{"label": "Services page scanned", "time": "3 min ago"},
 			{"label": "Contact page scanned", "time": "2 min ago"},
 		],
-		"ai_summary": (
-			"Rhône Plomberie is a strong fit: clear local focus in Lyon, 24/7 emergency "
-			"service, and phone-first customer acquisition. Uncertainty: generic email "
-			"(no named contact) and limited team info."
-		),
 	},
 	{
-		"slug": "btp-rhone",
-		"initials": "BT",
-		"logo_color": "#0ea5e9",
 		"name": "BTP Rhône Services",
 		"description": "General construction & renovation services",
 		"location": "Lyon, France",
 		"website": "btprhone.fr",
 		"email": "contact@btprhone.fr",
 		"phone": "04 72 000 000",
-		"contact_badge": "Email + phone found",
 		"score": 72,
-		"score_label": "High fit",
-		"score_tone": "green",
-		"contactability": 68,
-		"confidence": "High",
-		"status": "High fit",
-		"category": "high_fit",
-		"industry": "Construction",
-		"employees": "20 – 80",
-		"service_area": "Lyon",
-		"business_type": "Local service business",
 		"why": ["Emergency & maintenance", "20+ years in business", "Local team in Lyon"],
 		"missing": ["No pricing on website"],
 		"recommended": ["Intro email with case study"],
 		"evidence": [],
 		"sources_scanned": [],
-		"ai_summary": "Established local construction firm with strong tenure and a local team.",
 	},
 	{
-		"slug": "ecobuild-lyon",
-		"initials": "EL",
-		"logo_color": "#16a34a",
 		"name": "EcoBuild Lyon",
 		"description": "Sustainable construction & eco-renovation",
 		"location": "Lyon, France",
 		"website": "ecobuild-lyon.fr",
 		"email": "",
 		"phone": "",
-		"contact_badge": "Contact form found",
 		"score": 66,
-		"score_label": "Needs review",
-		"score_tone": "orange",
-		"contactability": 40,
-		"confidence": "Medium",
-		"status": "Needs verification",
-		"category": "needs_verification",
-		"industry": "Construction",
-		"employees": "5 – 20",
-		"service_area": "Lyon",
-		"business_type": "Local service business",
 		"why": ["Eco-focused positioning", "Residential & small projects", "Active blog & news"],
 		"missing": ["No direct phone number", "Team page limited"],
 		"recommended": ["Verify phone & response time"],
 		"evidence": [],
 		"sources_scanned": [],
-		"ai_summary": "Eco-positioned builder; needs phone verification before outreach.",
 	},
 	{
-		"slug": "artisan-toiture-plus",
-		"initials": "AT",
-		"logo_color": "#6366f1",
 		"name": "Artisan Toiture Plus",
 		"description": "Roofing & roof repair specialists",
 		"location": "Lyon, France",
 		"website": "toitureplus.fr",
 		"email": "",
 		"phone": "04 78 555 111",
-		"contact_badge": "Phone found",
 		"score": 61,
-		"score_label": "Needs review",
-		"score_tone": "orange",
-		"contactability": 45,
-		"confidence": "Medium",
-		"status": "Needs verification",
-		"category": "needs_verification",
-		"industry": "Roofing",
-		"employees": "5 – 15",
-		"service_area": "Lyon",
-		"business_type": "Local service business",
 		"why": ["Roofing specialists", "10+ years experience", "Local service area"],
 		"missing": ["No email found"],
 		"recommended": ["Find email & owner contact"],
 		"evidence": [],
 		"sources_scanned": [],
-		"ai_summary": "Specialist roofer with phone contact only; find an email to reach the owner.",
 	},
 	{
-		"slug": "maison-renov-experts",
-		"initials": "MR",
-		"logo_color": "#f43f5e",
 		"name": "Maison Rénov Experts",
 		"description": "Renovation & home improvement",
 		"location": "Lyon, France",
 		"website": "maisonrenov-experts.fr",
 		"email": "info@maisonrenov-experts.fr",
 		"phone": "04 78 222 333",
-		"contact_badge": "Email + phone found",
 		"score": 59,
-		"score_label": "Promising",
-		"score_tone": "orange",
-		"contactability": 55,
-		"confidence": "Medium",
-		"status": "Promising",
-		"category": "promising",
-		"industry": "Renovation",
-		"employees": "5 – 25",
-		"service_area": "Lyon",
-		"business_type": "Local service business",
 		"why": ["Full renovation services", "Positive customer reviews", "Active social presence"],
 		"missing": ["Website outdated"],
 		"recommended": ["Re-verify activity & lead gen fit"],
 		"evidence": [],
 		"sources_scanned": [],
-		"ai_summary": "Good reviews and social presence, but the website looks stale — re-verify.",
 	},
 ]
+
 
 
 def seed(reset: bool = False) -> None:
@@ -260,9 +181,12 @@ def seed(reset: bool = False) -> None:
 
 		mission_objs: list[Mission] = []
 		for data in MISSIONS:
-			mission = Mission(**data, user_id=user.id)
+			mission = Mission(**data)
 			db.add(mission)
 			mission_objs.append(mission)
+		db.flush()
+		for mission in mission_objs:
+			db.add(UserMissionLink(user_id=user.id, mission_id=mission.id))
 		db.flush()
 		print(f"Created {len(mission_objs)} missions")
 
