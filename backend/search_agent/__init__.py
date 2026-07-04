@@ -6,6 +6,7 @@ Public surface:
 """
 
 from .agent import run_search_agent
+from .errors import ProviderNotConfiguredError
 from .schemas import (
     BusinessProfile,
     CandidateLead,
@@ -23,6 +24,7 @@ __all__ = [
     "CandidateLead",
     "DiscoverLeadCardVM",
     "Mission",
+    "ProviderNotConfiguredError",
     "ProviderOptions",
     "SearchAgentInput",
     "SearchAgentOutput",

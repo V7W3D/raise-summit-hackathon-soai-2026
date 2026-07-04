@@ -45,19 +45,3 @@ def test_home_dashboard_aggregates(client: TestClient) -> None:
 	assert stats["New leads found this week"] == "43"
 	assert stats["Qualified leads"] == "15"
 	assert len(body["recent_missions"]) == 2
-
-
-def test_insights_report(client: TestClient) -> None:
-	res = client.get("/insights")
-	assert res.status_code == 200
-	body = res.json()
-	assert len(body["performance"]) == 7
-	assert len(body["funnel_stages"]) == 6
-	assert body["mission_name"] == "Construction Clients – Lyon"
-
-
-def test_insights_named_mission(client: TestClient) -> None:
-	mission = client.post("/missions", json={"name": "Seafood Suppliers – Paris"}).json()
-	body = client.get("/insights", params={"mission_id": mission["id"]}).json()
-	assert body["mission_name"] == "Seafood Suppliers – Paris"
-	assert body["mission_id"] == mission["id"]
