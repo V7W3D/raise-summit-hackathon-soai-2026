@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, Query, status
 from database.dependencies import DbSession
 from models.schemas.missions import MissionCreate, MissionRead, MissionUpdate
 from services import missions as mission_service
+from services import search_agent as search_agent_service
 from services import users as user_service
 from services.business_profiles import BusinessProfileNotFoundError
 from services.mission_search import (
@@ -69,6 +70,37 @@ def run_mission_search(mission_id: int, db: DbSession):
 			status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
 			detail=str(exc),
 		) from None
+
+
+@router.post("/{mission_id}/search")
+def search_mission(mission_id: int, db: DbSession):
+	"""Re-run the search agent for a mission and persist newly found leads."""
+	user = _require_default_user(db)
+	try:
+		result = search_agent_service.run_search_for_mission(
+			db, mission_id, user_id=user.id
+		)
+	except BusinessProfileNotFoundError:
+		raise HTTPException(
+			status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+			detail=(
+				"Business profile required before running search. "
+				"Run: python -m database.seed"
+			),
+		) from None
+	except ProviderNotConfiguredError as exc:
+		raise HTTPException(
+			status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+			detail=str(exc),
+		) from None
+	if result is None:
+		raise HTTPException(status_code=404, detail="Mission not found")
+	output, leads = result
+	return {
+		"missionId": mission_id,
+		"agentStatus": output.status,
+		"leadsCreated": len(leads),
+	}
 
 
 @router.get("/{mission_id}", response_model=MissionRead)
