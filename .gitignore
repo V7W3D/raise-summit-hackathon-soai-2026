@@ -50,7 +50,7 @@ htmlcov/
 .ruff_cache/
 
 # SQLite
-
+backend/data/
 
 # Misc
 *.local
