@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import type { ElementType } from 'react';
 import { useLead, useUpdateLeadStatus } from './use-leads-api-queries';
+import { NetworkMemberBadge } from './NetworkMemberBadge';
+import './network-member-badge.css';
 import { useMission } from '../missions/use-missions-api-queries';
 import { OutreachDraftPanel } from '../outreach/OutreachDraftPanel';
 import './lead-detail.css';
@@ -122,6 +124,7 @@ export function LeadDetailPage() {
             <span className="ld-logo">{lead.initials}</span>
             <div>
               <div className="ld-company-name">{lead.name}</div>
+              <NetworkMemberBadge lead={lead} size="md" showPitch />
               <div className="ld-company-desc">{lead.description}</div>
               <div className="ld-badges">
                 {lead.email && (

@@ -188,6 +188,58 @@ LEADS = [
 	},
 ]
 
+# Registered Scouter network companies — matched to prospect leads by website domain.
+NETWORK_MEMBERS = [
+	{
+		"user": {"name": "Rhône Plomberie", "email": "contact@rhoneplomberie.fr"},
+		"profile": {
+			"business_name": "Rhône Plomberie",
+			"business_type": "Local services",
+			"what_we_sell": "Emergency plumbing and repair in Lyon",
+			"value_proposition": "24/7 plumbing response for homes and businesses in Lyon",
+			"target_geographies": ["Lyon, France"],
+			"ideal_customers": ["homeowners", "property managers"],
+			"bad_fit_customers": ["national franchises"],
+			"languages": ["fr"],
+			"website": "rhoneplomberie.fr",
+			"is_network_member": True,
+			"network_badge": "verified",
+		},
+	},
+	{
+		"user": {"name": "BTP Rhône", "email": "contact@btprhone.fr"},
+		"profile": {
+			"business_name": "BTP Rhône Services",
+			"business_type": "Construction",
+			"what_we_sell": "General construction and renovation in the Rhône region",
+			"value_proposition": "Trusted local builder for renovation and maintenance projects",
+			"target_geographies": ["Lyon, France"],
+			"ideal_customers": ["homeowners", "small businesses"],
+			"bad_fit_customers": ["very large enterprises"],
+			"languages": ["fr"],
+			"website": "btprhone.fr",
+			"is_network_member": True,
+			"network_badge": "sponsored",
+		},
+	},
+	{
+		"user": {"name": "Pulse Social", "email": "hello@pulse-social.fr"},
+		"profile": {
+			"business_name": "Pulse Social Lyon",
+			"business_type": "Marketing agency",
+			"what_we_sell": "Social media management and community building for local brands",
+			"value_proposition": "Full-service social media agency for Lyon businesses",
+			"target_geographies": ["Lyon, France"],
+			"ideal_customers": ["retail brands", "restaurants", "local services"],
+			"bad_fit_customers": ["enterprise groups"],
+			"languages": ["fr"],
+			"website": "pulse-social.fr",
+			"is_network_member": True,
+			"network_badge": "verified",
+		},
+	},
+]
+
 
 
 def _apply_migrations() -> None:
@@ -198,6 +250,35 @@ def _apply_migrations() -> None:
 
 	cfg = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
 	command.upgrade(cfg, "head")
+
+
+def _ensure_network_members(db) -> None:
+	for entry in NETWORK_MEMBERS:
+		email = entry["user"]["email"]
+		existing_user = db.scalar(select(User).where(User.email == email))
+		if existing_user is not None:
+			profile = db.scalar(
+				select(BusinessProfile).where(BusinessProfile.user_id == existing_user.id)
+			)
+			if profile is not None:
+				for field in (
+					"website",
+					"is_network_member",
+					"network_badge",
+					"value_proposition",
+					"what_we_sell",
+				):
+					if field in entry["profile"]:
+						setattr(profile, field, entry["profile"][field])
+				continue
+			db.add(BusinessProfile(**entry["profile"], user_id=existing_user.id))
+			continue
+		user = User(**entry["user"])
+		db.add(user)
+		db.flush()
+		db.add(BusinessProfile(**entry["profile"], user_id=user.id))
+	db.flush()
+	print(f"Ensured {len(NETWORK_MEMBERS)} Scouter network member companies")
 
 
 def seed(reset: bool = False) -> None:
@@ -226,6 +307,7 @@ def seed(reset: bool = False) -> None:
 
 		existing = db.scalar(select(Mission).limit(1))
 		if existing is not None and not reset:
+			_ensure_network_members(db)
 			db.commit()
 			print("Missions already present — skipping seed. Use --reset to reseed.")
 			return
@@ -246,6 +328,8 @@ def seed(reset: bool = False) -> None:
 			db.add(Lead(**data, mission_id=lyon_mission.id))
 		db.flush()
 		print(f"Created {len(LEADS)} leads for mission '{lyon_mission.name}'")
+
+		_ensure_network_members(db)
 
 		db.commit()
 		print("Seed complete.")

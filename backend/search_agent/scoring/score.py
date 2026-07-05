@@ -57,17 +57,42 @@ def build_scoring_context(mission: Mission, plan: SearchPlan) -> ScoringContext:
         term = normalize_text(mission.target_industry)
         if term not in segment_terms:
             segment_terms.append(term)
+    for signal in mission.trigger_signals or []:
+        term = normalize_text(signal)
+        if term and term not in segment_terms:
+            segment_terms.append(term)
     # Also match individual significant words of multi-word segments
     # ("entreprise de rénovation" should match a page saying "rénovation").
     for segment in list(segment_terms):
         for word in segment.split():
             if len(word) >= 5 and word not in segment_terms:
                 segment_terms.append(word)
+
+    good_signal_terms = [
+        normalize_text(s) for s in plan.good_fit_signals if normalize_text(s)
+    ]
+    for signal in mission.trigger_signals or []:
+        term = normalize_text(signal)
+        if term and term not in good_signal_terms:
+            good_signal_terms.append(term)
+    if not good_signal_terms:
+        good_signal_terms = [normalize_text(k) for k in GOOD_SIGNAL_KEYWORDS]
+
+    bad_signal_terms = [
+        normalize_text(s) for s in plan.bad_fit_signals if normalize_text(s)
+    ]
+    for filt in mission.negative_filters or []:
+        term = normalize_text(filt)
+        if term and term not in bad_signal_terms:
+            bad_signal_terms.append(term)
+    if not bad_signal_terms:
+        bad_signal_terms = [normalize_text(k) for k in BAD_SIGNAL_KEYWORDS]
+
     return ScoringContext(
         location_terms=location_terms,
         segment_terms=segment_terms,
-        good_signal_terms=[normalize_text(k) for k in GOOD_SIGNAL_KEYWORDS],
-        bad_signal_terms=[normalize_text(k) for k in BAD_SIGNAL_KEYWORDS],
+        good_signal_terms=good_signal_terms,
+        bad_signal_terms=bad_signal_terms,
     )
 
 

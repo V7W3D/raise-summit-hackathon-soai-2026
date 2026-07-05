@@ -20,6 +20,7 @@ from .extraction import (
     normalize_url,
 )
 from .fetching import BasicHttpPageFetcher, PageFetcher
+from .deep_search_loop import run_evolutive_deep_search
 from .planning import build_fallback_plan, build_llm_plan, llm_planning_available
 from .providers import (
     ProviderSearchOptions,
@@ -42,6 +43,7 @@ from .schemas import (
     Summary,
 )
 from .scoring import build_scoring_context, classify_candidate, score_candidate
+from .scoring.llm_score import score_candidates_with_llm
 from .scoring.score import ScoringContext
 from .utils import TraceRecorder, new_id, normalize_text, now_iso
 
@@ -220,7 +222,11 @@ def run_search_agent(
                 {"queries": len(plan.generated_queries)},
             )
 
-        report(phase="searching", queries_planned=len(plan.generated_queries))
+        report(
+            phase="planning",
+            search_mode=options.search_mode,
+            queries_planned=len(plan.generated_queries),
+        )
 
         context = build_scoring_context(mission, plan)
 
@@ -249,107 +255,139 @@ def run_search_agent(
                 fetcher = BasicHttpPageFetcher()
         trace.add("provider", f"Using search provider '{provider.name}'")
 
-        # 4. Run queries -----------------------------------------------------
-        search_options = ProviderSearchOptions(
-            max_results=options.max_results_per_query,
-            location=mission.target_location,
-            language=mission.language,
-        )
-        raw_results: list[tuple[RawSearchResult, str]] = []
-        queries_run = 0
-        query_failures = 0
-        for query in plan.generated_queries:
-            try:
-                results = provider.search(query, search_options)
-                queries_run += 1
-                raw_results.extend((r, query) for r in results)
-                report(queries_run=queries_run, results_found=len(raw_results))
-                trace.add("search", f"Query returned {len(results)} results", {"query": query})
-            except Exception as exc:
-                query_failures += 1
-                warnings.append(
-                    SearchWarning(
-                        code="query_failed",
-                        message=f"Query '{query}' failed: {exc}",
-                    )
-                )
+        use_deep_loop = options.deep_search and options.max_rounds > 1
 
-        # User-provided URLs become raw results too.
-        if "user_urls" in options.include_sources or options.user_provided_urls:
-            for user_url in options.user_provided_urls:
-                raw_results.append(
-                    (
-                        RawSearchResult(
-                            title=get_domain(user_url) or user_url,
-                            url=user_url,
-                            source="user_urls",
-                        ),
-                        "user_provided",
-                    )
-                )
+        def _make_candidate(result, query, page, ctx):
+            return _build_candidate(
+                result, agent_input, provider.name, query, page, ctx
+            )
 
-        # 5. Fetch pages + build candidates -----------------------------------
-        report(phase="extracting")
-        pages_fetched = 0
-        fetch_failures = 0
-        emails_found = 0
-        phones_found = 0
-        candidates: list[CandidateLead] = []
-        fetched_pages: dict[str, object] = {}  # normalized url -> FetchedPage
-        for result, query in raw_results:
-            page = None
-            page_url = normalize_url(result.url)
-            if page_url in fetched_pages:
-                page = fetched_pages[page_url]
-            elif pages_fetched < options.max_pages_to_fetch:
+        if use_deep_loop:
+            candidates, fetched_pages, pages_fetched, emails_found = (
+                run_evolutive_deep_search(
+                    agent_input=agent_input,
+                    provider=provider,
+                    fetcher=fetcher,
+                    context=context,
+                    plan=plan,
+                    build_candidate_fn=_make_candidate,
+                    report=report,
+                    trace=trace,
+                    warnings=warnings,
+                )
+            )
+            phones_found = sum(len(c.contact.phones) for c in candidates)
+            queries_run = len(plan.generated_queries)
+            query_failures = 0
+            fetch_failures = 0
+            raw_results_count = len(candidates)
+        else:
+            # 4. Standard linear search ----------------------------------------
+            search_options = ProviderSearchOptions(
+                max_results=options.max_results_per_query,
+                location=mission.target_location,
+                language=mission.language,
+            )
+            raw_results: list[tuple[RawSearchResult, str]] = []
+            queries_run = 0
+            query_failures = 0
+
+            report(phase="searching", search_mode=options.search_mode)
+            for query in plan.generated_queries:
+                if not query:
+                    continue
                 try:
-                    page = fetcher.fetch_page(page_url)
-                    fetched_pages[page_url] = page
-                    if page.ok:
-                        pages_fetched += 1
-                    else:
-                        fetch_failures += 1
+                    results = provider.search(query, search_options)
+                    queries_run += 1
+                    raw_results.extend((r, query) for r in results)
+                    report(queries_run=queries_run, results_found=len(raw_results))
+                    trace.add(
+                        "search",
+                        f"Query returned {len(results)} results",
+                        {"query": query},
+                    )
+                except Exception as exc:
+                    query_failures += 1
+                    warnings.append(
+                        SearchWarning(
+                            code="query_failed",
+                            message=f"Query '{query}' failed: {exc}",
+                        )
+                    )
+
+            if "user_urls" in options.include_sources or options.user_provided_urls:
+                for user_url in options.user_provided_urls:
+                    raw_results.append(
+                        (
+                            RawSearchResult(
+                                title=get_domain(user_url) or user_url,
+                                url=user_url,
+                                source="user_urls",
+                            ),
+                            "user_provided",
+                        )
+                    )
+
+            report(phase="extracting")
+            pages_fetched = 0
+            emails_found = 0
+            phones_found = 0
+            candidates = []
+            fetched_pages: dict[str, object] = {}
+            for result, query in raw_results:
+                page = None
+                page_url = normalize_url(result.url)
+                if page_url in fetched_pages:
+                    page = fetched_pages[page_url]
+                elif pages_fetched < options.max_pages_to_fetch:
+                    try:
+                        page = fetcher.fetch_page(page_url)
+                        fetched_pages[page_url] = page
+                        if page.ok:
+                            pages_fetched += 1
+                        else:
+                            warnings.append(
+                                SearchWarning(
+                                    code="page_fetch_failed",
+                                    message=f"Could not fetch {result.url}: {page.error}",
+                                    severity="info",
+                                )
+                            )
+                    except Exception as exc:
                         warnings.append(
                             SearchWarning(
                                 code="page_fetch_failed",
-                                message=f"Could not fetch {result.url}: {page.error}",
+                                message=f"Could not fetch {result.url}: {exc}",
                                 severity="info",
                             )
                         )
+                try:
+                    candidate = _make_candidate(result, query, page, context)
+                    candidates.append(candidate)
+                    emails_found += len(candidate.contact.emails)
+                    phones_found += len(candidate.contact.phones)
                 except Exception as exc:
-                    fetch_failures += 1
                     warnings.append(
                         SearchWarning(
-                            code="page_fetch_failed",
-                            message=f"Could not fetch {result.url}: {exc}",
-                            severity="info",
+                            code="extraction_failed",
+                            message=f"Extraction failed for {result.url}: {exc}",
                         )
                     )
-            try:
-                candidate = _build_candidate(
-                    result, agent_input, provider.name, query, page, context
+                report(
+                    pages_fetched=pages_fetched,
+                    emails_found=emails_found,
+                    phones_found=phones_found,
+                    candidates_built=len(candidates),
                 )
-                candidates.append(candidate)
-                emails_found += len(candidate.contact.emails)
-                phones_found += len(candidate.contact.phones)
-            except Exception as exc:
-                warnings.append(
-                    SearchWarning(
-                        code="extraction_failed",
-                        message=f"Extraction failed for {result.url}: {exc}",
-                    )
-                )
-            report(
-                pages_fetched=pages_fetched,
-                emails_found=emails_found,
-                phones_found=phones_found,
-                candidates_built=len(candidates),
+            raw_results_count = len(raw_results)
+            fetch_failures = 0
+
+        if not use_deep_loop:
+            trace.add(
+                "extract",
+                f"Built {len(candidates)} candidates from {raw_results_count} raw results",
+                {"pagesFetched": pages_fetched},
             )
-        trace.add(
-            "extract",
-            f"Built {len(candidates)} candidates from {len(raw_results)} raw results",
-            {"pagesFetched": pages_fetched},
-        )
 
         # 6. Dedupe ------------------------------------------------------------
         candidates, duplicates_removed = dedupe_candidates(candidates)
@@ -362,13 +400,24 @@ def run_search_agent(
         leads_scored = 0
         shortlisted = 0
         rejected = 0
+
+        if options.llm_score_candidates and candidates:
+            report(phase="scoring", search_mode=options.search_mode)
+            llm_scored = score_candidates_with_llm(candidates, agent_input)
+            trace.add("score", f"Groq LLM scored {llm_scored} candidates (deep search)")
+
         for candidate in candidates:
-            page = fetched_pages.get(candidate.website_url or "")
-            website_ok = bool(page is not None and page.ok)
-            page_text = page.text if website_ok else None
-            scoring = score_candidate(candidate, context, page_text, website_ok)
-            candidate.scores = scoring.scores
-            candidate.classification = classify_candidate(candidate, scoring, mission)
+            if options.llm_score_candidates and candidate.scores.overall_score > 0:
+                pass
+            else:
+                page = fetched_pages.get(candidate.website_url or "")
+                website_ok = bool(page is not None and getattr(page, "ok", False))
+                page_text = page.text if website_ok else None
+                scoring = score_candidate(candidate, context, page_text, website_ok)
+                candidate.scores = scoring.scores
+                candidate.classification = classify_candidate(
+                    candidate, scoring, mission
+                )
             candidate.updated_at = now_iso()
             leads_scored += 1
             if candidate.classification.category == "high_fit":
@@ -377,10 +426,8 @@ def run_search_agent(
                 rejected += 1
             report(leads_scored=leads_scored, shortlisted=shortlisted, rejected=rejected)
 
-        # 8. Sort + group ----------------------------------------------------
+        # 8. Sort + group (no lead-count cap — agent runs free) --------------
         candidates.sort(key=lambda c: c.scores.overall_score, reverse=True)
-        if mission.desired_lead_count:
-            candidates = candidates[: max(mission.desired_lead_count, 1)]
         for candidate in candidates:
             bucket = {
                 "high_fit": groups.high_fit,
@@ -411,7 +458,7 @@ def run_search_agent(
 
         summary = Summary(
             queries_run=queries_run,
-            raw_results_found=len(raw_results),
+            raw_results_found=raw_results_count,
             pages_fetched=pages_fetched,
             candidates_created=len(candidates),
             duplicates_removed=duplicates_removed,

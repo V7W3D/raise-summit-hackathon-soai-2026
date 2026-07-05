@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import re
-from typing import Literal
+from typing import Any, Literal
+
+from models.schemas.prospect_segments import ProspectSegment
 
 MissionPriority = Literal["fast_wins", "high_value", "broad_coverage"]
 MissionUrgency = Literal["low", "medium", "high"]
@@ -90,6 +92,108 @@ def suggest_industries_from_profile(
 		add(industry.capitalize())
 
 	return suggestions[:8]
+
+
+def suggest_prospect_segments_fallback(
+	business_profile: dict[str, Any] | None = None,
+) -> list[ProspectSegment]:
+	"""Deterministic segments aligned with what the seller offers — not generic trades."""
+	profile = business_profile or {}
+	what = str(profile.get("whatWeSell") or profile.get("what_we_sell") or "").lower()
+	ideal_text = " ".join(
+		profile.get("idealCustomers") or profile.get("ideal_customers") or []
+	).lower()
+	value = str(
+		profile.get("valueProposition") or profile.get("value_proposition") or ""
+	).lower()
+	product_text = f"{what} {value}"
+
+	call_product = any(
+		token in product_text
+		for token in ("phone", "call", "reception", "receptionist", "inbound", "missed call")
+	)
+
+	if call_product:
+		return [
+			ProspectSegment(
+				id="emergency-on-call",
+				label="Emergency & on-call local services",
+				target="emergency plumber locksmith HVAC",
+				reason="They promise 24/7 response but miss inbound calls while teams are on jobs",
+				trigger_signals=["24/7 service", "Emergency calls", "Phone-first booking"],
+				buyer_roles=["Owner"],
+			),
+			ProspectSegment(
+				id="appointment-front-desk",
+				label="Appointment-based businesses with a front desk",
+				target="dental clinic veterinary salon",
+				reason="Staff serving clients can't answer the phone — calls go to voicemail",
+				trigger_signals=["Online booking", "Reception desk", "High appointment volume"],
+				buyer_roles=["Owner", "Office manager"],
+			),
+			ProspectSegment(
+				id="field-service-teams",
+				label="Field service teams (quotes & scheduling by phone)",
+				target="home renovation roofing landscaping",
+				reason="Owners are in the field; new customer calls compete with active work",
+				trigger_signals=["Free quote", "Mobile team", "Call to schedule"],
+				buyer_roles=["Owner"],
+			),
+			ProspectSegment(
+				id="auto-garage-inbound",
+				label="Auto repair & garages with high inbound volume",
+				target="auto garage mechanic car repair",
+				reason="Workshop noise and busy bays make live call handling unreliable",
+				trigger_signals=["Breakdown service", "Same-day repair", "Phone estimates"],
+				buyer_roles=["Owner", "Shop manager"],
+			),
+			ProspectSegment(
+				id="property-maintenance",
+				label="Property maintenance with after-hours demand",
+				target="property maintenance facility management",
+				reason="Tenants call outside business hours; small teams can't cover every line",
+				trigger_signals=["After-hours", "Tenant support", "On-call maintenance"],
+				buyer_roles=["Operations manager"],
+			),
+		]
+
+	# Generic B2B fallback — derive from product description + ideal customers
+	industries = suggest_industries_from_profile(
+		profile.get("idealCustomers") or profile.get("ideal_customers"),
+		profile.get("businessType") or profile.get("business_type"),
+	)
+	product_hint = what.strip()[:100] or "your offering"
+	target_phrase = (
+		" ".join(ind.lower() for ind in industries[:3])
+		or " ".join(word for word in ideal_text.split()[:4])
+		or "organizations matching your ICP"
+	)
+	return [
+		ProspectSegment(
+			id="profile-aligned",
+			label="Organizations matching your ideal customer profile",
+			target=target_phrase,
+			reason=f"Prospects aligned with who you sell to and likely to need {product_hint}",
+			trigger_signals=["Active online presence", "Growing team"],
+			buyer_roles=["Owner", "Decision maker"],
+		),
+		ProspectSegment(
+			id="product-fit",
+			label="Buyers with pain your product solves",
+			target=f"{target_phrase} {what.split()[0] if what else 'buyers'}".strip(),
+			reason=f"Targets chosen for fit with what you sell: {product_hint}",
+			trigger_signals=["Recent hiring", "Digital transformation", "Compliance needs"],
+			buyer_roles=["Founder", "Operations manager"],
+		),
+		ProspectSegment(
+			id="growth-segment",
+			label="Growing teams expanding their stack",
+			target=f"growing {target_phrase}",
+			reason="Scaling organizations often adopt new tools that match your value proposition",
+			trigger_signals=["Hiring", "New location", "Expanded services"],
+			buyer_roles=["Founder", "Owner"],
+		),
+	]
 
 
 def suggest_business_sizes() -> list[str]:

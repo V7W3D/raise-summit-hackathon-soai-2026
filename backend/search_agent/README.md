@@ -51,8 +51,9 @@ API key in `backend/.env`. Missing configuration raises `ProviderNotConfiguredEr
 Mission create (`POST /missions`) reads `SEARCH_PROVIDER` from the environment
 when no explicit provider is passed.
 
-Optional LLM planning uses `ANTHROPIC_API_KEY` + the `anthropic` package and
-only runs when `searchOptions.allowLLM` is true; otherwise (or on any LLM
+Optional LLM planning uses `GROQ_API_KEY` (same as mission assist / outreach) and
+runs when `searchOptions.allowLLM` is true. Mission searches from the UI enable
+LLM planning automatically when `GROQ_API_KEY` is set; otherwise (or on any LLM
 error) the deterministic fallback plan is used.
 
 ## Layout

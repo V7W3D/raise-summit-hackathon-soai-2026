@@ -114,13 +114,6 @@ export function MissionDetailsContent({ mission, title = 'Mission details' }: Mi
         </div>
       </div>
 
-      <div className="create-step" style={{ marginBottom: 0 }}>
-        <div className="create-step-head">
-          <span className="step-num">4</span> Goal
-        </div>
-        <DetailField label="Desired lead count" value={mission.desiredLeadCount} />
-      </div>
-
       <div className="create-note">
         <Info /> This mission packages one prospecting objective with clear targeting and output.
       </div>

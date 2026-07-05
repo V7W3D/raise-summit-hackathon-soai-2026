@@ -14,6 +14,8 @@ import { ScoreRing, fitColor } from '@components/ScoreRing';
 import { useLeads } from './use-discover-api-queries';
 import { useMissions } from '../missions/use-missions-api-queries';
 import type { LeadVM } from '../leads/use-leads-api-queries';
+import { NetworkMemberBadge } from '../leads/NetworkMemberBadge';
+import '../leads/network-member-badge.css';
 import {
   countByCategory,
   filterLeadsByCategory,
@@ -339,13 +341,20 @@ export function DiscoverPage() {
             />
           ) : (
             filteredLeads.map((lead) => (
-              <Link key={lead.id} to={`/leads/${lead.id}`} className="card lead-card">
+              <Link
+                key={lead.id}
+                to={`/leads/${lead.id}`}
+                className={`card lead-card${lead.isNetworkMember ? ` network-member${lead.networkBadge === 'sponsored' ? ' sponsored' : ''}` : ''}`}
+              >
                 <div className="lead-card-main">
                   <span className="lead-logo" style={{ background: lead.logoColor }}>
                     {lead.initials}
                   </span>
                   <div className="lead-identity-body">
-                    <div className="lead-name">{lead.name}</div>
+                    <div className="lead-name-row">
+                      <div className="lead-name">{lead.name}</div>
+                      <NetworkMemberBadge lead={lead} />
+                    </div>
                     <div className="lead-desc">{lead.description}</div>
                     <div className="lead-meta-row">
                       <span className="lead-loc">

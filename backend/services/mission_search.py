@@ -119,7 +119,12 @@ def _execute_mission_search(db: Session, mission_id: int, user_id: int) -> None:
 
 	final_status = "ready"
 	lead_count = 0
-	search_progress.start_progress(mission_id)
+	from search_agent.search_profiles import search_mode_label
+	from services.missions import get_mission
+
+	mission = get_mission(db, mission_id)
+	mode_label = search_mode_label(mission.mission_priority if mission else None)
+	search_progress.start_progress(mission_id, search_mode=mode_label)
 
 	def on_progress(fields: dict) -> None:
 		search_progress.update_progress(mission_id, **fields)

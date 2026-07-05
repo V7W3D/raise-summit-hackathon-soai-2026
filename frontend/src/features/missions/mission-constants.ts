@@ -28,22 +28,26 @@ export const languageOptions = [
 
 export const MISSION_PRIORITY_META: Record<
   MissionPriority,
-  { label: string; description: string; urgencyEffect: string }
+  { label: string; description: string; urgencyEffect: string; searchMode: string }
 > = {
   fast_wins: {
     label: 'Fast wins',
     description: 'Prioritize leads you can contact quickly with visible phone numbers.',
-    urgencyEffect: 'Search favors contactable businesses and recent activity.',
+    urgencyEffect: 'Runs a fast search — 3 direct queries, no LLM planning, quickest verdict.',
+    searchMode: 'Fast search',
   },
   high_value: {
     label: 'High value',
     description: 'Prioritize best-fit accounts even if the list is smaller.',
-    urgencyEffect: 'Search favors ICP fit and buying signals over volume.',
+    urgencyEffect: 'Runs a balanced search — LLM-planned queries with stricter fit scoring.',
+    searchMode: 'Balanced search',
   },
   broad_coverage: {
     label: 'Broad coverage',
     description: 'Maximize market reach across your target segment.',
-    urgencyEffect: 'Search explores wider sources to fill the lead count.',
+    urgencyEffect:
+      'Evolutive deep search — 3 rounds of search, LLM evaluates each batch and evolves queries, then Groq scores every lead.',
+    searchMode: 'Deep search',
   },
 };
 
@@ -63,38 +67,48 @@ export const DIFFICULTY_LABELS = {
 export const WIZARD_STEPS = [
   { id: 'what', label: 'What' },
   { id: 'priority', label: 'Mode' },
-  { id: 'goal', label: 'Goal' },
+  { id: 'goal', label: 'Filters' },
   { id: 'review', label: 'Review' },
 ] as const;
 
 export type WizardStepId = (typeof WIZARD_STEPS)[number]['id'];
 
 export type MissionFormState = {
-  targetKeywords: string[];
+  selectedSegmentId: string;
+  segmentLabel: string;
   target: string;
   location: string;
   language: string;
+  triggerSignals: string[];
+  buyerRoles: string[];
   missionPriority: MissionPriority | '';
   negativeFilters: string[];
   outreachChannel: OutreachChannel | '';
-  targetBusinessSize: string;
+  targetBusinessSizes: string[];
   desiredLeadCount: number;
   customLeadCount: string;
   name: string;
   nameManuallyEdited: boolean;
+  prospectBrief: string;
+  assistReasoning: string;
 };
 
 export const INITIAL_MISSION_FORM: MissionFormState = {
-  targetKeywords: [],
+  selectedSegmentId: '',
+  segmentLabel: '',
   target: '',
   location: '',
   language: 'fr',
+  triggerSignals: [],
+  buyerRoles: [],
   missionPriority: 'fast_wins',
   negativeFilters: [],
   outreachChannel: 'mixed',
-  targetBusinessSize: 'small',
+  targetBusinessSizes: ['small'],
   desiredLeadCount: 25,
   customLeadCount: '',
   name: '',
   nameManuallyEdited: false,
+  prospectBrief: '',
+  assistReasoning: '',
 };

@@ -47,6 +47,10 @@ export const leadSchema = z
     recommended: z.array(z.string()),
     evidence: z.array(evidenceSchema),
     sources_scanned: z.array(sourceScannedSchema),
+    is_network_member: z.boolean().default(false),
+    network_member_name: z.string().nullable().optional(),
+    network_badge: z.enum(['verified', 'sponsored']).nullable().optional(),
+    network_pitch: z.string().nullable().optional(),
     created_at: z.string(),
     updated_at: z.string(),
   })
@@ -69,6 +73,10 @@ export const leadSchema = z
         recommended: dto.recommended,
         evidence: dto.evidence,
         sourcesScanned: dto.sources_scanned,
+        isNetworkMember: dto.is_network_member,
+        networkMemberName: dto.network_member_name ?? null,
+        networkBadge: dto.network_badge ?? null,
+        networkPitch: dto.network_pitch ?? null,
       }),
     ),
   );

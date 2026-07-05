@@ -10,7 +10,11 @@ from typing import Any
 import httpx
 
 from models.schemas.mission_assist import MissionAssistResponse
-from services.mission_intelligence import suggest_industries_from_profile
+from models.schemas.prospect_segments import ProspectSegment, ProspectSegmentsResponse
+from services.mission_intelligence import (
+	suggest_industries_from_profile,
+	suggest_prospect_segments_fallback,
+)
 
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_MODEL = "llama-3.1-8b-instant"
@@ -29,17 +33,46 @@ Rules:
 Return JSON only:
 {"keywords": ["Plumber", "Electrician", "Locksmith", "Garage", "Clinic"]}"""
 
+PROSPECT_SEGMENTS_PROMPT = """You are a B2B prospecting strategist. Read the businessProfile JSON carefully.
+Suggest 5 prospect segments — types of organizations that would BUY what the seller offers (whatWeSell).
+
+Critical rules:
+- Segments MUST follow whatWeSell first. If the product changed, segments must change too.
+- Do NOT reuse segments from a previous product (e.g. phone reception) unless whatWeSell is about calls/phones.
+- Each segment explains WHY they need THIS seller's product (pain/fit), not just an industry name.
+- "target" is a short web search phrase (2-5 words, lowercase) for finding those buyers online.
+- Use idealCustomers and badFitCustomers to steer fit; ignore stale wording that contradicts whatWeSell.
+- Labels are human-readable titles (not one word).
+- triggerSignals are observable buying signals relevant to THIS product.
+
+Return JSON only with exactly 5 segments:
+{
+  "segments": [
+    {
+      "id": "short-slug",
+      "label": "Human-readable segment title",
+      "target": "search phrase for prospects",
+      "reason": "Why this segment needs what the seller sells",
+      "triggerSignals": ["signal 1", "signal 2"],
+      "buyerRoles": ["Role 1", "Role 2"]
+    }
+  ]
+}"""
+
 SYSTEM_PROMPT = """You are a B2B prospecting strategist helping sales teams define targeting missions.
-Given a business profile and a natural-language description of who the user wants to find,
-return a JSON object only — no markdown, no commentary.
+Given a business profile (what the seller sells) and a natural-language description of WHO
+the user wants to find (userQuery), return a JSON object only — no markdown, no commentary.
 
 Rules:
+- userQuery defines the PROSPECT TYPE to hunt — not what the seller sells.
+- target and target_label must reflect userQuery first. Do not substitute cybersecurity,
+  physical security, or unrelated industries unless userQuery asks for them.
+- If userQuery says "social media", target social media agencies, community managers, etc.
 - Be specific and practical for local B2B prospecting.
-- Suggest realistic buyer roles, trigger signals, and filters.
+- Suggest realistic buyer roles, trigger signals, and filters for the PROSPECT type.
 - Infer location from the query when mentioned; otherwise leave location empty.
-- related_targets must contain 4-6 alternative target types the user might also want.
-- Use concise labels matching common sales vocabulary.
-- Align suggestions with what the seller actually sells.
+- related_targets must contain 4-6 alternative prospect types the user might also want.
+- Align trigger_signals with the prospect type, not the seller's product keywords.
 - Prefer French market context when geographies include France.
 
 Return JSON matching this schema:
@@ -225,6 +258,61 @@ def generate_target_keywords(
 			["Plumber", "Electrician", "Locksmith", "Garage", "Clinic", "Restaurant", "Construction"]
 		)
 	return keywords[:7], "fallback"
+
+
+def _normalize_segments(values: object) -> list[ProspectSegment]:
+	if not isinstance(values, list):
+		return []
+	segments: list[ProspectSegment] = []
+	seen_ids: set[str] = set()
+	for item in values:
+		if not isinstance(item, dict):
+			continue
+		segment_id = str(item.get("id") or "").strip()
+		label = str(item.get("label") or "").strip()
+		target = str(item.get("target") or "").strip()
+		reason = str(item.get("reason") or "").strip()
+		if not segment_id or not label or not target or not reason:
+			continue
+		if segment_id in seen_ids:
+			continue
+		seen_ids.add(segment_id)
+		segments.append(
+			ProspectSegment(
+				id=segment_id,
+				label=label,
+				target=target[:120],
+				reason=reason[:240],
+				trigger_signals=_normalize_list(
+					item.get("triggerSignals") or item.get("trigger_signals")
+				),
+				buyer_roles=_normalize_list(
+					item.get("buyerRoles") or item.get("buyer_roles")
+				),
+			)
+		)
+	return segments[:6]
+
+
+def generate_prospect_segments(
+	*,
+	business_profile: dict[str, Any] | None = None,
+) -> ProspectSegmentsResponse:
+	user_prompt = json.dumps({"businessProfile": business_profile or {}}, ensure_ascii=False)
+	try:
+		raw = _generate_with_llm(
+			user_prompt=user_prompt,
+			system_instruction=PROSPECT_SEGMENTS_PROMPT,
+		)
+		parsed = _extract_json(raw)
+		segments = _normalize_segments(parsed.get("segments"))
+		if len(segments) >= 3:
+			return ProspectSegmentsResponse(segments=segments, source="llm")
+	except (MissionLLMError, Exception):
+		pass
+
+	fallback = suggest_prospect_segments_fallback(business_profile)
+	return ProspectSegmentsResponse(segments=fallback, source="fallback")
 
 
 def generate_mission_assist(

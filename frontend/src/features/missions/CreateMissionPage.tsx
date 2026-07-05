@@ -12,7 +12,8 @@ export function CreateMissionPage() {
 
       <h1 className="page-title">Launch a Prospecting Mission</h1>
       <p className="page-subtitle">
-        Tell us who you want, where, and what matters most — we build the mission for you.
+        Choose who fits your offer, where to hunt, and launch — targeting follows your
+        business profile.
       </p>
 
       <div className="card create-mission-page">

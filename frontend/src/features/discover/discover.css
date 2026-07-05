@@ -344,6 +344,14 @@ button.toggle-row {
   flex-shrink: 0;
 }
 
+.lead-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
 .lead-name {
   font-weight: 600;
   font-size: 0.875rem;
