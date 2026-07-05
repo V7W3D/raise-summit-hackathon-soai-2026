@@ -49,8 +49,5 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 
-# SQLite
-*.db
-
 # Misc
 *.local
