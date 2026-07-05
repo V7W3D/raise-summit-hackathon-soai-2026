@@ -252,10 +252,6 @@ export function MissionSearchPanel({ mission, autoStart = false }: MissionSearch
         </div>
       ) : (
         <div className="mission-search-idle">
-          <p className="mission-search-idle-copy">
-            Run the agent whenever you want fresh leads. Each run adds new businesses without
-            duplicating ones you already have.
-          </p>
           {isFailed ? (
             <p className="mission-search-error" role="alert">
               Last search did not finish successfully. Try again — Tavily searches usually take

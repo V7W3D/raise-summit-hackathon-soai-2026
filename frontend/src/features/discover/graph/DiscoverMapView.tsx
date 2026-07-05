@@ -103,8 +103,6 @@ export function DiscoverMapView({
     onSelectCluster?.([]);
   };
 
-  const priorityCount = mapModel.segments.find((segment) => segment.id === 'fast_wins')?.leads.length ?? 0;
-
   return (
     <div className="discover-map">
       <div className="discover-map-header card">
@@ -112,10 +110,6 @@ export function DiscoverMapView({
           <Target size={18} />
           <div>
             <strong>Opportunity map</strong>
-            <p>
-              Spot who to contact first, what is missing, and which segment to action in bulk.
-              {priorityCount > 0 ? ` ${priorityCount} fast-win lead${priorityCount === 1 ? '' : 's'} ready.` : ''}
-            </p>
           </div>
         </div>
 

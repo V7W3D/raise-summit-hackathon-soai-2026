@@ -173,12 +173,6 @@ export function MissionVerdictPage() {
           <h1 className="page-title">
             <Sparkles size={22} className="verdict-title-icon" /> Agent verdict
           </h1>
-          <p className="page-subtitle">
-            {mission
-              ? `${mission.target || mission.name}${mission.location ? ` in ${mission.location}` : ''}`
-              : 'Mission results'}{' '}
-            — contact {shortlist.length}, skip {skipped.length}.
-          </p>
         </div>
         <Link to={`/discover?mission=${id}`} className="btn btn-outline">
           <Search size={15} /> Open in Discover

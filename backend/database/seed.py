@@ -113,10 +113,6 @@ LEADS = [
 				"source": "Homepage",
 			},
 			{
-				"quote": "Plombier à Lyon — dépannage rapide, installation, fuite d'eau, débouchage, chauffe-eau…",
-				"source": "Homepage",
-			},
-			{
 				"quote": "Appelez-nous au 04 78 123 456 pour une intervention rapide. Devis gratuit.",
 				"source": "Contact page",
 			},
