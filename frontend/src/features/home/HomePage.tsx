@@ -38,15 +38,6 @@ export function HomePage() {
 
       <div className="home-top">
         <div className="home-intro">
-          <div className="home-kpi-grid">
-            {keyMetrics.map((stat) => (
-              <div key={stat.label} className="home-kpi-widget">
-                <span className="home-kpi-value">{stat.value}</span>
-                <span className="home-kpi-label">{stat.label}</span>
-              </div>
-            ))}
-          </div>
-
           <nav className="home-actions" aria-label="Quick actions">
             <Link to="/missions/new" className="home-btn home-btn-primary">
               <Plus /> Start new mission
@@ -55,54 +46,63 @@ export function HomePage() {
               <Play /> Continue current mission
             </Link>
           </nav>
+
+          <div className="home-kpi-grid">
+            {keyMetrics.map((stat) => (
+              <div key={stat.label} className="home-kpi-widget">
+                <span className="home-kpi-value">{stat.value}</span>
+                <span className="home-kpi-label">{stat.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
       <div className="home-grid">
-        <section className="home-panel">
-          <div className="home-panel-head">
-            <h2 className="home-panel-title">Missions</h2>
-            <Link className="home-panel-link" to="/missions">
+        <section className="home-section">
+          <div className="home-section-head">
+            <h2 className="home-section-title">Missions</h2>
+            <Link className="home-section-link" to="/missions">
               View all <ArrowRight />
             </Link>
           </div>
-          <ul className="home-missions">
+          <div className="home-item-grid">
             {missions.map((mission) => (
-              <li key={mission.id} className="home-mission">
-                <div className="home-mission-row">
-                  <span className="home-mission-name">{mission.name}</span>
-                  <span className="home-mission-pct">{mission.progress}%</span>
-                </div>
+              <Link
+                key={mission.id}
+                to={`/missions/${mission.id}`}
+                className="home-item-widget home-mission-widget"
+              >
+                <span className="home-mission-name">{mission.name}</span>
                 <span className="home-mission-meta">{mission.updated}</span>
-                <div className="home-mission-bar">
-                  <div className="home-mission-fill" style={{ width: `${mission.progress}%` }} />
-                </div>
-              </li>
+              </Link>
             ))}
-          </ul>
+          </div>
         </section>
 
-        <section className="home-panel">
-          <div className="home-panel-head">
-            <h2 className="home-panel-title">Prospects</h2>
-            <Link className="home-panel-link" to="/discover">
+        <section className="home-section">
+          <div className="home-section-head">
+            <h2 className="home-section-title">Prospects</h2>
+            <Link className="home-section-link" to="/discover">
               View all <ArrowRight />
             </Link>
           </div>
-          <ul className="home-prospects">
+          <div className="home-item-grid">
             {prospects.map((prospect) => (
-              <li key={prospect.id}>
-                <Link to={`/leads/${prospect.id}`} className="home-prospect">
-                  <div className="home-prospect-row">
-                    <span className="home-prospect-name">{prospect.name}</span>
-                    <span className="home-prospect-time">{prospect.time}</span>
-                  </div>
-                  <span className="home-prospect-meta">{prospect.meta}</span>
-                  <span className="home-prospect-fit">{prospect.fit}</span>
-                </Link>
-              </li>
+              <Link
+                key={prospect.id}
+                to={`/leads/${prospect.id}`}
+                className="home-item-widget home-prospect-widget"
+              >
+                <div className="home-prospect-row">
+                  <span className="home-prospect-name">{prospect.name}</span>
+                  <span className="home-prospect-time">{prospect.time}</span>
+                </div>
+                <span className="home-prospect-meta">{prospect.meta}</span>
+                <span className="home-prospect-fit">{prospect.fit}</span>
+              </Link>
             ))}
-          </ul>
+          </div>
         </section>
       </div>
     </div>

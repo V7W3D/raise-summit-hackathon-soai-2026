@@ -33,6 +33,11 @@
   --purple: #6b5f7a;
   --purple-soft: #f5f3f7;
 
+  /* Brand — Scouter logo accent blue */
+  --brand-blue: #1858e0;
+  --brand-blue-soft: #d6e6fb;
+  --brand-blue-border: #b8cff5;
+
   /* Legacy aliases for inline styles */
   --navy: var(--ink);
   --navy-800: var(--accent);
@@ -110,8 +115,8 @@ p {
 .sidebar {
   width: 188px;
   flex-shrink: 0;
-  background: var(--surface-soft);
-  border-right: 1px solid var(--border-strong);
+  background: var(--brand-blue-soft);
+  border-right: 1px solid var(--brand-blue-border);
   display: flex;
   flex-direction: column;
   padding: 40px 0 32px 40px;
@@ -176,7 +181,7 @@ p {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: var(--ink);
+  background: var(--brand-blue);
 }
 
 .sidebar-footer {

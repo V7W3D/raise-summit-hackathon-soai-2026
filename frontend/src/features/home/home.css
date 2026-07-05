@@ -55,7 +55,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  padding-left: 24px;
 }
 
 .home-btn {
@@ -105,21 +104,14 @@
   gap: 24px;
 }
 
-.home-panel {
-  padding: 20px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--surface);
-}
-
-.home-panel-head {
+.home-section-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 14px;
 }
 
-.home-panel-title {
+.home-section-title {
   margin: 0;
   font-size: 0.9375rem;
   font-weight: 600;
@@ -127,7 +119,7 @@
   letter-spacing: -0.01em;
 }
 
-.home-panel-link {
+.home-section-link {
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--faint);
@@ -137,56 +129,48 @@
   transition: color 0.15s ease;
 }
 
-.home-panel-link:hover {
+.home-section-link:hover {
   color: var(--ink);
 }
 
-.home-panel-link svg {
+.home-section-link svg {
   width: 13px;
   height: 13px;
 }
 
-/* Missions */
-.home-missions {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.home-mission {
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.home-mission:first-child {
-  padding-top: 0;
-}
-
-.home-mission:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.home-mission-row {
+.home-item-grid {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  flex-direction: column;
   gap: 12px;
 }
 
+.home-item-widget {
+  display: block;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.home-item-widget:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-soft);
+}
+
+.home-item-widget:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* Missions */
 .home-mission-name {
+  display: block;
   font-weight: 500;
   font-size: 0.875rem;
   color: var(--ink);
   letter-spacing: -0.01em;
   line-height: 1.35;
-}
-
-.home-mission-pct {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--muted);
-  flex-shrink: 0;
 }
 
 .home-mission-meta {
@@ -196,46 +180,7 @@
   margin-top: 4px;
 }
 
-.home-mission-bar {
-  height: 3px;
-  margin-top: 12px;
-  border-radius: 999px;
-  background: var(--accent-muted);
-  overflow: hidden;
-}
-
-.home-mission-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: var(--ink);
-}
-
 /* Prospects */
-.home-prospects {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.home-prospect {
-  display: block;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-  transition: opacity 0.15s ease;
-}
-
-.home-prospect:first-child {
-  padding-top: 0;
-}
-
-.home-prospect:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.home-prospect:hover {
-  opacity: 0.65;
-}
 
 .home-prospect-row {
   display: flex;
@@ -297,7 +242,6 @@
   .home-actions {
     flex-direction: column;
     align-items: stretch;
-    padding-left: 0;
   }
 
   .home-btn {
