@@ -1,29 +1,10 @@
 import { Link } from 'react-router-dom';
-import { Plus, Play, Users, Send, ArrowRight } from 'lucide-react';
+import { Plus, Play, ArrowRight } from 'lucide-react';
+import { userFirstName } from '../../lib/user-display';
 import { useDashboard } from './use-home-api-queries';
 import './home.css';
 
 const KEY_METRIC_LABELS = ['New leads found this week', 'Qualified leads'] as const;
-
-function feedShortLabel(text: string): string {
-  if (text.toLowerCase().includes('new matching business')) {
-    return 'New matching business detected';
-  }
-  if (text.toLowerCase().includes('lead changed status')) {
-    return 'A lead changed status';
-  }
-  if (text.toLowerCase().includes('duplicate')) {
-    return 'Potential duplicate found';
-  }
-  if (text.toLowerCase().includes('no longer active')) {
-    return 'Prospect website inactive';
-  }
-  if (text.toLowerCase().includes('high-fit company')) {
-    return 'New high-fit company detected';
-  }
-  const colon = text.indexOf(':');
-  return colon > 0 ? text.slice(0, colon).trim() : text;
-}
 
 export function HomePage() {
   const { data, isPending, isError } = useDashboard();
@@ -36,7 +17,10 @@ export function HomePage() {
     return <p className="home-loading">Unable to load dashboard.</p>;
   }
 
-  const { subtitle, stats, opportunityFeed, recentMissions, recentProspects } = data;
+  const { stats, recentMissions, recentProspects, user, subtitle } = data;
+  const firstName = userFirstName(user.name);
+  const welcomeSubtitle =
+    subtitle || "Here's what's happening in your workspace.";
 
   const keyMetrics = stats.filter((stat) =>
     KEY_METRIC_LABELS.includes(stat.label as (typeof KEY_METRIC_LABELS)[number]),
@@ -47,13 +31,16 @@ export function HomePage() {
 
   return (
     <div className="home">
+      <header className="home-header">
+        <h1 className="page-title">Welcome back, {firstName}</h1>
+        <p className="page-subtitle">{welcomeSubtitle}</p>
+      </header>
+
       <div className="home-top">
         <div className="home-intro">
-          <p className="home-headline">{subtitle}</p>
-
-          <div className="home-kpis">
+          <div className="home-kpi-grid">
             {keyMetrics.map((stat) => (
-              <div key={stat.label} className="home-kpi">
+              <div key={stat.label} className="home-kpi-widget">
                 <span className="home-kpi-value">{stat.value}</span>
                 <span className="home-kpi-label">{stat.label}</span>
               </div>
@@ -61,36 +48,14 @@ export function HomePage() {
           </div>
 
           <nav className="home-actions" aria-label="Quick actions">
-            <Link to="/missions" className="home-btn home-btn-primary">
+            <Link to="/missions/new" className="home-btn home-btn-primary">
               <Plus /> Start new mission
             </Link>
             <Link to="/discover" className="home-btn home-btn-outline">
               <Play /> Continue current mission
             </Link>
-            <Link to="/discover" className="home-btn home-btn-outline">
-              <Users /> Review leads
-            </Link>
-            <button type="button" className="home-btn home-btn-outline">
-              <Send /> Send follow-ups
-            </button>
           </nav>
         </div>
-
-        <aside className="home-activity card">
-          <div className="home-activity-head">
-            <span className="home-activity-title">Recent activity</span>
-            <span className="home-activity-count">{opportunityFeed.length}</span>
-          </div>
-          <ul className="home-activity-list">
-            {opportunityFeed.map((item) => (
-              <li key={item.text} className="home-activity-item">
-                <span className="home-activity-dot" style={{ background: item.dot }} />
-                <span className="home-activity-msg">{feedShortLabel(item.text)}</span>
-                <span className="home-activity-time">{item.time}</span>
-              </li>
-            ))}
-          </ul>
-        </aside>
       </div>
 
       <div className="home-grid">

@@ -2,18 +2,12 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Sparkles,
-  RefreshCw,
-  Bookmark,
-  MoreHorizontal,
   MoreVertical,
   Building2,
-  ChevronDown,
   MapPin,
-  X,
+  Factory,
   Check,
   ArrowUpDown,
-  CircleX,
-  Search,
   Eye,
   Send,
   AlertCircle,
@@ -48,6 +42,7 @@ function BrandDot({ bg, label }: { bg: string; label: string }) {
 }
 import { ScoreRing, fitColor } from '@components/ScoreRing';
 import { useLeads } from './use-discover-api-queries';
+import { useMissions } from '../missions/use-missions-api-queries';
 import type { LeadVM } from '../leads/use-leads-api-queries';
 import {
   countByCategory,
@@ -68,11 +63,7 @@ const FIT_CATEGORIES: FitCategory[] = [
   'rejected',
 ];
 
-const SOURCES = ['Websites', 'Directories', 'LinkedIn', 'Maps'];
-const INDUSTRIES = ['Construction', 'Plumbing', 'Renovation', 'Roofing'];
-const TOGGLES = ['Has contact info', 'Has website', 'Active / recently active'];
-const SIZES = ['1–10', '10–50', '50–200'];
-const ROLES = ['Owner', 'Operations', 'Office Manager'];
+const ALL_MISSIONS = -1;
 
 const scorePill: Record<LeadVM['scoreTone'], string> = {
   green: 'pill-green',
@@ -80,17 +71,89 @@ const scorePill: Record<LeadVM['scoreTone'], string> = {
   orange: 'pill-orange',
 };
 
+function leadCity(lead: LeadVM): string {
+  return lead.location.split(',')[0]?.trim() ?? '';
+}
+
 export function DiscoverPage() {
   const [activeCategory, setActiveCategory] = useState<FitCategory>('high_fit');
   const [viewMode, setViewMode] = useState<DiscoverViewMode>('list');
-  const { data, isPending, isError } = useLeads();
-  const discoverLeads = data ?? [];
+  const [missionChoice, setMissionChoice] = useState<number | null>(null);
+  const [locationFilter, setLocationFilter] = useState<string | null>(null);
+  const [industryFilter, setIndustryFilter] = useState<string | null>(null);
+  const [requireContact, setRequireContact] = useState(false);
+  const [requireEmail, setRequireEmail] = useState(false);
+  const [requirePhone, setRequirePhone] = useState(false);
+  const [requireWebsite, setRequireWebsite] = useState(false);
+  const [sortDesc, setSortDesc] = useState(true);
 
-  const categoryCounts = useMemo(() => countByCategory(discoverLeads), [discoverLeads]);
-  const filteredLeads = useMemo(
-    () => filterLeadsByCategory(discoverLeads, activeCategory),
-    [discoverLeads, activeCategory],
+  const { data: missions } = useMissions();
+  const selectedMissionId = missionChoice ?? missions?.[0]?.id ?? ALL_MISSIONS;
+  const activeMission = missions?.find((mission) => mission.id === selectedMissionId);
+
+  const { data, isPending, isError } = useLeads({
+    missionId: selectedMissionId === ALL_MISSIONS ? undefined : selectedMissionId,
+  });
+  const discoverLeads = useMemo(() => data ?? [], [data]);
+
+  const locations = useMemo(() => {
+    const cities = discoverLeads.map(leadCity).filter(Boolean);
+    return [...new Set(cities)].slice(0, 6);
+  }, [discoverLeads]);
+
+  const industries = useMemo(() => {
+    const items = discoverLeads.map((lead) => lead.industry).filter(Boolean);
+    return [...new Set(items)].slice(0, 8);
+  }, [discoverLeads]);
+
+  const resetFilters = () => {
+    setLocationFilter(null);
+    setIndustryFilter(null);
+    setRequireContact(false);
+    setRequireEmail(false);
+    setRequirePhone(false);
+    setRequireWebsite(false);
+  };
+
+  /* Sidebar filters apply before the category tabs so tab counts stay honest. */
+  const baseLeads = useMemo(
+    () =>
+      discoverLeads.filter((lead) => {
+        if (locationFilter && leadCity(lead) !== locationFilter) return false;
+        if (industryFilter && lead.industry !== industryFilter) return false;
+        if (requireContact && !lead.email && !lead.phone) return false;
+        if (requireEmail && !lead.email) return false;
+        if (requirePhone && !lead.phone) return false;
+        if (requireWebsite && !lead.website) return false;
+        return true;
+      }),
+    [
+      discoverLeads,
+      locationFilter,
+      industryFilter,
+      requireContact,
+      requireEmail,
+      requirePhone,
+      requireWebsite,
+    ],
   );
+
+  const categoryCounts = useMemo(() => countByCategory(baseLeads), [baseLeads]);
+  const filteredLeads = useMemo(
+    () =>
+      filterLeadsByCategory(baseLeads, activeCategory).sort((a, b) =>
+        sortDesc ? b.score - a.score : a.score - b.score,
+      ),
+    [baseLeads, activeCategory, sortDesc],
+  );
+
+  const hasActiveFilters =
+    locationFilter !== null ||
+    industryFilter !== null ||
+    requireContact ||
+    requireEmail ||
+    requirePhone ||
+    requireWebsite;
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [outreachLeadId, setOutreachLeadId] = useState<number | null>(null);
@@ -100,6 +163,9 @@ export function DiscoverPage() {
     filteredLeads[0] ??
     discoverLeads[0];
   const outreachLead = discoverLeads.find((lead) => lead.id === outreachLeadId);
+  const outreachMissionName = outreachLead
+    ? missions?.find((mission) => mission.id === outreachLead.missionId)?.name
+    : undefined;
 
   if (isPending) {
     return <p className="page-subtitle">Loading…</p>;
@@ -112,184 +178,164 @@ export function DiscoverPage() {
   return (
     <div>
       <div className="discover-header">
-        <div>
-          <div className="discover-title-row">
-            <h1 className="page-title">Discover Leads</h1>
-          </div>
-          <p className="page-subtitle" style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-            AI-assisted lead discovery &amp; verification for your mission.
-            <span className="pill pill-blue">
-              Evidence-backed ranking <Sparkles size={12} />
-            </span>
-          </p>
-        </div>
-        <div className="discover-header-actions">
-          <span className="pill pill-green" style={{ padding: '8px 14px' }}>
-            ● Mission active
-          </span>
-          <button className="btn btn-outline">
-            <RefreshCw /> Run new search
-          </button>
-          <button className="btn btn-primary">
-            <Bookmark /> Save shortlist
-          </button>
-          <button className="icon-btn bordered" aria-label="More options">
-            <MoreHorizontal size={17} />
-          </button>
-        </div>
+        <h1 className="page-title">Discover Leads</h1>
       </div>
 
-      <div className="card mission-banner">
+      <div className="card mission-bar">
         <span className="icon-tile blue">
           <Building2 />
         </span>
-        <div className="mission-banner-info">
-          <div className="mission-banner-name">Construction Clients – Lyon</div>
-          <div className="mission-banner-target">
-            Target: small construction service businesses • Goal: find likely prospects for AI call reception
-          </div>
+        <div className="mission-bar-info">
+          <span className="mission-bar-name">
+            {activeMission ? activeMission.name : 'All missions'}
+            {activeMission && <span className="mission-bar-dot" />}
+          </span>
+          {activeMission && (
+            <span className="mission-bar-meta">
+              {[activeMission.location, activeMission.target || activeMission.targetIndustry]
+                .filter(Boolean)
+                .join(' · ')}
+            </span>
+          )}
         </div>
-        <div className="mission-banner-stats">
-          <div>
-            <div className="mb-stat-value">{discoverLeads.length}</div>
-            <div className="mb-stat-label">Leads discovered</div>
-          </div>
-          <div>
-            <div className="mb-stat-value">{categoryCounts.high_fit}</div>
-            <div className="mb-stat-label">High fit</div>
-          </div>
-          <div>
-            <div className="mb-stat-value">7</div>
-            <div className="mb-stat-label">Contacted</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <ScoreRing value={33} size={52} stroke={5} color="var(--accent)" fontSize={12} label="33%" />
-            <div className="mb-stat-label" style={{ marginTop: 4 }}>
-              Mission progress
-            </div>
-          </div>
+        <div className="mission-bar-stats">
+          <span>
+            <strong>{discoverLeads.length}</strong> leads
+          </span>
+          <span>
+            <strong>{countByCategory(discoverLeads).high_fit}</strong> high fit
+          </span>
         </div>
       </div>
 
-      <div className="discover-layout">
+      <div className={`discover-layout${selected ? '' : ' no-panel'}`}>
         <aside className="card filters-panel">
           <div className="filters-head">
-            <span className="filters-head-title">Mission context &amp; filters</span>
-            <a className="link" href="#reset" style={{ fontSize: '0.75rem' }}>
-              Reset all
-            </a>
+            <span className="filters-head-title">Filters</span>
+            {hasActiveFilters && (
+              <button type="button" className="link filters-reset" onClick={resetFilters}>
+                Reset all
+              </button>
+            )}
           </div>
 
           <div className="filter-group">
-            <div className="filter-label">Active mission</div>
-            <div className="active-mission-card">
-              <div className="active-mission-name">
-                Construction Clients – Lyon <span className="active-mission-dot" />
-              </div>
-              <div className="active-mission-meta">
-                Small construction service businesses
-                <br />
-                AI call reception solution
-              </div>
-            </div>
-          </div>
-
-          <div className="filter-group">
-            <div className="filter-label">Sources</div>
-            <div className="sources-grid">
-              {SOURCES.map((source) => (
-                <label key={source} className="checkbox">
-                  <span className="checkbox-box checked">
-                    <Check />
-                  </span>
-                  {source}
-                </label>
+            <div className="filter-label">Mission</div>
+            <select
+              className="select-control"
+              style={{ width: '100%' }}
+              value={selectedMissionId}
+              onChange={(event) => {
+                setMissionChoice(Number(event.target.value));
+                setSelectedId(null);
+                resetFilters();
+              }}
+            >
+              <option value={ALL_MISSIONS}>All missions</option>
+              {(missions ?? []).map((mission) => (
+                <option key={mission.id} value={mission.id}>
+                  {mission.name}
+                </option>
               ))}
-            </div>
+            </select>
           </div>
 
-          <div className="filter-group">
-            <div className="filter-label">Location</div>
-            <div className="location-chip">
-              <MapPin /> Lyon, France <X size={14} className="close" />
-            </div>
-          </div>
-
-          <div className="filter-group">
-            <div className="filter-label">
-              Industry <ChevronDown size={14} style={{ color: 'var(--muted)' }} />
-            </div>
-            <div className="tag-row">
-              {INDUSTRIES.map((industry) => (
-                <span key={industry} className="filter-tag">
-                  {industry} <X />
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="filter-group">
-            <div className="filter-label">Fit score range</div>
-            <div className="range-labels">
-              <span>60</span>
-              <span>100</span>
-            </div>
-            <div className="range-track">
-              <div className="range-fill" />
-              <div className="range-handle" style={{ left: '8%' }} />
-              <div className="range-handle" style={{ left: '94%' }} />
-            </div>
-          </div>
-
-          <div className="filter-group">
-            {TOGGLES.map((toggle) => (
-              <div key={toggle} className="toggle-row">
-                {toggle}
-                <span className="switch on" />
+          {locations.length > 0 && (
+            <div className="filter-group">
+              <div className="filter-label">Location</div>
+              <div className="tag-row">
+                {locations.map((city) => (
+                  <button
+                    key={city}
+                    type="button"
+                    className={`filter-tag${locationFilter === city ? ' selected' : ''}`}
+                    onClick={() =>
+                      setLocationFilter((current) => (current === city ? null : city))
+                    }
+                  >
+                    <MapPin size={11} /> {city}
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
-
-          <div className="filter-group">
-            <div className="filter-label">Business size (employees)</div>
-            <div className="seg-row">
-              {SIZES.map((size, i) => (
-                <button key={size} className={`seg-option${i === 0 ? ' selected' : ''}`}>
-                  {size}
-                </button>
-              ))}
             </div>
-          </div>
+          )}
+
+          {industries.length > 0 && (
+            <div className="filter-group">
+              <div className="filter-label">Industry</div>
+              <div className="tag-row">
+                {industries.map((industry) => (
+                  <button
+                    key={industry}
+                    type="button"
+                    className={`filter-tag${industryFilter === industry ? ' selected' : ''}`}
+                    onClick={() =>
+                      setIndustryFilter((current) => (current === industry ? null : industry))
+                    }
+                  >
+                    <Factory size={11} /> {industry}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="filter-group" style={{ marginBottom: 0 }}>
-            <div className="filter-label">Role type</div>
-            <div className="seg-row">
-              {ROLES.map((role, i) => (
-                <button key={role} className={`seg-option${i === 0 ? ' selected' : ''}`}>
-                  {role}
-                </button>
-              ))}
-            </div>
+            <div className="filter-label">Requirements</div>
+            <button
+              type="button"
+              className="toggle-row"
+              onClick={() => setRequireContact((value) => !value)}
+            >
+              Has contact info
+              <span className={`switch${requireContact ? ' on' : ''}`} />
+            </button>
+            <button
+              type="button"
+              className="toggle-row"
+              onClick={() => setRequireEmail((value) => !value)}
+            >
+              Has email
+              <span className={`switch${requireEmail ? ' on' : ''}`} />
+            </button>
+            <button
+              type="button"
+              className="toggle-row"
+              onClick={() => setRequirePhone((value) => !value)}
+            >
+              Has phone
+              <span className={`switch${requirePhone ? ' on' : ''}`} />
+            </button>
+            <button
+              type="button"
+              className="toggle-row"
+              onClick={() => setRequireWebsite((value) => !value)}
+            >
+              Has website
+              <span className={`switch${requireWebsite ? ' on' : ''}`} />
+            </button>
           </div>
         </aside>
 
         <div className="leads-column">
           <div className="leads-tabs">
-            {FIT_CATEGORIES.map((category) => {
-              const label = tabLabel(category, categoryCounts[category]);
-              return (
-                <button
-                  key={category}
-                  className={`leads-tab${category === activeCategory ? ' active' : ''}`}
-                  onClick={() => {
-                    setActiveCategory(category);
-                    setSelectedId(null);
-                  }}
-                >
-                  {label}
-                </button>
-              );
-            })}
+            <div className="leads-tab-group">
+              {FIT_CATEGORIES.map((category) => {
+                const label = tabLabel(category, categoryCounts[category]);
+                return (
+                  <button
+                    key={category}
+                    className={`leads-tab${category === activeCategory ? ' active' : ''}`}
+                    onClick={() => {
+                      setActiveCategory(category);
+                      setSelectedId(null);
+                    }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
             <div className="leads-view-toggle">
               <button
                 type="button"
@@ -308,14 +354,24 @@ export function DiscoverPage() {
                 <Network /> Graph
               </button>
             </div>
-            <button className="select-control sort-btn" style={{ padding: '7px 12px', fontSize: '0.7813rem' }}>
-              <ArrowUpDown /> Sort by fit score <ChevronDown />
+            <button
+              className="select-control sort-btn"
+              style={{ padding: '7px 12px', fontSize: '0.7813rem' }}
+              onClick={() => setSortDesc((value) => !value)}
+            >
+              <ArrowUpDown /> Score {sortDesc ? 'high → low' : 'low → high'}
             </button>
           </div>
           <div className="leads-count">
             {filteredLeads.length} result{filteredLeads.length === 1 ? '' : 's'}
             {viewMode === 'graph' ? ' · graph view' : ''}
           </div>
+
+          {filteredLeads.length === 0 && viewMode === 'list' && (
+            <p className="page-subtitle" style={{ padding: '24px 4px', textAlign: 'center' }}>
+              No leads match the current filters.
+            </p>
+          )}
 
           {viewMode === 'graph' ? (
             <DiscoverGraphView
@@ -389,15 +445,6 @@ export function DiscoverPage() {
 
                 {isSelected && (
                   <div className="lead-actions">
-                    <button className="btn btn-outline btn-sm">
-                      <Bookmark size={14} /> Save
-                    </button>
-                    <button className="btn btn-outline btn-sm">
-                      <CircleX size={14} /> Reject
-                    </button>
-                    <button className="btn btn-outline btn-sm">
-                      <Search size={14} /> Investigate more
-                    </button>
                     <Link to={`/leads/${lead.id}`} className="btn btn-outline btn-sm">
                       <Eye size={14} /> Open details
                     </Link>
@@ -419,8 +466,8 @@ export function DiscoverPage() {
           )}
         </div>
 
+        {selected && (
         <div className="lead-panel-wrap">
-          {selected ? (
           <aside className="card lead-panel">
             <div className="lead-panel-head">
               <span className="pill pill-blue">Selected lead</span>
@@ -428,7 +475,6 @@ export function DiscoverPage() {
                 <span className="pill pill-purple">
                   AI-verified <Sparkles size={11} />
                 </span>
-                <X size={15} style={{ color: 'var(--faint)' }} />
               </span>
             </div>
 
@@ -445,12 +491,6 @@ export function DiscoverPage() {
                 <span className={`pill ${scorePill[selected.scoreTone]}`}>{selected.scoreLabel}</span>
               </div>
             </div>
-
-            <div className="lead-panel-section-title">Website evidence summary</div>
-            <p className="lead-panel-text">
-              We scanned {selected.website} and found strong signals of local activity, emergency service, and
-              phone-first operations.
-            </p>
 
             <div className="lead-panel-section-title">Key evidence snippets</div>
             {selected.evidence.length > 0 ? (
@@ -470,22 +510,19 @@ export function DiscoverPage() {
             </div>
             {selected.email && (
               <div className="contact-row">
-                <Mail /> {selected.email} <span className="pill pill-neutral">Generic</span>
+                <Mail /> {selected.email}
               </div>
             )}
             {selected.phone && (
               <div className="contact-row">
-                <Phone /> {selected.phone} <span className="pill pill-green">Primary</span>
+                <Phone /> {selected.phone}
               </div>
             )}
             {!selected.email && !selected.phone && (
               <p className="lead-panel-text">No contact details found yet.</p>
             )}
-            <button className="btn btn-primary btn-sm" style={{ margin: '8px 0 16px', width: '100%' }}>
-              Open source page <ExternalLink size={13} />
-            </button>
 
-            <div className="lead-panel-section-title">Social presence</div>
+            <div className="lead-panel-section-title" style={{ marginTop: 16 }}>Social presence</div>
             <div className="social-row">
               <span className="social-chip">
                 <BrandDot bg="var(--blue)" label="in" /> LinkedIn
@@ -496,14 +533,6 @@ export function DiscoverPage() {
               <span className="social-chip">
                 <BrandDot bg="var(--faint)" label="ig" /> Instagram
               </span>
-            </div>
-
-            <div className="ai-summary">
-              <div className="ai-summary-head">
-                <CheckCircle2 size={15} /> AI reasoning summary
-              </div>
-              We scanned {selected.website} and found strong signals of local activity, emergency
-              service, and phone-first operations.
             </div>
 
             {selected.sourcesScanned.length > 0 && (
@@ -522,28 +551,21 @@ export function DiscoverPage() {
               <button
                 type="button"
                 className="btn btn-primary btn-sm"
-                style={{ width: '100%', marginBottom: 10 }}
+                style={{ width: '100%' }}
                 onClick={() => setOutreachLeadId(selected.id)}
               >
                 <Send size={14} /> Draft outreach
               </button>
-              <a className="link" href="#sources">
-                View all sources
-              </a>
             </div>
           </aside>
-          ) : (
-            <aside className="card lead-panel">
-              <p className="lead-panel-text">No leads to display.</p>
-            </aside>
-          )}
         </div>
+        )}
       </div>
 
       {outreachLead && (
         <OutreachDraftPanel
           lead={outreachLead}
-          missionName="Construction Clients – Lyon"
+          missionName={outreachMissionName}
           onClose={() => setOutreachLeadId(null)}
         />
       )}

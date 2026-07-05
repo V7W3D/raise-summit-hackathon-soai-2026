@@ -14,26 +14,23 @@ from database.dependencies import get_db
 from main import app
 from models.clients.business_profiles import BusinessProfile
 from models.clients.users import User
-from search_agent.schemas import SearchAgentOutput, SearchPlan
 
 
 @pytest.fixture(autouse=True)
 def _stub_mission_search_on_create(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch):
-	"""Avoid running the full search pipeline on every POST /missions in unrelated tests."""
-	if request.node.path and "test_search_agent_service.py" in str(request.node.path):
+	"""Avoid dispatching Celery tasks on every POST /missions in unrelated tests."""
+	if request.node.path and (
+		"test_search_agent_service.py" in str(request.node.path)
+		or "test_mission_search.py" in str(request.node.path)
+	):
 		return
 
-	def _noop_run_search(db: Session, mission_id: int, **kwargs):
-		return SearchAgentOutput(
-			request_id="req_stub",
-			mission_id=str(mission_id),
-			status="success",
-			search_plan=SearchPlan(interpreted_goal="stub"),
-		), []
+	def _noop_enqueue(mission_id: int, user_id: int) -> None:
+		return None
 
 	monkeypatch.setattr(
-		"services.search_agent.run_search_for_mission",
-		_noop_run_search,
+		"services.mission_search.enqueue_mission_search",
+		_noop_enqueue,
 	)
 
 

@@ -34,8 +34,8 @@ def test_home_dashboard_empty(client: TestClient) -> None:
 
 
 def test_home_dashboard_aggregates(client: TestClient) -> None:
-	m1 = client.post("/missions", json={"name": "M1", "status": "Active"}).json()
-	m2 = client.post("/missions", json={"name": "M2", "status": "Active"}).json()
+	m1 = client.post("/missions", json={"name": "M1"}).json()
+	m2 = client.post("/missions", json={"name": "M2"}).json()
 	_create_leads(client, m1["id"], total=25, qualified=9)
 	_create_leads(client, m2["id"], total=18, qualified=6)
 

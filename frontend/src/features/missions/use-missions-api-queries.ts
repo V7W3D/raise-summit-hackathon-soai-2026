@@ -1,19 +1,13 @@
 import axios from 'axios';
 import { z } from 'zod';
+import { useEffect, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { API_BASE_URL } from '../../api/config';
 import { dashboardQueryKey } from '../home/use-home-api-queries';
 
-const STATUS_TONE: Record<string, string> = {
-  Active: 'green',
-  Draft: 'neutral',
-  Paused: 'orange',
-  Archived: 'neutral',
-};
+export const missionSearchStatuses = ['running', 'ready', 'failed'] as const;
 
-function statusTone(status: string): string {
-  return STATUS_TONE[status] ?? 'neutral';
-}
+export type MissionSearchStatus = (typeof missionSearchStatuses)[number];
 
 export const missionUrgencies = ['low', 'medium', 'high'] as const;
 
@@ -22,11 +16,13 @@ export type MissionUrgency = (typeof missionUrgencies)[number];
 const missionSchema = z
   .object({
     id: z.number(),
+    search_status: z.enum(missionSearchStatuses),
+    search_activated: z.boolean(),
     name: z.string(),
     target: z.string(),
     location: z.string(),
-    status: z.string(),
     progress: z.number(),
+    is_archived: z.boolean(),
     description: z.string(),
     target_industry: z.string().nullable(),
     target_business_size: z.string().nullable(),
@@ -39,23 +35,52 @@ const missionSchema = z
   })
   .transform((dto) => ({
     id: dto.id,
+    searchStatus: dto.search_status,
+    searchActivated: dto.search_activated,
     name: dto.name,
     target: dto.target,
     location: dto.location,
     progress: dto.progress,
-    status: dto.status,
+    isArchived: dto.is_archived,
     description: dto.description,
     targetIndustry: dto.target_industry,
     targetBusinessSize: dto.target_business_size,
     desiredLeadCount: dto.desired_lead_count,
     urgency: dto.urgency,
     language: dto.language,
-    statusTone: statusTone(dto.status),
   }));
 
 export type MissionVM = z.infer<typeof missionSchema>;
 
-export const missionsQueryKey = ['missions'] as const;
+const SEARCH_POLL_INTERVAL_MS = 2_000;
+
+function missionListHasRunningSearch(missions: MissionVM[] | undefined) {
+  return missions?.some((mission) => mission.searchStatus === 'running') ?? false;
+}
+
+function missionIsSearchRunning(mission: MissionVM | undefined) {
+  return mission?.searchStatus === 'running';
+}
+
+function useRefetchWhenSearchCompletes(
+  searchStatuses: MissionSearchStatus[] | undefined,
+) {
+  const queryClient = useQueryClient();
+  const wasRunningRef = useRef(false);
+
+  useEffect(() => {
+    const isRunning = searchStatuses?.some((status) => status === 'running') ?? false;
+    if (wasRunningRef.current && !isRunning) {
+      void queryClient.invalidateQueries({ queryKey: ['missions'] });
+      void queryClient.invalidateQueries({ queryKey: ['mission'] });
+      void queryClient.invalidateQueries({ queryKey: ['leads'] });
+      void queryClient.invalidateQueries({ queryKey: dashboardQueryKey });
+    }
+    wasRunningRef.current = isRunning;
+  }, [queryClient, searchStatuses]);
+}
+
+export const missionsQueryKey = (isArchived = false) => ['missions', { isArchived }] as const;
 
 export const missionQueryKey = (id: number) => ['mission', id] as const;
 
@@ -63,7 +88,6 @@ export type MissionCreatePayload = {
   name: string;
   target?: string;
   location?: string;
-  status?: string;
   description?: string;
   target_industry?: string;
   target_business_size?: string;
@@ -72,8 +96,25 @@ export type MissionCreatePayload = {
   language?: string;
 };
 
-async function fetchMissions(signal?: AbortSignal) {
-  const { data } = await axios.get(`${API_BASE_URL}/missions`, { signal });
+export type MissionUpdatePayload = {
+  name?: string;
+  target?: string;
+  location?: string;
+  description?: string;
+  target_industry?: string | null;
+  target_business_size?: string | null;
+  desired_lead_count?: number | null;
+  urgency?: MissionUrgency | null;
+  language?: string | null;
+  is_archived?: boolean;
+  progress?: number;
+};
+
+async function fetchMissions(isArchived: boolean, signal?: AbortSignal) {
+  const { data } = await axios.get(`${API_BASE_URL}/missions`, {
+    params: { is_archived: isArchived },
+    signal,
+  });
   return z.array(missionSchema).parse(data);
 }
 
@@ -87,22 +128,60 @@ async function createMission(payload: MissionCreatePayload) {
   return missionSchema.parse(data);
 }
 
+async function updateMission(id: number, payload: MissionUpdatePayload) {
+  const { data } = await axios.patch(`${API_BASE_URL}/missions/${id}`, payload);
+  return missionSchema.parse(data);
+}
+
 async function deleteMission(id: number) {
   await axios.delete(`${API_BASE_URL}/missions/${id}`);
 }
 
-export function useMissions() {
-  return useQuery({
-    queryKey: missionsQueryKey,
-    queryFn: ({ signal }) => fetchMissions(signal),
+export function useMissions(options: { isArchived?: boolean; enabled?: boolean } = {}) {
+  const isArchived = options.isArchived ?? false;
+  const query = useQuery({
+    queryKey: missionsQueryKey(isArchived),
+    queryFn: ({ signal }) => fetchMissions(isArchived, signal),
+    enabled: options.enabled ?? true,
+    refetchInterval: (query) =>
+      missionListHasRunningSearch(query.state.data) ? SEARCH_POLL_INTERVAL_MS : false,
   });
+
+  useRefetchWhenSearchCompletes(query.data?.map((mission) => mission.searchStatus));
+
+  return query;
 }
 
 export function useMission(id: number) {
-  return useQuery({
+  const query = useQuery({
     queryKey: missionQueryKey(id),
     queryFn: ({ signal }) => fetchMission(id, signal),
     enabled: !Number.isNaN(id),
+    refetchInterval: (query) =>
+      missionIsSearchRunning(query.state.data) ? SEARCH_POLL_INTERVAL_MS : false,
+  });
+
+  useRefetchWhenSearchCompletes(
+    query.data ? [query.data.searchStatus] : undefined,
+  );
+
+  return query;
+}
+
+async function runMissionSearch(id: number) {
+  const { data } = await axios.post(`${API_BASE_URL}/missions/${id}/search`);
+  return missionSchema.parse(data);
+}
+
+export function useRunMissionSearch() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: runMissionSearch,
+    onSuccess: (_mission, missionId) => {
+      queryClient.invalidateQueries({ queryKey: ['missions'] });
+      queryClient.invalidateQueries({ queryKey: missionQueryKey(missionId) });
+      queryClient.invalidateQueries({ queryKey: dashboardQueryKey });
+    },
   });
 }
 
@@ -111,8 +190,21 @@ export function useCreateMission() {
   return useMutation({
     mutationFn: createMission,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: missionsQueryKey });
+      queryClient.invalidateQueries({ queryKey: ['missions'] });
       queryClient.invalidateQueries({ queryKey: dashboardQueryKey });
+    },
+  });
+}
+
+export function useUpdateMission() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: MissionUpdatePayload }) =>
+      updateMission(id, payload),
+    onSuccess: (mission, variables) => {
+      queryClient.setQueryData(missionQueryKey(variables.id), mission);
+      void queryClient.invalidateQueries({ queryKey: ['missions'] });
+      void queryClient.invalidateQueries({ queryKey: dashboardQueryKey });
     },
   });
 }
@@ -122,7 +214,7 @@ export function useDeleteMission() {
   return useMutation({
     mutationFn: deleteMission,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: missionsQueryKey });
+      queryClient.invalidateQueries({ queryKey: ['missions'] });
       queryClient.invalidateQueries({ queryKey: dashboardQueryKey });
       queryClient.invalidateQueries({ queryKey: ['leads'] });
     },

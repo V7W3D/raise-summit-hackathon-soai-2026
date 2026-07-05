@@ -192,10 +192,16 @@ def run_search_for_mission(
 
 	leads: list[Lead] = []
 	if persist and output.candidates:
-		payloads = [
-			candidate_to_lead_create(candidate, mission_id)
-			for candidate in output.candidates
-		]
-		leads = create_leads(db, payloads)
+		# Re-runs must not duplicate leads: skip websites already saved.
+		known_websites = {lead.website for lead in mission.leads if lead.website}
+		payloads = []
+		for candidate in output.candidates:
+			payload = candidate_to_lead_create(candidate, mission_id)
+			if payload.website and payload.website in known_websites:
+				continue
+			known_websites.add(payload.website)
+			payloads.append(payload)
+		if payloads:
+			leads = create_leads(db, payloads)
 
 	return output, leads

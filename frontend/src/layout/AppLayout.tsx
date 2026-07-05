@@ -1,4 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import { useCurrentUser } from '../features/home/use-home-api-queries';
+import { userInitials } from '../lib/user-display';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Home', end: true },
@@ -7,6 +9,8 @@ const NAV_ITEMS = [
 ];
 
 export function AppLayout() {
+  const { data: user, isPending } = useCurrentUser();
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -26,10 +30,14 @@ export function AppLayout() {
           ))}
         </nav>
         <div className="sidebar-footer">
-          <button type="button" className="sidebar-user">
-            <span className="sidebar-user-avatar">AZ</span>
-            <span className="sidebar-user-name">Azzedine</span>
-          </button>
+          <NavLink to="/profile" className="sidebar-user">
+            <span className="sidebar-user-avatar">
+              {user ? userInitials(user.name) : '…'}
+            </span>
+            <span className="sidebar-user-name">
+              {user?.name ?? (isPending ? 'Loading…' : 'User')}
+            </span>
+          </NavLink>
         </div>
       </aside>
       <main className="main">

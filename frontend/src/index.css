@@ -110,7 +110,8 @@ p {
 .sidebar {
   width: 188px;
   flex-shrink: 0;
-  background: transparent;
+  background: var(--surface-soft);
+  border-right: 1px solid var(--border-strong);
   display: flex;
   flex-direction: column;
   padding: 40px 0 32px 40px;
@@ -188,6 +189,7 @@ p {
   cursor: pointer;
   color: inherit;
   font: inherit;
+  text-decoration: none;
   transition: opacity 0.15s ease;
 }
 
@@ -218,7 +220,7 @@ p {
 .main {
   flex: 1;
   min-width: 0;
-  padding: 40px 48px 64px 24px;
+  padding: 40px 48px 64px 32px;
 }
 
 /* ---------- Typography ---------- */
@@ -293,7 +295,7 @@ p {
   box-shadow: none;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   background: var(--accent-hover);
 }
 
@@ -303,9 +305,28 @@ p {
   color: var(--ink);
 }
 
-.btn-outline:hover {
+.btn-outline:hover:not(:disabled) {
   border-color: var(--muted);
   background: var(--surface-soft);
+}
+
+.btn:disabled,
+.btn[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-primary:disabled,
+.btn-primary[disabled] {
+  background: var(--accent);
+}
+
+.btn-outline:disabled,
+.btn-outline[disabled] {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  color: var(--muted);
 }
 
 .btn-ghost {
