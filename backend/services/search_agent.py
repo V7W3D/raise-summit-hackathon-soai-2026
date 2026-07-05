@@ -39,10 +39,10 @@ def resolve_provider_options(
 	if provider_options is not None:
 		return provider_options
 
-	provider = os.environ.get("SEARCH_PROVIDER", "").strip()
+	provider = os.environ.get("SEARCH_PROVIDER", "").strip().strip('"').strip("'")
 	if not provider:
 		raise ProviderNotConfiguredError(
-			"SEARCH_PROVIDER is not set. Configure one of: tavily, exa, brave, serper"
+			"SEARCH_PROVIDER is not set. Configure one of: tavily, exa, brave, serper, fixture"
 		)
 	return ProviderOptions(provider=provider)  # type: ignore[arg-type]
 
@@ -159,6 +159,7 @@ def run_search_for_mission(
 	provider: SearchProvider | None = None,
 	fetcher: PageFetcher | None = None,
 	persist: bool = True,
+	progress_callback=None,
 ) -> tuple[SearchAgentOutput, list[Lead]] | None:
 	"""Fetch a mission from the DB, run the search agent, and persist leads.
 
@@ -188,7 +189,12 @@ def run_search_for_mission(
 		provider_options=provider_options,
 	)
 
-	output = run_search_agent(agent_input, provider=provider, fetcher=fetcher)
+	output = run_search_agent(
+		agent_input,
+		provider=provider,
+		fetcher=fetcher,
+		progress_callback=progress_callback,
+	)
 
 	leads: list[Lead] = []
 	if persist and output.candidates:

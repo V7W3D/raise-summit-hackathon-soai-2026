@@ -5,6 +5,8 @@ score -> classify -> group. LLM is used (optionally) only for planning;
 everything else is deterministic code.
 """
 
+from typing import Callable
+
 from pydantic import ValidationError
 
 from .dedupe import dedupe_candidates
@@ -146,18 +148,32 @@ def _build_candidate(
     return candidate
 
 
+ProgressCallback = Callable[[dict], None]
+
+
 def run_search_agent(
     agent_input: SearchAgentInput | dict,
     provider: SearchProvider | None = None,
     fetcher: PageFetcher | None = None,
+    progress_callback: ProgressCallback | None = None,
 ) -> SearchAgentOutput:
     """Run the full search agent pipeline.
 
     `provider` and `fetcher` are injectable for tests; by default the provider
     is resolved from providerOptions and pages are fetched over HTTP.
+    `progress_callback`, when provided, receives cumulative counters as the
+    pipeline advances (for live progress UIs).
     """
     trace = TraceRecorder()
     warnings: list[SearchWarning] = []
+
+    def report(**fields) -> None:
+        if progress_callback is None:
+            return
+        try:
+            progress_callback(fields)
+        except Exception:  # progress must never break the pipeline
+            pass
 
     # 1. Validate input -----------------------------------------------------
     try:
@@ -204,6 +220,8 @@ def run_search_agent(
                 {"queries": len(plan.generated_queries)},
             )
 
+        report(phase="searching", queries_planned=len(plan.generated_queries))
+
         context = build_scoring_context(mission, plan)
 
         if options.dry_run:
@@ -223,7 +241,12 @@ def run_search_agent(
         if provider is None:
             provider = create_provider(provider_name)
         if fetcher is None:
-            fetcher = BasicHttpPageFetcher()
+            if provider_name == "fixture":
+                from .providers.fixture import FixturePageFetcher
+
+                fetcher = FixturePageFetcher()
+            else:
+                fetcher = BasicHttpPageFetcher()
         trace.add("provider", f"Using search provider '{provider.name}'")
 
         # 4. Run queries -----------------------------------------------------
@@ -240,6 +263,7 @@ def run_search_agent(
                 results = provider.search(query, search_options)
                 queries_run += 1
                 raw_results.extend((r, query) for r in results)
+                report(queries_run=queries_run, results_found=len(raw_results))
                 trace.add("search", f"Query returned {len(results)} results", {"query": query})
             except Exception as exc:
                 query_failures += 1
@@ -265,8 +289,11 @@ def run_search_agent(
                 )
 
         # 5. Fetch pages + build candidates -----------------------------------
+        report(phase="extracting")
         pages_fetched = 0
         fetch_failures = 0
+        emails_found = 0
+        phones_found = 0
         candidates: list[CandidateLead] = []
         fetched_pages: dict[str, object] = {}  # normalized url -> FetchedPage
         for result, query in raw_results:
@@ -299,11 +326,12 @@ def run_search_agent(
                         )
                     )
             try:
-                candidates.append(
-                    _build_candidate(
-                        result, agent_input, provider.name, query, page, context
-                    )
+                candidate = _build_candidate(
+                    result, agent_input, provider.name, query, page, context
                 )
+                candidates.append(candidate)
+                emails_found += len(candidate.contact.emails)
+                phones_found += len(candidate.contact.phones)
             except Exception as exc:
                 warnings.append(
                     SearchWarning(
@@ -311,6 +339,12 @@ def run_search_agent(
                         message=f"Extraction failed for {result.url}: {exc}",
                     )
                 )
+            report(
+                pages_fetched=pages_fetched,
+                emails_found=emails_found,
+                phones_found=phones_found,
+                candidates_built=len(candidates),
+            )
         trace.add(
             "extract",
             f"Built {len(candidates)} candidates from {len(raw_results)} raw results",
@@ -321,9 +355,13 @@ def run_search_agent(
         candidates, duplicates_removed = dedupe_candidates(candidates)
         if duplicates_removed:
             trace.add("dedupe", f"Removed {duplicates_removed} duplicate candidates")
+        report(phase="scoring", duplicates_removed=duplicates_removed)
 
         # 7. Score + classify --------------------------------------------------
         groups = Groups()
+        leads_scored = 0
+        shortlisted = 0
+        rejected = 0
         for candidate in candidates:
             page = fetched_pages.get(candidate.website_url or "")
             website_ok = bool(page is not None and page.ok)
@@ -332,6 +370,12 @@ def run_search_agent(
             candidate.scores = scoring.scores
             candidate.classification = classify_candidate(candidate, scoring, mission)
             candidate.updated_at = now_iso()
+            leads_scored += 1
+            if candidate.classification.category == "high_fit":
+                shortlisted += 1
+            elif candidate.classification.category == "rejected_or_low_fit":
+                rejected += 1
+            report(leads_scored=leads_scored, shortlisted=shortlisted, rejected=rejected)
 
         # 8. Sort + group ----------------------------------------------------
         candidates.sort(key=lambda c: c.scores.overall_score, reverse=True)

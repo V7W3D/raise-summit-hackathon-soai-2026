@@ -25,16 +25,19 @@ def test_create_mission_defaults_description_from_name_and_target(client: TestCl
 	res = client.post(
 		"/missions",
 		json={
-			"name": "Construction Clients – Lyon",
-			"target": "Target: small service businesses",
+			"name": "Plumber – Lyon – Fast wins – 25 leads",
+			"target": "plumber",
 			"location": "Lyon, France",
+			"mission_priority": "fast_wins",
+			"desired_lead_count": 25,
 		},
 	)
 	assert res.status_code == 201, res.text
 	body = res.json()
-	assert body["description"] == (
-		"Construction Clients – Lyon: Target: small service businesses"
-	)
+	assert "plumber" in body["description"].lower()
+	assert body["target_industry"] == "plumber"
+	assert body["language"] == "fr"
+	assert body["urgency"] == "high"
 
 
 def test_create_and_list_missions(client: TestClient) -> None:
@@ -123,7 +126,7 @@ def test_start_mission_search_conflict_when_already_running(client: TestClient) 
 	assert res.status_code == 409
 
 
-def test_start_mission_search_conflict_when_not_activated(
+def test_start_mission_search_allows_rerun_when_ready(
 	client: TestClient, db_session: Session
 ) -> None:
 	created = _create_mission(client)
@@ -131,11 +134,11 @@ def test_start_mission_search_conflict_when_not_activated(
 	mission = db_session.get(Mission, created["id"])
 	assert mission is not None
 	mission.search_status = "ready"
-	mission.search_activated = False
 	db_session.commit()
 
 	res = client.post(f"/missions/{created['id']}/search")
-	assert res.status_code == 409
+	assert res.status_code == 200
+	assert res.json()["search_status"] == "running"
 
 
 def test_update_mission_reactivates_search(client: TestClient, db_session: Session) -> None:

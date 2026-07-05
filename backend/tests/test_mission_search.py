@@ -7,7 +7,6 @@ from models.clients.missions import Mission
 from services import search_agent as search_agent_service
 from services.mission_search import (
 	MissionSearchAlreadyRunningError,
-	MissionSearchNotActivatedError,
 	_execute_mission_search,
 	start_mission_search,
 )
@@ -36,7 +35,6 @@ def test_execute_mission_search_sets_ready(db_session: Session) -> None:
 
 	db_session.refresh(mission)
 	assert mission.search_status == "ready"
-	assert mission.search_activated is False
 
 
 def test_start_mission_search_sets_running_and_enqueues(
@@ -65,26 +63,40 @@ def test_start_mission_search_rejects_already_running(db_session: Session) -> No
 		start_mission_search(db_session, mission.id, user_id=1)
 
 
-def test_start_mission_search_rejects_not_activated(db_session: Session) -> None:
-	mission = _create_mission(db_session)
-	mission.search_activated = False
-	db_session.commit()
-
-	with pytest.raises(MissionSearchNotActivatedError):
-		start_mission_search(db_session, mission.id, user_id=1)
-
-
-def test_enqueue_mission_search_dispatches_task(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_start_mission_search_allows_rerun_after_completion(
+	db_session: Session, monkeypatch: pytest.MonkeyPatch
+) -> None:
 	calls: list[tuple[int, int]] = []
 
-	def fake_delay(mission_id: int, user_id: int) -> None:
+	def fake_enqueue(mission_id: int, user_id: int) -> None:
 		calls.append((mission_id, user_id))
 
-	import tasks.mission_search as mission_search_tasks
+	monkeypatch.setattr("services.mission_search.enqueue_mission_search", fake_enqueue)
 
-	monkeypatch.setattr(mission_search_tasks.run_mission_search_task, "delay", fake_delay)
+	mission = _create_mission(db_session)
+	mission.search_activated = False
+	mission.search_status = "ready"
+	db_session.commit()
+
+	result = start_mission_search(db_session, mission.id, user_id=1)
+	assert result.search_status == "running"
+	assert calls == [(mission.id, 1)]
+
+
+def test_enqueue_mission_search_starts_thread(monkeypatch: pytest.MonkeyPatch) -> None:
+	started: list[tuple[int, int]] = []
+
+	class FakeThread:
+		def __init__(self, target, args=(), kwargs=None, daemon=True, name=None):
+			self._target = target
+			self._args = args
+
+		def start(self) -> None:
+			started.append(self._args)
+
+	monkeypatch.setattr("services.mission_search.threading.Thread", FakeThread)
 
 	from services.mission_search import enqueue_mission_search
 
 	enqueue_mission_search(42, 7)
-	assert calls == [(42, 7)]
+	assert started == [(42, 7)]

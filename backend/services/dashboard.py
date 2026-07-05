@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -34,10 +36,23 @@ def _fit_from_score(score: int) -> tuple[str, str]:
 	return "Low fit", "blue"
 
 
-def _rel_time(index: int) -> str:
-	# Lightweight relative-time labels for seeded/demo ordering.
-	buckets = ["2m ago", "15m ago", "1h ago", "2h ago", "3h ago", "5h ago"]
-	return buckets[index] if index < len(buckets) else "1d ago"
+def _relative_time(value: datetime | None) -> str:
+	if value is None:
+		return ""
+	if value.tzinfo is None:
+		value = value.replace(tzinfo=timezone.utc)
+	delta = datetime.now(timezone.utc) - value
+	seconds = max(int(delta.total_seconds()), 0)
+	if seconds < 60:
+		return "just now"
+	minutes = seconds // 60
+	if minutes < 60:
+		return f"{minutes}m ago"
+	hours = minutes // 60
+	if hours < 24:
+		return f"{hours}h ago"
+	days = hours // 24
+	return f"{days}d ago"
 
 
 def build_dashboard(db: Session, user: User) -> HomeDashboard:
@@ -57,14 +72,15 @@ def build_dashboard(db: Session, user: User) -> HomeDashboard:
 	total_qualified = (
 		db.scalar(select(func.count(Lead.id)).where(Lead.score >= 75)) or 0
 	)
+	total_approved = (
+		db.scalar(select(func.count(Lead.id)).where(Lead.status == "approved")) or 0
+	)
 
 	stats = [
 		Stat(icon="missions", label="Missions active", value=str(active_missions)),
 		Stat(icon="search", label="New leads found this week", value=str(total_leads)),
 		Stat(icon="user", label="Qualified leads", value=str(total_qualified)),
-		Stat(icon="send", label="Outreach sent", value="0"),
-		Stat(icon="smile", label="Positive replies", value="3"),
-		Stat(icon="calendar", label="Meetings booked", value="1"),
+		Stat(icon="send", label="Approved leads", value=str(total_approved)),
 	]
 
 	recent_missions_rows = list(
@@ -83,17 +99,17 @@ def build_dashboard(db: Session, user: User) -> HomeDashboard:
 		RecentMission(
 			id=m.id,
 			name=m.name,
-			updated=f"Updated {_rel_time(i)}",
+			updated=f"Updated {_relative_time(m.updated_at)}",
 			progress=m.progress,
 		)
-		for i, m in enumerate(recent_missions_rows)
+		for m in recent_missions_rows
 	]
 
 	recent_leads_rows = list(
 		db.scalars(select(Lead).order_by(Lead.score.desc()).limit(5)).all()
 	)
 	recent_prospects = []
-	for i, lead in enumerate(recent_leads_rows):
+	for lead in recent_leads_rows:
 		fit, tone = _fit_from_score(lead.score)
 		recent_prospects.append(
 			RecentProspect(
@@ -104,60 +120,42 @@ def build_dashboard(db: Session, user: User) -> HomeDashboard:
 				meta=lead.location or lead.description,
 				fit=fit,
 				fit_tone=tone,
-				time=_rel_time(i),
+				time=_relative_time(lead.created_at),
 			)
 		)
 
-	pending_review = max(total_leads - total_qualified, 0)
-	next_best_actions = [
-		NextBestAction(
-			icon="leads",
-			priority="High",
-			title=f"Review {pending_review} new leads",
-			subtitle=(
-				f"From your {recent_missions_rows[0].name} mission"
-				if recent_missions_rows
-				else None
-			),
-		),
-		NextBestAction(icon="draft", priority="High", title="Approve 3 outreach drafts"),
-		NextBestAction(
-			icon="reply", priority="Medium", title="Reply to 2 interested prospects"
-		),
-		NextBestAction(
-			icon="clock", priority="Medium", title="Follow up with 5 silent leads"
-		),
-		NextBestAction(
-			icon="refresh", priority="Low", title="Update status for 1 ongoing negotiation"
-		),
-	]
+	pending_review = max(total_leads - total_approved, 0)
+	next_best_actions = []
+	if pending_review > 0:
+		next_best_actions.append(
+			NextBestAction(
+				icon="leads",
+				priority="High",
+				title=f"Review {pending_review} new leads",
+				subtitle=(
+					f"From your {recent_missions_rows[0].name} mission"
+					if recent_missions_rows
+					else None
+				),
+			)
+		)
+	if total_qualified > 0:
+		next_best_actions.append(
+			NextBestAction(
+				icon="draft",
+				priority="High",
+				title=f"Draft outreach for {total_qualified} high-fit leads",
+			)
+		)
 
 	opportunity_feed = [
 		FeedItem(
 			dot="#2563eb",
 			icon="building",
-			text="New matching business detected: Atlantic Fish Pro may fit your sourcing mission",
-			time="2m ago",
-		),
-		FeedItem(
-			dot="#16a34a",
-			icon="reply",
-			text="A lead changed status: BTP Rhône replied positively",
-			time="15m ago",
-		),
-		FeedItem(dot="#ea8a1f", icon="warning", text="Potential duplicate found", time="1h ago"),
-		FeedItem(
-			dot="#dc2626",
-			icon="globe",
-			text="Website of a tracked prospect is no longer active",
-			time="2h ago",
-		),
-		FeedItem(
-			dot="#2563eb",
-			icon="star",
-			text="New high-fit company detected in your target niche",
-			time="3h ago",
-		),
+			text=f"New matching business detected: {lead.name}",
+			time=_relative_time(lead.created_at),
+		)
+		for lead in recent_leads_rows[:5]
 	]
 
 	first_name = user.name.split()[0] if user.name else "there"

@@ -14,7 +14,10 @@ def list_missions(db: Session, *, is_archived: bool = False) -> list[Mission]:
 		.where(Mission.is_archived == is_archived)
 		.order_by(Mission.last_activity_at.desc())
 	)
-	return list(db.scalars(stmt).all())
+	missions = list(db.scalars(stmt).all())
+	from services.mission_search import recover_stale_searches
+
+	return recover_stale_searches(db, missions)
 
 
 def get_mission(db: Session, mission_id: int, *, active_only: bool = True) -> Mission | None:
@@ -23,7 +26,9 @@ def get_mission(db: Session, mission_id: int, *, active_only: bool = True) -> Mi
 		return None
 	if active_only and mission.is_archived:
 		return None
-	return mission
+	from services.mission_search import recover_stale_search
+
+	return recover_stale_search(db, mission)
 
 
 def create_mission(db: Session, payload: MissionCreate, *, user_id: int) -> Mission:

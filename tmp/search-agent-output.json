@@ -1,0 +1,798 @@
+{
+  "requestId": "76fdd776-cb1e-4e02-9644-e02c252689ed",
+  "missionId": "mission_lyon_construction",
+  "status": "success",
+  "searchPlan": {
+    "targetPersonas": [
+      "owner",
+      "founder",
+      "operations manager",
+      "office manager",
+      "director"
+    ],
+    "targetSegments": [
+      "construction services",
+      "plumbers",
+      "roofers",
+      "renovation companies",
+      "electricians",
+      "HVAC businesses",
+      "emergency repair services"
+    ],
+    "goodFitSignals": [
+      "local service business",
+      "phone-first workflow",
+      "emergency service",
+      "active website",
+      "small team",
+      "devis gratuit",
+      "intervention rapide"
+    ],
+    "badFitSignals": [
+      "large enterprise",
+      "national group",
+      "no phone workflow",
+      "inactive website",
+      "public tenders only",
+      "grand groupe",
+      "grands comptes",
+      "groupe national",
+      "appels d'offres",
+      "very large enterprises",
+      "businesses with no phone-based workflow",
+      "inactive companies"
+    ],
+    "suggestedSources": [
+      "web",
+      "directories",
+      "maps"
+    ],
+    "interpretedGoal": "Find construction services in Lyon aligned with: Find small construction service businesses in Lyon likely to need AI call reception.",
+    "generatedQueries": [
+      "plombier Lyon urgence contact",
+      "entreprise rénovation Lyon téléphone",
+      "BTP Lyon service local contact",
+      "construction services Lyon devis email"
+    ],
+    "assumptions": [
+      "Searching public web sources for construction services in Lyon",
+      "Including French-language queries for local discovery",
+      "Contact pages and business websites prioritized over social profiles"
+    ]
+  },
+  "candidates": [
+    {
+      "id": "lead_1783180150443_1",
+      "missionId": "mission_lyon_construction",
+      "name": "Rhône Plomberie",
+      "type": "company",
+      "websiteUrl": "https://rhoneplomberie.fr",
+      "domain": "rhoneplomberie.fr",
+      "sourceUrls": [
+        "https://rhoneplomberie.fr"
+      ],
+      "sourceProvider": "mock",
+      "sourceQuery": "plombier Lyon urgence contact",
+      "shortDescription": "Plombier à Lyon. Intervention rapide 24h/24 et 7j/7 pour tous vos dépannages de plomberie.",
+      "location": "Lyon, France",
+      "contact": {
+        "emails": [
+          {
+            "value": "contact@rhoneplomberie.fr",
+            "type": "generic",
+            "confidence": 0.75,
+            "sourceUrl": "https://rhoneplomberie.fr"
+          }
+        ],
+        "phones": [
+          {
+            "value": "04 78 123 456",
+            "confidence": 0.85,
+            "sourceUrl": "https://rhoneplomberie.fr"
+          }
+        ],
+        "socialLinks": []
+      },
+      "evidence": [
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "title": "Rhône Plomberie - Plombier Lyon",
+          "snippet": "Plombier à Lyon. Intervention rapide 24h/24 et 7j/7 pour tous vos dépannages de plomberie.",
+          "evidenceType": "other",
+          "confidence": 0.6
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "snippet": "Good fit signal: devis gratuit",
+          "evidenceType": "service_match",
+          "confidence": 0.7
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "snippet": "Good fit signal: intervention rapide",
+          "evidenceType": "service_match",
+          "confidence": 0.7
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "snippet": "Location match: Lyon",
+          "evidenceType": "location_match",
+          "confidence": 0.8
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "snippet": "Contact information found on page",
+          "evidenceType": "contact_found",
+          "confidence": 0.85
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "snippet": "Website fetched successfully",
+          "evidenceType": "activity_signal",
+          "confidence": 0.7
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "title": "Rhône Plomberie - Plombier Lyon",
+          "snippet": "Plombier à Lyon. Intervention rapide 24h/24 et 7j/7 pour tous vos dépannages de plomberie.",
+          "evidenceType": "other",
+          "confidence": 0.6
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "snippet": "Good fit signal: devis gratuit",
+          "evidenceType": "service_match",
+          "confidence": 0.7
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "snippet": "Good fit signal: intervention rapide",
+          "evidenceType": "service_match",
+          "confidence": 0.7
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "snippet": "Location match: Lyon",
+          "evidenceType": "location_match",
+          "confidence": 0.8
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "snippet": "Contact information found on page",
+          "evidenceType": "contact_found",
+          "confidence": 0.85
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "snippet": "Website fetched successfully",
+          "evidenceType": "activity_signal",
+          "confidence": 0.7
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "title": "Rhône Plomberie - Plombier Lyon",
+          "snippet": "Plombier à Lyon. Intervention rapide 24h/24 et 7j/7 pour tous vos dépannages de plomberie.",
+          "evidenceType": "other",
+          "confidence": 0.6
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "snippet": "Good fit signal: devis gratuit",
+          "evidenceType": "service_match",
+          "confidence": 0.7
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "snippet": "Good fit signal: intervention rapide",
+          "evidenceType": "service_match",
+          "confidence": 0.7
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "snippet": "Location match: Lyon",
+          "evidenceType": "location_match",
+          "confidence": 0.8
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "snippet": "Contact information found on page",
+          "evidenceType": "contact_found",
+          "confidence": 0.85
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "snippet": "Website fetched successfully",
+          "evidenceType": "activity_signal",
+          "confidence": 0.7
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "title": "Rhône Plomberie - Plombier Lyon",
+          "snippet": "Plombier à Lyon. Intervention rapide 24h/24 et 7j/7 pour tous vos dépannages de plomberie.",
+          "evidenceType": "other",
+          "confidence": 0.6
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "snippet": "Good fit signal: devis gratuit",
+          "evidenceType": "service_match",
+          "confidence": 0.7
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "snippet": "Good fit signal: intervention rapide",
+          "evidenceType": "service_match",
+          "confidence": 0.7
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "snippet": "Location match: Lyon",
+          "evidenceType": "location_match",
+          "confidence": 0.8
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "snippet": "Contact information found on page",
+          "evidenceType": "contact_found",
+          "confidence": 0.85
+        },
+        {
+          "sourceUrl": "https://rhoneplomberie.fr",
+          "snippet": "Website fetched successfully",
+          "evidenceType": "activity_signal",
+          "confidence": 0.7
+        }
+      ],
+      "scores": {
+        "fitScore": 70,
+        "contactabilityScore": 75,
+        "evidenceQualityScore": 100,
+        "overallScore": 83
+      },
+      "classification": {
+        "category": "high_fit",
+        "confidence": "high",
+        "reasons": [
+          "Emergency service mentioned",
+          "Local plumbing company in Lyon",
+          "Strong mission fit signals detected",
+          "Phone-first workflow detected",
+          "Email found",
+          "Location matches mission target",
+          "Relevant services mentioned"
+        ],
+        "missingInfo": [
+          "No contact page identified",
+          "No named decision-maker found"
+        ],
+        "recommendedNextAction": "draft_outreach"
+      },
+      "createdAt": "2026-07-04T15:49:10.442Z",
+      "updatedAt": "2026-07-04T15:49:10.444Z"
+    },
+    {
+      "id": "lead_1783180150443_3",
+      "missionId": "mission_lyon_construction",
+      "name": "EcoBuild Lyon",
+      "type": "company",
+      "websiteUrl": "https://ecobuild-lyon.fr",
+      "domain": "ecobuild-lyon.fr",
+      "sourceUrls": [
+        "https://ecobuild-lyon.fr"
+      ],
+      "sourceProvider": "mock",
+      "sourceQuery": "plombier Lyon urgence contact",
+      "shortDescription": "Construction durable et rénovation écologique en région Auvergne-Rhône-Alpes. Blog actif.",
+      "location": "Lyon, France",
+      "industry": "construction services",
+      "contact": {
+        "emails": [],
+        "phones": [],
+        "socialLinks": []
+      },
+      "evidence": [
+        {
+          "sourceUrl": "https://ecobuild-lyon.fr",
+          "title": "EcoBuild Lyon - Construction durable",
+          "snippet": "Construction durable et rénovation écologique en région Auvergne-Rhône-Alpes. Blog actif.",
+          "evidenceType": "other",
+          "confidence": 0.6
+        },
+        {
+          "sourceUrl": "https://ecobuild-lyon.fr",
+          "snippet": "Location match: Lyon",
+          "evidenceType": "location_match",
+          "confidence": 0.8
+        },
+        {
+          "sourceUrl": "https://ecobuild-lyon.fr",
+          "snippet": "Website fetched successfully",
+          "evidenceType": "activity_signal",
+          "confidence": 0.7
+        },
+        {
+          "sourceUrl": "https://ecobuild-lyon.fr",
+          "title": "EcoBuild Lyon - Construction durable",
+          "snippet": "Construction durable et rénovation écologique en région Auvergne-Rhône-Alpes. Blog actif.",
+          "evidenceType": "other",
+          "confidence": 0.6
+        },
+        {
+          "sourceUrl": "https://ecobuild-lyon.fr",
+          "snippet": "Location match: Lyon",
+          "evidenceType": "location_match",
+          "confidence": 0.8
+        },
+        {
+          "sourceUrl": "https://ecobuild-lyon.fr",
+          "snippet": "Website fetched successfully",
+          "evidenceType": "activity_signal",
+          "confidence": 0.7
+        },
+        {
+          "sourceUrl": "https://ecobuild-lyon.fr",
+          "title": "EcoBuild Lyon - Construction durable",
+          "snippet": "Construction durable et rénovation écologique en région Auvergne-Rhône-Alpes. Blog actif.",
+          "evidenceType": "other",
+          "confidence": 0.6
+        },
+        {
+          "sourceUrl": "https://ecobuild-lyon.fr",
+          "snippet": "Location match: Lyon",
+          "evidenceType": "location_match",
+          "confidence": 0.8
+        },
+        {
+          "sourceUrl": "https://ecobuild-lyon.fr",
+          "snippet": "Website fetched successfully",
+          "evidenceType": "activity_signal",
+          "confidence": 0.7
+        },
+        {
+          "sourceUrl": "https://ecobuild-lyon.fr",
+          "title": "EcoBuild Lyon - Construction durable",
+          "snippet": "Construction durable et rénovation écologique en région Auvergne-Rhône-Alpes. Blog actif.",
+          "evidenceType": "other",
+          "confidence": 0.6
+        },
+        {
+          "sourceUrl": "https://ecobuild-lyon.fr",
+          "snippet": "Location match: Lyon",
+          "evidenceType": "location_match",
+          "confidence": 0.8
+        },
+        {
+          "sourceUrl": "https://ecobuild-lyon.fr",
+          "snippet": "Website fetched successfully",
+          "evidenceType": "activity_signal",
+          "confidence": 0.7
+        }
+      ],
+      "scores": {
+        "fitScore": 98,
+        "contactabilityScore": 0,
+        "evidenceQualityScore": 95,
+        "overallScore": 68
+      },
+      "classification": {
+        "category": "promising_but_incomplete",
+        "confidence": "medium",
+        "reasons": [
+          "Strong mission fit signals detected",
+          "Location matches mission target"
+        ],
+        "missingInfo": [
+          "No direct email or phone found",
+          "No contact page identified",
+          "No named decision-maker found"
+        ],
+        "recommendedNextAction": "find_contact"
+      },
+      "createdAt": "2026-07-04T15:49:10.443Z",
+      "updatedAt": "2026-07-04T15:49:10.444Z"
+    },
+    {
+      "id": "lead_1783180150443_2",
+      "missionId": "mission_lyon_construction",
+      "name": "BTP Rhône Services",
+      "type": "company",
+      "websiteUrl": "https://btprhone.fr",
+      "domain": "btprhone.fr",
+      "sourceUrls": [
+        "https://btprhone.fr"
+      ],
+      "sourceProvider": "mock",
+      "sourceQuery": "plombier Lyon urgence contact",
+      "shortDescription": "Entreprise de rénovation et maintenance à Lyon. Travaux de bâtiment pour particuliers et professionnels.",
+      "location": "Lyon, France",
+      "contact": {
+        "emails": [],
+        "phones": [],
+        "contactPageUrl": "https://btprhone.fr/contact",
+        "socialLinks": []
+      },
+      "evidence": [
+        {
+          "sourceUrl": "https://btprhone.fr",
+          "title": "BTP Rhône Services - Rénovation Lyon",
+          "snippet": "Entreprise de rénovation et maintenance à Lyon. Travaux de bâtiment pour particuliers et professionnels.",
+          "evidenceType": "other",
+          "confidence": 0.6
+        },
+        {
+          "sourceUrl": "https://btprhone.fr",
+          "snippet": "Location match: Lyon",
+          "evidenceType": "location_match",
+          "confidence": 0.8
+        },
+        {
+          "sourceUrl": "https://btprhone.fr",
+          "snippet": "Website fetched successfully",
+          "evidenceType": "activity_signal",
+          "confidence": 0.7
+        },
+        {
+          "sourceUrl": "https://btprhone.fr",
+          "title": "BTP Rhône Services - Rénovation Lyon",
+          "snippet": "Entreprise de rénovation et maintenance à Lyon. Travaux de bâtiment pour particuliers et professionnels.",
+          "evidenceType": "other",
+          "confidence": 0.6
+        },
+        {
+          "sourceUrl": "https://btprhone.fr",
+          "snippet": "Location match: Lyon",
+          "evidenceType": "location_match",
+          "confidence": 0.8
+        },
+        {
+          "sourceUrl": "https://btprhone.fr",
+          "snippet": "Website fetched successfully",
+          "evidenceType": "activity_signal",
+          "confidence": 0.7
+        },
+        {
+          "sourceUrl": "https://btprhone.fr",
+          "title": "BTP Rhône Services - Rénovation Lyon",
+          "snippet": "Entreprise de rénovation et maintenance à Lyon. Travaux de bâtiment pour particuliers et professionnels.",
+          "evidenceType": "other",
+          "confidence": 0.6
+        },
+        {
+          "sourceUrl": "https://btprhone.fr",
+          "snippet": "Location match: Lyon",
+          "evidenceType": "location_match",
+          "confidence": 0.8
+        },
+        {
+          "sourceUrl": "https://btprhone.fr",
+          "snippet": "Website fetched successfully",
+          "evidenceType": "activity_signal",
+          "confidence": 0.7
+        },
+        {
+          "sourceUrl": "https://btprhone.fr",
+          "title": "BTP Rhône Services - Rénovation Lyon",
+          "snippet": "Entreprise de rénovation et maintenance à Lyon. Travaux de bâtiment pour particuliers et professionnels.",
+          "evidenceType": "other",
+          "confidence": 0.6
+        },
+        {
+          "sourceUrl": "https://btprhone.fr",
+          "snippet": "Location match: Lyon",
+          "evidenceType": "location_match",
+          "confidence": 0.8
+        },
+        {
+          "sourceUrl": "https://btprhone.fr",
+          "snippet": "Website fetched successfully",
+          "evidenceType": "activity_signal",
+          "confidence": 0.7
+        }
+      ],
+      "scores": {
+        "fitScore": 60,
+        "contactabilityScore": 15,
+        "evidenceQualityScore": 95,
+        "overallScore": 54
+      },
+      "classification": {
+        "category": "needs_verification",
+        "confidence": "low",
+        "reasons": [
+          "Location matches mission target"
+        ],
+        "missingInfo": [
+          "No direct email or phone found",
+          "No named decision-maker found"
+        ],
+        "recommendedNextAction": "save_for_later"
+      },
+      "createdAt": "2026-07-04T15:49:10.443Z",
+      "updatedAt": "2026-07-04T15:49:10.444Z"
+    },
+    {
+      "id": "lead_1783180150443_4",
+      "missionId": "mission_lyon_construction",
+      "name": "Paris Enterprise Construction Group",
+      "type": "company",
+      "websiteUrl": "https://bigconstructiongroup.example",
+      "domain": "bigconstructiongroup.example",
+      "sourceUrls": [
+        "https://bigconstructiongroup.example"
+      ],
+      "sourceProvider": "mock",
+      "sourceQuery": "plombier Lyon urgence contact",
+      "shortDescription": "Grand groupe national de construction, projets publics, appels d'offres grands comptes.",
+      "location": "Paris, France",
+      "industry": "construction services",
+      "contact": {
+        "emails": [],
+        "phones": [],
+        "socialLinks": []
+      },
+      "evidence": [
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "title": "Paris Enterprise Construction Group",
+          "snippet": "Grand groupe national de construction, projets publics, appels d'offres grands comptes.",
+          "evidenceType": "other",
+          "confidence": 0.6
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "snippet": "Bad fit signal: grand groupe",
+          "evidenceType": "bad_fit_signal",
+          "confidence": 0.75
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "snippet": "Bad fit signal: grands comptes",
+          "evidenceType": "bad_fit_signal",
+          "confidence": 0.75
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "snippet": "Bad fit signal: groupe national",
+          "evidenceType": "bad_fit_signal",
+          "confidence": 0.75
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "snippet": "Bad fit signal: appels d'offres",
+          "evidenceType": "bad_fit_signal",
+          "confidence": 0.75
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "snippet": "Website fetched successfully",
+          "evidenceType": "activity_signal",
+          "confidence": 0.7
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "title": "Paris Enterprise Construction Group",
+          "snippet": "Grand groupe national de construction, projets publics, appels d'offres grands comptes.",
+          "evidenceType": "other",
+          "confidence": 0.6
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "snippet": "Bad fit signal: grand groupe",
+          "evidenceType": "bad_fit_signal",
+          "confidence": 0.75
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "snippet": "Bad fit signal: grands comptes",
+          "evidenceType": "bad_fit_signal",
+          "confidence": 0.75
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "snippet": "Bad fit signal: groupe national",
+          "evidenceType": "bad_fit_signal",
+          "confidence": 0.75
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "snippet": "Bad fit signal: appels d'offres",
+          "evidenceType": "bad_fit_signal",
+          "confidence": 0.75
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "snippet": "Website fetched successfully",
+          "evidenceType": "activity_signal",
+          "confidence": 0.7
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "title": "Paris Enterprise Construction Group",
+          "snippet": "Grand groupe national de construction, projets publics, appels d'offres grands comptes.",
+          "evidenceType": "other",
+          "confidence": 0.6
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "snippet": "Bad fit signal: grand groupe",
+          "evidenceType": "bad_fit_signal",
+          "confidence": 0.75
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "snippet": "Bad fit signal: grands comptes",
+          "evidenceType": "bad_fit_signal",
+          "confidence": 0.75
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "snippet": "Bad fit signal: groupe national",
+          "evidenceType": "bad_fit_signal",
+          "confidence": 0.75
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "snippet": "Bad fit signal: appels d'offres",
+          "evidenceType": "bad_fit_signal",
+          "confidence": 0.75
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "snippet": "Website fetched successfully",
+          "evidenceType": "activity_signal",
+          "confidence": 0.7
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "title": "Paris Enterprise Construction Group",
+          "snippet": "Grand groupe national de construction, projets publics, appels d'offres grands comptes.",
+          "evidenceType": "other",
+          "confidence": 0.6
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "snippet": "Bad fit signal: grand groupe",
+          "evidenceType": "bad_fit_signal",
+          "confidence": 0.75
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "snippet": "Bad fit signal: grands comptes",
+          "evidenceType": "bad_fit_signal",
+          "confidence": 0.75
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "snippet": "Bad fit signal: groupe national",
+          "evidenceType": "bad_fit_signal",
+          "confidence": 0.75
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "snippet": "Bad fit signal: appels d'offres",
+          "evidenceType": "bad_fit_signal",
+          "confidence": 0.75
+        },
+        {
+          "sourceUrl": "https://bigconstructiongroup.example",
+          "snippet": "Website fetched successfully",
+          "evidenceType": "activity_signal",
+          "confidence": 0.7
+        }
+      ],
+      "scores": {
+        "fitScore": 58,
+        "contactabilityScore": 0,
+        "evidenceQualityScore": 95,
+        "overallScore": 48
+      },
+      "classification": {
+        "category": "rejected_or_low_fit",
+        "confidence": "high",
+        "reasons": [
+          "Bad-fit signals: grand groupe, grands comptes, groupe national, appels d'offres, outside target location",
+          "Appears to be a large national group"
+        ],
+        "missingInfo": [
+          "No direct email or phone found",
+          "No contact page identified",
+          "No named decision-maker found"
+        ],
+        "recommendedNextAction": "reject"
+      },
+      "createdAt": "2026-07-04T15:49:10.443Z",
+      "updatedAt": "2026-07-04T15:49:10.444Z"
+    }
+  ],
+  "groups": {
+    "highFit": [
+      "lead_1783180150443_1"
+    ],
+    "promisingButIncomplete": [
+      "lead_1783180150443_3"
+    ],
+    "needsVerification": [
+      "lead_1783180150443_2"
+    ],
+    "rejectedOrLowFit": [
+      "lead_1783180150443_4"
+    ]
+  },
+  "summary": {
+    "queriesRun": 4,
+    "rawResultsFound": 16,
+    "pagesFetched": 5,
+    "candidatesCreated": 4,
+    "duplicatesRemoved": 12,
+    "highFitCount": 1,
+    "warningCount": 0
+  },
+  "warnings": [],
+  "trace": [
+    {
+      "timestamp": "2026-07-04T15:49:10.440Z",
+      "step": "input_received",
+      "message": "Search agent input validated",
+      "metadata": {
+        "requestId": "76fdd776-cb1e-4e02-9644-e02c252689ed",
+        "missionId": "mission_lyon_construction"
+      }
+    },
+    {
+      "timestamp": "2026-07-04T15:49:10.441Z",
+      "step": "search_plan",
+      "message": "Fallback search plan generated",
+      "metadata": {
+        "queryCount": 4
+      }
+    },
+    {
+      "timestamp": "2026-07-04T15:49:10.441Z",
+      "step": "search_query",
+      "message": "Query completed: plombier Lyon urgence contact",
+      "metadata": {
+        "resultCount": 4
+      }
+    },
+    {
+      "timestamp": "2026-07-04T15:49:10.441Z",
+      "step": "search_query",
+      "message": "Query completed: entreprise rénovation Lyon téléphone",
+      "metadata": {
+        "resultCount": 4
+      }
+    },
+    {
+      "timestamp": "2026-07-04T15:49:10.441Z",
+      "step": "search_query",
+      "message": "Query completed: BTP Lyon service local contact",
+      "metadata": {
+        "resultCount": 4
+      }
+    },
+    {
+      "timestamp": "2026-07-04T15:49:10.441Z",
+      "step": "search_query",
+      "message": "Query completed: construction services Lyon devis email",
+      "metadata": {
+        "resultCount": 4
+      }
+    },
+    {
+      "timestamp": "2026-07-04T15:49:10.442Z",
+      "step": "page_fetch",
+      "message": "Page fetching completed",
+      "metadata": {
+        "pagesFetched": 5
+      }
+    },
+    {
+      "timestamp": "2026-07-04T15:49:10.444Z",
+      "step": "dedupe",
+      "message": "Removed 12 duplicate candidate(s)",
+      "metadata": {
+        "duplicatesRemoved": 12
+      }
+    }
+  ]
+}

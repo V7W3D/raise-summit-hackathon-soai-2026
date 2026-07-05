@@ -20,7 +20,7 @@ class CamelModel(BaseModel):
 
 SourceKind = Literal["web", "maps", "directories", "linkedin_public", "user_urls"]
 
-ProviderName = Literal["exa", "tavily", "brave", "serper", "custom"]
+ProviderName = Literal["exa", "tavily", "brave", "serper", "custom", "fixture"]
 
 
 class BusinessProfile(CamelModel):

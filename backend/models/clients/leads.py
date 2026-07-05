@@ -29,6 +29,9 @@ class Lead(Base):
 	email: Mapped[str] = mapped_column(String(255), default="", nullable=False)
 	phone: Mapped[str] = mapped_column(String(60), default="", nullable=False)
 	score: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+	status: Mapped[str] = mapped_column(
+		String(20), default="new", server_default="new", nullable=False
+	)
 
 	why: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
 	missing: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)

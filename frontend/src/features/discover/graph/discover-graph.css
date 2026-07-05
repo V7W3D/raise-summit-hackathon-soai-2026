@@ -356,4 +356,264 @@
     height: 480px;
     min-height: 420px;
   }
+
+  .discover-map-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Opportunity map (replaces decorative graph) */
+.discover-map {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.discover-map-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  flex-wrap: wrap;
+}
+
+.discover-map-header-copy {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  min-width: 240px;
+  flex: 1;
+}
+
+.discover-map-header-copy strong {
+  display: block;
+  font-size: 0.9375rem;
+  margin-bottom: 2px;
+}
+
+.discover-map-header-copy p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  line-height: 1.45;
+  max-width: 520px;
+}
+
+.discover-map-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.1fr) minmax(280px, 0.9fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.discover-map-canvas {
+  position: relative;
+  padding: 12px;
+  min-height: 340px;
+}
+
+.discover-map-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.discover-map-quadrant {
+  fill: rgba(77, 124, 92, 0.04);
+  stroke: none;
+}
+
+.discover-map-quadrant.enrich-first {
+  fill: rgba(74, 98, 120, 0.05);
+}
+
+.discover-map-quadrant-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  fill: var(--muted);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.discover-map-axis-label {
+  font-size: 0.6875rem;
+  fill: var(--muted);
+  font-weight: 500;
+}
+
+.discover-map-point {
+  cursor: pointer;
+}
+
+.discover-map-point.dimmed {
+  pointer-events: none;
+}
+
+.discover-map-point-ring {
+  fill: none;
+  stroke-width: 2;
+}
+
+.discover-map-point-circle {
+  stroke-width: 2.5;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.discover-map-point-circle.hovered {
+  filter: brightness(1.08);
+}
+
+.discover-map-point-initials {
+  text-anchor: middle;
+  font-size: 0.625rem;
+  font-weight: 700;
+  fill: #fff;
+  pointer-events: none;
+}
+
+.discover-map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 0.6875rem;
+  color: var(--muted);
+}
+
+.discover-map-segments {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 680px;
+  overflow-y: auto;
+}
+
+.discover-segment-card {
+  text-align: left;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.discover-segment-card:hover,
+.discover-segment-card.active {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow);
+}
+
+.discover-segment-card.active {
+  border-color: var(--accent);
+}
+
+.discover-segment-card-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: start;
+  margin-bottom: 10px;
+}
+
+.discover-segment-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  margin-top: 5px;
+}
+
+.discover-segment-title-wrap strong {
+  display: block;
+  font-size: 0.875rem;
+}
+
+.discover-segment-title-wrap span {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.discover-segment-playbook {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.discover-segment-explanation {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0 0 10px;
+  font-size: 0.8125rem;
+  color: var(--ink);
+  line-height: 1.45;
+}
+
+.discover-segment-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.discover-segment-meta span {
+  font-size: 0.6875rem;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+
+.discover-segment-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.discover-segment-lead-chip {
+  font-size: 0.6875rem;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
+.discover-segment-lead-chip.muted {
+  color: var(--muted);
+}
+
+.discover-segment-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.discover-map-hover {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 20;
+  padding: 12px 14px;
+  display: grid;
+  gap: 4px;
+  font-size: 0.8125rem;
+  max-width: 280px;
+  box-shadow: var(--shadow);
+}
+
+.discover-map-hover em {
+  font-style: normal;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.leads-view-toggle-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }

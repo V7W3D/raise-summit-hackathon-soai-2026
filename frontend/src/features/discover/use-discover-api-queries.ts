@@ -17,10 +17,13 @@ async function fetchLeads(params: { missionId?: number } = {}, signal?: AbortSig
   return z.array(leadSchema).parse(data);
 }
 
-export function useLeads(params: { missionId?: number } = {}) {
+export function useLeads(
+  params: { missionId?: number; refetchInterval?: number | false } = {},
+) {
   return useQuery({
     queryKey: leadsQueryKey(params.missionId),
     queryFn: ({ signal }) => fetchLeads(params, signal),
+    refetchInterval: params.refetchInterval,
   });
 }
 

@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useCurrentUser } from '../features/home/use-home-api-queries';
 import { userInitials } from '../lib/user-display';
+import scouterLogo from '../assets/scouter_logo.png';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Home', end: true },
@@ -15,7 +16,7 @@ export function AppLayout() {
     <div className="app-shell">
       <aside className="sidebar">
         <NavLink to="/" className="sidebar-logo">
-          Scouter
+          <img src={scouterLogo} alt="Scouter" className="sidebar-logo-img" />
         </NavLink>
         <nav className="sidebar-nav" aria-label="Main">
           {NAV_ITEMS.map(({ to, label, end }) => (

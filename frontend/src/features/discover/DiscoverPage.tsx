@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Sparkles,
   MoreVertical,
@@ -17,7 +17,7 @@ import {
   ExternalLink,
   CheckCircle2,
   LayoutList,
-  Network,
+  Map,
 } from 'lucide-react';
 
 function BrandDot({ bg, label }: { bg: string; label: string }) {
@@ -51,7 +51,7 @@ import {
   type DiscoverViewMode,
   type FitCategory,
 } from './discover-utils';
-import { DiscoverGraphView } from './graph/DiscoverGraphView';
+import { DiscoverMapView } from './graph/DiscoverMapView';
 import { OutreachDraftPanel } from '../outreach/OutreachDraftPanel';
 import './discover.css';
 import './graph/discover-graph.css';
@@ -76,6 +76,7 @@ function leadCity(lead: LeadVM): string {
 }
 
 export function DiscoverPage() {
+  const [searchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState<FitCategory>('high_fit');
   const [viewMode, setViewMode] = useState<DiscoverViewMode>('list');
   const [missionChoice, setMissionChoice] = useState<number | null>(null);
@@ -88,6 +89,24 @@ export function DiscoverPage() {
   const [sortDesc, setSortDesc] = useState(true);
 
   const { data: missions } = useMissions();
+  const missionFromUrl = searchParams.get('mission');
+
+  useEffect(() => {
+    if (activeCategory === 'rejected' && viewMode === 'map') {
+      setViewMode('list');
+    }
+  }, [activeCategory, viewMode]);
+
+  const mapViewAvailable = activeCategory !== 'rejected';
+
+  useEffect(() => {
+    if (!missionFromUrl) return;
+    const parsed = Number(missionFromUrl);
+    if (!Number.isNaN(parsed)) {
+      setMissionChoice(parsed);
+    }
+  }, [missionFromUrl]);
+
   const selectedMissionId = missionChoice ?? missions?.[0]?.id ?? ALL_MISSIONS;
   const activeMission = missions?.find((mission) => mission.id === selectedMissionId);
 
@@ -347,11 +366,13 @@ export function DiscoverPage() {
               </button>
               <button
                 type="button"
-                className={`leads-view-toggle-btn${viewMode === 'graph' ? ' active' : ''}`}
-                onClick={() => setViewMode('graph')}
-                aria-pressed={viewMode === 'graph'}
+                className={`leads-view-toggle-btn${viewMode === 'map' ? ' active' : ''}`}
+                onClick={() => setViewMode('map')}
+                aria-pressed={viewMode === 'map'}
+                disabled={!mapViewAvailable}
+                title={mapViewAvailable ? undefined : 'Map view is best for actionable leads, not rejected noise'}
               >
-                <Network /> Graph
+                <Map /> Map
               </button>
             </div>
             <button
@@ -364,7 +385,7 @@ export function DiscoverPage() {
           </div>
           <div className="leads-count">
             {filteredLeads.length} result{filteredLeads.length === 1 ? '' : 's'}
-            {viewMode === 'graph' ? ' · graph view' : ''}
+            {viewMode === 'map' ? ' · opportunity map' : ''}
           </div>
 
           {filteredLeads.length === 0 && viewMode === 'list' && (
@@ -373,8 +394,8 @@ export function DiscoverPage() {
             </p>
           )}
 
-          {viewMode === 'graph' ? (
-            <DiscoverGraphView
+          {viewMode === 'map' ? (
+            <DiscoverMapView
               leads={filteredLeads}
               selectedId={effectiveSelectedId ?? null}
               onSelectLead={setSelectedId}

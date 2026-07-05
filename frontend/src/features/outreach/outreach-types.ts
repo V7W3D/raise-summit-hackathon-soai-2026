@@ -22,25 +22,6 @@ export type OutreachScore = {
   tips: OutreachTip[];
 };
 
-export type VerificationStatus = 'verified' | 'partial' | 'unverified';
-
-export type VerificationCheck = {
-  id: string;
-  label: string;
-  passed: boolean;
-  detail: string;
-};
-
-export type LeadVerification = {
-  status: VerificationStatus;
-  statusLabel: string;
-  summary: string;
-  checks: VerificationCheck[];
-  sourcesScanned: number;
-  lastScanned: string | null;
-  evidenceCount: number;
-};
-
 export const OUTREACH_CHANNEL_LABELS: Record<OutreachChannel, string> = {
   email: 'Email',
   linkedin: 'LinkedIn',

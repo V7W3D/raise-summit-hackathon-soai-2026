@@ -12,7 +12,7 @@ ENV_KEYS = {
 	"serper": "SERPER_API_KEY",
 }
 
-SUPPORTED_PROVIDERS = frozenset(ENV_KEYS)
+SUPPORTED_PROVIDERS = frozenset({*ENV_KEYS.keys(), "fixture"})
 
 
 def create_provider(name: str) -> SearchProvider:
@@ -24,6 +24,11 @@ def create_provider(name: str) -> SearchProvider:
 		raise ProviderNotConfiguredError(
 			"Custom search provider is not configured for this deployment"
 		)
+
+	if name == "fixture":
+		from .fixture import FixtureSearchProvider
+
+		return FixtureSearchProvider()
 
 	env_key = ENV_KEYS.get(name)
 	if env_key is None:

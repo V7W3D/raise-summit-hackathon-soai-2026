@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, Integer, String, func
+from sqlalchemy import Boolean, DateTime, Integer, JSON, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database.base import Base
@@ -35,6 +35,13 @@ class Mission(Base):
 	desired_lead_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
 	urgency: Mapped[str | None] = mapped_column(String(10), nullable=True)
 	language: Mapped[str | None] = mapped_column(String(10), nullable=True)
+	mission_priority: Mapped[str | None] = mapped_column(String(20), nullable=True)
+	outreach_channel: Mapped[str | None] = mapped_column(String(20), nullable=True)
+	buyer_roles: Mapped[list] = mapped_column(JSON, default=list, server_default="[]", nullable=False)
+	trigger_signals: Mapped[list] = mapped_column(JSON, default=list, server_default="[]", nullable=False)
+	must_have_filters: Mapped[list] = mapped_column(JSON, default=list, server_default="[]", nullable=False)
+	nice_to_have_filters: Mapped[list] = mapped_column(JSON, default=list, server_default="[]", nullable=False)
+	negative_filters: Mapped[list] = mapped_column(JSON, default=list, server_default="[]", nullable=False)
 
 	created_at: Mapped[datetime] = mapped_column(
 		DateTime(timezone=True), server_default=func.now(), nullable=False

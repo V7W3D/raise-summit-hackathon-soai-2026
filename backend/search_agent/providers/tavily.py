@@ -18,7 +18,8 @@ class TavilySearchProvider(SearchProvider):
     name = "tavily"
 
     def __init__(self, api_key: str | None = None) -> None:
-        self.api_key = api_key or os.environ.get("TAVILY_API_KEY", "")
+        raw = api_key or os.environ.get("TAVILY_API_KEY", "")
+        self.api_key = raw.strip().strip('"').strip("'")
         if not self.api_key:
             raise ValueError("TAVILY_API_KEY is not set")
 

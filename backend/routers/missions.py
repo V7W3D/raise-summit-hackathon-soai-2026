@@ -3,16 +3,31 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Query, status
 
 from database.dependencies import DbSession
+from models.schemas.target_keywords import TargetKeywordsResponse
+from models.schemas.mission_assist import MissionAssistRequest, MissionAssistResponse
+from models.schemas.mission_preview import (
+	MissionPreviewRequest,
+	MissionPreviewResponse,
+	MissionSuggestionsResponse,
+	build_mission_preview,
+	build_mission_suggestions,
+)
 from models.schemas.missions import MissionCreate, MissionRead, MissionUpdate
 from services import missions as mission_service
-from services import search_agent as search_agent_service
 from services import users as user_service
-from services.business_profiles import BusinessProfileNotFoundError
+from services.business_profiles import BusinessProfileNotFoundError, get_business_profile_for_user
+from services.mission_llm import (
+	MissionLLMError,
+	generate_fallback_assist,
+	generate_mission_assist,
+	generate_target_keywords,
+	llm_available,
+)
 from services.mission_search import (
 	MissionSearchAlreadyRunningError,
-	MissionSearchNotActivatedError,
 	start_mission_search,
 )
+from services.search_progress import get_progress
 from search_agent.errors import ProviderNotConfiguredError
 
 router = APIRouter(prefix="/missions", tags=["missions"])
@@ -31,6 +46,88 @@ def _require_default_user(db: DbSession):
 @router.get("", response_model=list[MissionRead])
 def list_missions(db: DbSession, is_archived: bool = Query(default=False)):
 	return mission_service.list_missions(db, is_archived=is_archived)
+
+
+@router.get("/suggestions", response_model=MissionSuggestionsResponse)
+def get_mission_suggestions(db: DbSession):
+	user = _require_default_user(db)
+	profile = get_business_profile_for_user(db, user.id)
+	default_location = profile.target_geographies[0] if profile and profile.target_geographies else ""
+	return build_mission_suggestions(
+		ideal_customers=profile.ideal_customers if profile else None,
+		business_type=profile.business_type if profile else None,
+		profile_languages=profile.languages if profile else None,
+		default_location=default_location,
+	)
+
+
+@router.get("/target-keywords", response_model=TargetKeywordsResponse)
+def get_target_keywords(db: DbSession):
+	user = _require_default_user(db)
+	profile = get_business_profile_for_user(db, user.id)
+	profile_payload = None
+	if profile:
+		profile_payload = {
+			"businessName": profile.business_name,
+			"businessType": profile.business_type,
+			"whatWeSell": profile.what_we_sell,
+			"idealCustomers": profile.ideal_customers,
+			"badFitCustomers": profile.bad_fit_customers,
+			"targetGeographies": profile.target_geographies,
+			"languages": profile.languages,
+		}
+	keywords, source = generate_target_keywords(business_profile=profile_payload)
+	return TargetKeywordsResponse(keywords=keywords, source=source)
+
+
+@router.post("/preview", response_model=MissionPreviewResponse)
+def preview_mission(payload: MissionPreviewRequest):
+	return build_mission_preview(payload)
+
+
+@router.post("/assist", response_model=MissionAssistResponse)
+def assist_mission(payload: MissionAssistRequest, db: DbSession):
+	user = _require_default_user(db)
+	profile = get_business_profile_for_user(db, user.id)
+	profile_payload = None
+	if profile:
+		profile_payload = {
+			"businessName": profile.business_name,
+			"businessType": profile.business_type,
+			"whatWeSell": profile.what_we_sell,
+			"idealCustomers": profile.ideal_customers,
+			"badFitCustomers": profile.bad_fit_customers,
+			"targetGeographies": profile.target_geographies,
+			"languages": profile.languages,
+		}
+
+	try:
+		if llm_available():
+			return generate_mission_assist(
+				query=payload.query,
+				business_profile=profile_payload,
+				current_location=payload.current_location,
+			)
+		return generate_fallback_assist(
+			query=payload.query,
+			ideal_customers=profile.ideal_customers if profile else None,
+			business_type=profile.business_type if profile else None,
+		)
+	except MissionLLMError as exc:
+		message = str(exc)
+		if "Describe who" in message:
+			raise HTTPException(
+				status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+				detail=message,
+			) from None
+		fallback = generate_fallback_assist(
+			query=payload.query,
+			ideal_customers=profile.ideal_customers if profile else None,
+			business_type=profile.business_type if profile else None,
+		)
+		fallback.reasoning = f"{message} Using profile-based suggestions instead."
+		fallback.source = "fallback"
+		return fallback
 
 
 @router.post("", response_model=MissionRead, status_code=status.HTTP_201_CREATED)
@@ -52,11 +149,6 @@ def run_mission_search(mission_id: int, db: DbSession):
 			status_code=status.HTTP_409_CONFLICT,
 			detail=str(exc),
 		) from None
-	except MissionSearchNotActivatedError as exc:
-		raise HTTPException(
-			status_code=status.HTTP_409_CONFLICT,
-			detail=str(exc),
-		) from None
 	except BusinessProfileNotFoundError:
 		raise HTTPException(
 			status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -72,35 +164,12 @@ def run_mission_search(mission_id: int, db: DbSession):
 		) from None
 
 
-@router.post("/{mission_id}/search")
-def search_mission(mission_id: int, db: DbSession):
-	"""Re-run the search agent for a mission and persist newly found leads."""
-	user = _require_default_user(db)
-	try:
-		result = search_agent_service.run_search_for_mission(
-			db, mission_id, user_id=user.id
-		)
-	except BusinessProfileNotFoundError:
-		raise HTTPException(
-			status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-			detail=(
-				"Business profile required before running search. "
-				"Run: python -m database.seed"
-			),
-		) from None
-	except ProviderNotConfiguredError as exc:
-		raise HTTPException(
-			status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-			detail=str(exc),
-		) from None
-	if result is None:
+@router.get("/{mission_id}/search-progress")
+def get_mission_search_progress(mission_id: int, db: DbSession):
+	mission = mission_service.get_mission(db, mission_id, active_only=False)
+	if mission is None:
 		raise HTTPException(status_code=404, detail="Mission not found")
-	output, leads = result
-	return {
-		"missionId": mission_id,
-		"agentStatus": output.status,
-		"leadsCreated": len(leads),
-	}
+	return get_progress(mission_id)
 
 
 @router.get("/{mission_id}", response_model=MissionRead)

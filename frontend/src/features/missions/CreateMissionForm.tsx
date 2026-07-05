@@ -1,68 +1,49 @@
 import axios from 'axios';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Info, Target } from 'lucide-react';
-import { BusinessProfileCard } from './BusinessProfileCard';
 import {
-  type MissionCreatePayload,
-  type MissionUrgency,
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Info,
+  Rocket,
+  Sparkles,
+} from 'lucide-react';
+import { BusinessProfileCard } from './BusinessProfileCard';
+import { ChipSelector, OptionCard } from './MissionChipSelector';
+import { TargetKeywordPicker } from './TargetKeywordPicker';
+import {
+  businessSizeOptions,
+  DIFFICULTY_LABELS,
+  INITIAL_MISSION_FORM,
+  languageOptions,
+  leadCountPresets,
+  MISSION_PRIORITY_META,
+  missionPriorities,
+  negativeFilterOptions,
+  OUTREACH_CHANNEL_LABELS,
+  outreachChannels,
+  WIZARD_STEPS,
+  type MissionFormState,
+  type WizardStepId,
+} from './mission-constants';
+import {
+  addTargetKeyword,
+  buildCreatePayload,
+  canAdvanceFromStep,
+  defaultLocationFromProfile,
+  formToPreviewPayload,
+  inferLanguageFromLocation,
+  removeTargetKeyword,
+} from './mission-form-utils';
+import {
   useCreateMission,
+  useMissionPreview,
+  useTargetKeywords,
+  type MissionPreviewVM,
 } from './use-missions-api-queries';
 import { useBusinessProfile } from './use-business-profile-api-queries';
-
-const URGENCY_OPTIONS: { value: MissionUrgency; label: string }[] = [
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
-];
-
-const INITIAL_FORM = {
-  name: '',
-  target: '',
-  location: '',
-  description: '',
-  targetIndustry: '',
-  targetBusinessSize: '',
-  desiredLeadCount: '',
-  urgency: '' as MissionUrgency | '',
-  language: '',
-};
-
-function buildPayload(form: typeof INITIAL_FORM): MissionCreatePayload | null {
-  const name = form.name.trim();
-  if (!name) return null;
-
-  const payload: MissionCreatePayload = {
-    name,
-  };
-
-  const target = form.target.trim();
-  if (target) payload.target = target;
-
-  const location = form.location.trim();
-  if (location) payload.location = location;
-
-  const description = form.description.trim();
-  if (description) payload.description = description;
-
-  const targetIndustry = form.targetIndustry.trim();
-  if (targetIndustry) payload.target_industry = targetIndustry;
-
-  const targetBusinessSize = form.targetBusinessSize.trim();
-  if (targetBusinessSize) payload.target_business_size = targetBusinessSize;
-
-  const language = form.language.trim();
-  if (language) payload.language = language;
-
-  if (form.urgency) payload.urgency = form.urgency;
-
-  const leadCount = Number.parseInt(form.desiredLeadCount, 10);
-  if (!Number.isNaN(leadCount) && leadCount >= 1) {
-    payload.desired_lead_count = leadCount;
-  }
-
-  return payload;
-}
 
 function mutationErrorMessage(error: unknown): string {
   if (!axios.isAxiosError(error)) {
@@ -75,51 +56,144 @@ function mutationErrorMessage(error: unknown): string {
 
 export function CreateMissionForm() {
   const navigate = useNavigate();
-  const [form, setForm] = useState(INITIAL_FORM);
+  const [step, setStep] = useState<WizardStepId>('what');
+  const [form, setForm] = useState<MissionFormState>(INITIAL_MISSION_FORM);
+  const [preview, setPreview] = useState<MissionPreviewVM | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [initialized, setInitialized] = useState(false);
+  const [keywordsLoaded, setKeywordsLoaded] = useState(false);
+
   const createMission = useCreateMission();
+  const previewMission = useMissionPreview();
   const { data: businessProfile, isPending: isProfilePending, isError: isProfileError } =
     useBusinessProfile();
+  const {
+    data: targetKeywords,
+    isPending: isKeywordsPending,
+    isError: isKeywordsError,
+  } = useTargetKeywords(Boolean(businessProfile));
 
-  const resetForm = () => {
-    setForm(INITIAL_FORM);
-    setValidationError(null);
-    createMission.reset();
-  };
+  useEffect(() => {
+    if (!businessProfile || initialized) return;
+    const location = defaultLocationFromProfile(businessProfile);
+    const language = inferLanguageFromLocation(location, businessProfile.languages);
+    setForm((current) => ({
+      ...current,
+      location: location || current.location,
+      language,
+    }));
+    setInitialized(true);
+  }, [businessProfile, initialized]);
 
-  const updateField = <K extends keyof typeof INITIAL_FORM>(
+  useEffect(() => {
+    if (!targetKeywords || keywordsLoaded) return;
+    setForm((current) => ({
+      ...current,
+      targetKeywords: targetKeywords.keywords,
+      target: current.target || targetKeywords.keywords[0] || '',
+    }));
+    setKeywordsLoaded(true);
+  }, [targetKeywords, keywordsLoaded]);
+
+  useEffect(() => {
+    if (!form.target.trim() || !form.location.trim()) {
+      setPreview(null);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      previewMission.mutate(formToPreviewPayload(form), {
+        onSuccess: (result) => {
+          setPreview(result);
+          if (!form.nameManuallyEdited) {
+            setForm((current) => ({ ...current, name: result.suggestedName }));
+          }
+        },
+      });
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    form.target,
+    form.location,
+    form.targetBusinessSize,
+    form.missionPriority,
+    form.negativeFilters,
+    form.outreachChannel,
+    form.desiredLeadCount,
+    form.customLeadCount,
+    form.nameManuallyEdited,
+    form.language,
+  ]);
+
+  const updateForm = <K extends keyof MissionFormState>(
     field: K,
-    value: (typeof INITIAL_FORM)[K],
+    value: MissionFormState[K],
   ) => {
     setForm((current) => ({ ...current, [field]: value }));
     setValidationError(null);
   };
 
-  const handleSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    const payload = buildPayload(form);
+  const handleAddKeyword = (keyword: string) => {
+    setForm((current) => {
+      const targetKeywords = addTargetKeyword(current.targetKeywords, keyword);
+      const target =
+        current.target && targetKeywords.some((item) => item.toLowerCase() === current.target.toLowerCase())
+          ? current.target
+          : keyword;
+      return { ...current, targetKeywords, target };
+    });
+  };
+
+  const handleRemoveKeyword = (keyword: string) => {
+    setForm((current) => {
+      const targetKeywords = removeTargetKeyword(current.targetKeywords, keyword);
+      const removedCurrent = current.target.toLowerCase() === keyword.toLowerCase();
+      return {
+        ...current,
+        targetKeywords,
+        target: removedCurrent ? (targetKeywords[0] ?? '') : current.target,
+      };
+    });
+  };
+
+  const stepIndex = WIZARD_STEPS.findIndex((item) => item.id === step);
+
+  const goNext = () => {
+    if (!canAdvanceFromStep(step, form)) {
+      setValidationError('Pick a target keyword and set a location before continuing.');
+      return;
+    }
+    const next = WIZARD_STEPS[stepIndex + 1];
+    if (next) setStep(next.id);
+    setValidationError(null);
+  };
+
+  const goBack = () => {
+    const prev = WIZARD_STEPS[stepIndex - 1];
+    if (prev) setStep(prev.id);
+    setValidationError(null);
+  };
+
+  const handleSubmit = () => {
+    const payload = buildCreatePayload(form);
     if (!payload) {
-      setValidationError('Mission name is required.');
+      setValidationError('Target, location, and mission name are required.');
       return;
     }
 
     createMission.mutate(payload, {
       onSuccess: (mission) => {
-        resetForm();
-        navigate(`/missions/${mission.id}`);
+        navigate(`/missions/${mission.id}?run=1`);
       },
     });
   };
 
-  const handleCancel = () => {
-    navigate('/missions');
-  };
-
   return (
-    <form className="create-mission-form" onSubmit={handleSubmit}>
+    <div className="create-mission-form">
       <div className="create-step">
         <div className="create-step-head">
-          <span className="step-num">1</span> Use saved business profile
+          <span className="step-num">✓</span> Saved business profile
         </div>
         {isProfilePending ? (
           <p className="mission-form-error">Loading business profile…</p>
@@ -132,132 +206,251 @@ export function CreateMissionForm() {
         )}
       </div>
 
-      <div className="create-step">
-        <div className="create-step-head">
-          <span className="step-num">2</span> Mission details
+      <div className="wizard-progress" aria-label="Mission creation progress">
+        {WIZARD_STEPS.map((wizardStep, index) => (
+          <div
+            key={wizardStep.id}
+            className={`wizard-progress-step${index <= stepIndex ? ' active' : ''}${index === stepIndex ? ' current' : ''}`}
+          >
+            <span className="wizard-progress-num">{index + 1}</span>
+            <span className="wizard-progress-label">{wizardStep.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {preview && step !== 'what' ? (
+        <div className="mission-live-summary">
+          <Sparkles size={16} />
+          <p>{preview.summary}</p>
         </div>
-        <div className="mission-form-grid mission-form-grid-wide">
+      ) : null}
+
+      {step === 'what' ? (
+        <section className="wizard-panel">
+          <h2 className="wizard-panel-title">What are you looking for?</h2>
+          <p className="wizard-panel-subtitle">
+            Pick your target from AI-suggested keywords — add or remove words as you go.
+          </p>
+
+          <TargetKeywordPicker
+            keywords={form.targetKeywords}
+            selected={form.target}
+            onSelect={(keyword) => updateForm('target', keyword)}
+            onAdd={handleAddKeyword}
+            onRemove={handleRemoveKeyword}
+            isLoading={isKeywordsPending && !keywordsLoaded}
+            source={targetKeywords?.source}
+          />
+
+          {isKeywordsError ? (
+            <p className="mission-form-error" role="alert">
+              Could not load AI keywords. Add your own targets to continue.
+            </p>
+          ) : null}
+
           <label className="mission-field mission-field-full">
-            <span className="mission-field-label">
-              Mission name <span className="mission-field-required">*</span>
-            </span>
-            <input
-              className="mission-input"
-              value={form.name}
-              onChange={(event) => updateField('name', event.target.value)}
-              placeholder="e.g. Construction Clients – Lyon"
-              maxLength={160}
-              required
-            />
-          </label>
-          <label className="mission-field">
-            <span className="mission-field-label">Target</span>
-            <input
-              className="mission-input"
-              value={form.target}
-              onChange={(event) => updateField('target', event.target.value)}
-              placeholder="e.g. small service businesses"
-            />
-          </label>
-          <label className="mission-field">
             <span className="mission-field-label">Location</span>
             <input
               className="mission-input"
               value={form.location}
-              onChange={(event) => updateField('location', event.target.value)}
+              onChange={(event) => {
+                const location = event.target.value;
+                updateForm('location', location);
+                updateForm(
+                  'language',
+                  inferLanguageFromLocation(location, businessProfile?.languages),
+                );
+              }}
               placeholder="e.g. Lyon, France"
             />
           </label>
-          <label className="mission-field mission-field-full">
-            <span className="mission-field-label">Description</span>
-            <textarea
-              className="mission-input mission-textarea"
-              value={form.description}
-              onChange={(event) => updateField('description', event.target.value)}
-              placeholder="Optional — auto-generated from name and target if left empty"
-              rows={3}
-              maxLength={500}
-            />
-          </label>
-        </div>
-      </div>
 
-      <div className="create-step">
-        <div className="create-step-head">
-          <span className="step-num">3</span> Target criteria
-        </div>
-        <div className="mission-form-grid mission-form-grid-wide">
-          <label className="mission-field">
-            <span className="mission-field-label">Target industry</span>
-            <input
-              className="mission-input"
-              value={form.targetIndustry}
-              onChange={(event) => updateField('targetIndustry', event.target.value)}
-              placeholder="e.g. construction"
-              maxLength={120}
-            />
-          </label>
-          <label className="mission-field">
-            <span className="mission-field-label">Business size</span>
-            <input
-              className="mission-input"
-              value={form.targetBusinessSize}
-              onChange={(event) => updateField('targetBusinessSize', event.target.value)}
-              placeholder="e.g. 10 – 100 employees"
-              maxLength={120}
-            />
-          </label>
-          <label className="mission-field">
-            <span className="mission-field-label">Urgency</span>
-            <select
-              className="mission-input mission-select"
-              value={form.urgency}
-              onChange={(event) =>
-                updateField('urgency', event.target.value as MissionUrgency | '')
-              }
-            >
-              <option value="">Not set</option>
-              {URGENCY_OPTIONS.map(({ value, label }) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="mission-field">
+          <div className="mission-chip-group">
             <span className="mission-field-label">Language</span>
-            <input
-              className="mission-input"
-              value={form.language}
-              onChange={(event) => updateField('language', event.target.value)}
-              placeholder="e.g. fr"
-              maxLength={10}
-            />
-          </label>
-        </div>
-      </div>
+            <div className="mission-chip-row">
+              {languageOptions.map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={`mission-chip${form.language === value ? ' selected' : ''}`}
+                  onClick={() => updateForm('language', value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
 
-      <div className="create-step" style={{ marginBottom: 0 }}>
-        <div className="create-step-head">
-          <span className="step-num">4</span> Success definition
-        </div>
-        <div className="mission-form-grid mission-form-grid-wide">
+      {step === 'priority' ? (
+        <section className="wizard-panel">
+          <h2 className="wizard-panel-title">How should this mission run?</h2>
+          <p className="wizard-panel-subtitle">
+            Pick a mode, what to exclude, and how you plan to reach out.
+          </p>
+
+          <div className="mission-option-grid">
+            {missionPriorities.map((priority) => {
+              const meta = MISSION_PRIORITY_META[priority];
+              return (
+                <OptionCard
+                  key={priority}
+                  label={meta.label}
+                  description={meta.description}
+                  selected={form.missionPriority === priority}
+                  onSelect={() => updateForm('missionPriority', priority)}
+                />
+              );
+            })}
+          </div>
+
+          {form.missionPriority ? (
+            <p className="mission-priority-effect">
+              <Info size={14} /> {MISSION_PRIORITY_META[form.missionPriority].urgencyEffect}
+            </p>
+          ) : null}
+
+          <ChipSelector
+            label="Negative filters"
+            hint="Exclude noise upfront"
+            options={negativeFilterOptions}
+            selected={form.negativeFilters}
+            onChange={(selected) => updateForm('negativeFilters', selected)}
+          />
+
+          <div className="mission-chip-group">
+            <span className="mission-field-label">Preferred outreach</span>
+            <div className="mission-chip-row">
+              {outreachChannels.map((channel) => (
+                <button
+                  key={channel}
+                  type="button"
+                  className={`mission-chip${form.outreachChannel === channel ? ' selected' : ''}`}
+                  onClick={() => updateForm('outreachChannel', channel)}
+                >
+                  {OUTREACH_CHANNEL_LABELS[channel]}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {step === 'goal' ? (
+        <section className="wizard-panel">
+          <h2 className="wizard-panel-title">How many leads do you want?</h2>
+          <p className="wizard-panel-subtitle">Pick a preset or enter a custom count.</p>
+
+          <div className="mission-chip-group">
+            <span className="mission-field-label">Lead count</span>
+            <div className="mission-chip-row">
+              {leadCountPresets.map((count) => (
+                <button
+                  key={count}
+                  type="button"
+                  className={`mission-chip mission-chip-lg${
+                    form.desiredLeadCount === count && !form.customLeadCount ? ' selected' : ''
+                  }`}
+                  onClick={() => {
+                    updateForm('desiredLeadCount', count);
+                    updateForm('customLeadCount', '');
+                  }}
+                >
+                  {count}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <label className="mission-field">
-            <span className="mission-field-label">Desired lead count</span>
+            <span className="mission-field-label">Custom count</span>
             <input
               className="mission-input"
               type="number"
               min={1}
-              value={form.desiredLeadCount}
-              onChange={(event) => updateField('desiredLeadCount', event.target.value)}
-              placeholder="e.g. 10"
+              value={form.customLeadCount}
+              onChange={(event) => updateForm('customLeadCount', event.target.value)}
+              placeholder={`Default: ${form.desiredLeadCount}`}
             />
           </label>
-        </div>
-      </div>
+
+          <div className="mission-chip-group">
+            <span className="mission-field-label">Business size</span>
+            <div className="mission-chip-row">
+              {businessSizeOptions.map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={`mission-chip${form.targetBusinessSize === value ? ' selected' : ''}`}
+                  onClick={() => updateForm('targetBusinessSize', value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {step === 'review' ? (
+        <section className="wizard-panel">
+          <h2 className="wizard-panel-title">Review your mission</h2>
+          <p className="wizard-panel-subtitle">
+            Confirm the generated strategy before launching prospecting.
+          </p>
+
+          {preview ? (
+            <div className="mission-review-card">
+              <div className="mission-review-summary">
+                <CheckCircle2 size={18} />
+                <p>{preview.summary}</p>
+              </div>
+
+              <div className="mission-review-meta">
+                <div>
+                  <span className="profile-field-label">Estimated yield</span>
+                  <span className="profile-field-value">
+                    {preview.estimatedYieldLow}–{preview.estimatedYieldHigh} good leads
+                  </span>
+                </div>
+                <div>
+                  <span className="profile-field-label">Difficulty</span>
+                  <span className="profile-field-value">
+                    {DIFFICULTY_LABELS[preview.difficulty]}
+                  </span>
+                </div>
+              </div>
+
+              {preview.coverageWarning ? (
+                <p className="mission-coverage-warning">
+                  <AlertTriangle size={14} /> {preview.coverageWarning}
+                </p>
+              ) : null}
+
+              <p className="mission-review-description">{preview.suggestedDescription}</p>
+            </div>
+          ) : null}
+
+          <label className="mission-field mission-field-full">
+            <span className="mission-field-label">Mission name</span>
+            <input
+              className="mission-input"
+              value={form.name}
+              onChange={(event) => {
+                updateForm('name', event.target.value);
+                updateForm('nameManuallyEdited', true);
+              }}
+              placeholder="Auto-generated from your selections"
+              maxLength={160}
+            />
+          </label>
+        </section>
+      ) : null}
 
       <div className="create-note">
-        <Info /> This profile is saved from onboarding and applied to every mission you create.
+        <Info /> Your saved profile is reused — define targeting once, launch missions in under a
+        minute.
       </div>
 
       {(validationError || createMission.isError) && (
@@ -267,13 +460,36 @@ export function CreateMissionForm() {
       )}
 
       <div className="create-actions">
-        <button type="button" className="btn btn-outline" onClick={handleCancel}>
+        <button type="button" className="btn btn-outline" onClick={() => navigate('/missions')}>
           Cancel
         </button>
-        <button type="submit" className="btn btn-primary" disabled={createMission.isPending || !businessProfile}>
-          <Target size={16} /> {createMission.isPending ? 'Creating…' : 'Create mission'}
-        </button>
+
+        {stepIndex > 0 ? (
+          <button type="button" className="btn btn-outline" onClick={goBack}>
+            <ArrowLeft size={16} /> Back
+          </button>
+        ) : null}
+
+        {step !== 'review' ? (
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={!businessProfile}
+            onClick={goNext}
+          >
+            Continue <ArrowRight size={16} />
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={createMission.isPending || !businessProfile}
+            onClick={handleSubmit}
+          >
+            <Rocket size={16} /> {createMission.isPending ? 'Launching…' : 'Launch mission'}
+          </button>
+        )}
       </div>
-    </form>
+    </div>
   );
 }

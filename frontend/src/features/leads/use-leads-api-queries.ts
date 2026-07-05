@@ -1,9 +1,14 @@
 import axios from 'axios';
 import { z } from 'zod';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { API_BASE_URL } from '../../api/config';
+import { dashboardQueryKey } from '../home/use-home-api-queries';
 import { enrichLeadContent } from './lead-content';
 import { enrichLeadDisplay } from './lead-display';
+
+export const leadStatuses = ['new', 'approved', 'rejected'] as const;
+
+export type LeadStatus = (typeof leadStatuses)[number];
 
 const evidenceSchema = z.object({
   quote: z.string(),
@@ -26,6 +31,7 @@ export const leadSchema = z
     email: z.string(),
     phone: z.string(),
     score: z.number(),
+    status: z.enum(leadStatuses).default('new'),
     why: z.array(z.string()),
     missing: z.array(z.string()),
     recommended: z.array(z.string()),
@@ -46,6 +52,7 @@ export const leadSchema = z
         email: dto.email,
         phone: dto.phone,
         score: dto.score,
+        status: dto.status,
         why: dto.why,
         missing: dto.missing,
         recommended: dto.recommended,
@@ -70,5 +77,23 @@ export function useLead(leadId: string | undefined) {
     queryKey: leadQueryKey(id ?? 0),
     queryFn: ({ signal }) => fetchLead(id as number, signal),
     enabled: id !== undefined && !Number.isNaN(id),
+  });
+}
+
+async function updateLeadStatus(id: number, status: LeadStatus) {
+  const { data } = await axios.patch(`${API_BASE_URL}/leads/${id}`, { status });
+  return leadSchema.parse(data);
+}
+
+export function useUpdateLeadStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: number; status: LeadStatus }) =>
+      updateLeadStatus(id, status),
+    onSuccess: (lead) => {
+      queryClient.setQueryData(leadQueryKey(lead.id), lead);
+      void queryClient.invalidateQueries({ queryKey: ['leads'] });
+      void queryClient.invalidateQueries({ queryKey: dashboardQueryKey });
+    },
   });
 }

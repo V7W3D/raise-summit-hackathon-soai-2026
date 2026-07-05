@@ -3,22 +3,65 @@
 from __future__ import annotations
 
 import logging
+import threading
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
 from database.session import SessionLocal
 from models.clients.missions import Mission
 from services import search_agent as search_agent_service
+from services import search_progress
 
 logger = logging.getLogger(__name__)
+
+# Searches using Tavily typically finish in under a minute. If still
+# "running" after this window, the worker likely died or never started.
+STALE_SEARCH_AFTER = timedelta(seconds=90)
 
 
 class MissionSearchAlreadyRunningError(Exception):
 	"""Raised when a search is already in progress for the mission."""
 
 
-class MissionSearchNotActivatedError(Exception):
-	"""Raised when the mission must be updated before the agent can run again."""
+def _utcnow() -> datetime:
+	return datetime.now(timezone.utc)
+
+
+def _as_utc(value: datetime) -> datetime:
+	if value.tzinfo is None:
+		return value.replace(tzinfo=timezone.utc)
+	return value.astimezone(timezone.utc)
+
+
+def is_search_stale(mission: Mission) -> bool:
+	if mission.search_status != "running":
+		return False
+	return _utcnow() - _as_utc(mission.updated_at) > STALE_SEARCH_AFTER
+
+
+def recover_stale_search(db: Session, mission: Mission) -> Mission:
+	"""Mark a long-running search as failed so the user can retry."""
+	if not is_search_stale(mission):
+		return mission
+	logger.warning(
+		"Recovering stale search for mission_id=%s (stuck since %s)",
+		mission.id,
+		mission.updated_at,
+	)
+	mission.search_status = "failed"
+	db.commit()
+	db.refresh(mission)
+	return mission
+
+
+def recover_stale_searches(db: Session, missions: list[Mission]) -> list[Mission]:
+	changed = False
+	for mission in missions:
+		if is_search_stale(mission):
+			recover_stale_search(db, mission)
+			changed = True
+	return missions
 
 
 def start_mission_search(db: Session, mission_id: int, *, user_id: int) -> Mission:
@@ -34,14 +77,12 @@ def start_mission_search(db: Session, mission_id: int, *, user_id: int) -> Missi
 		raise ValueError("Mission not found")
 
 	if mission.search_status == "running":
-		raise MissionSearchAlreadyRunningError(
-			f"Search is already running for mission {mission_id}"
-		)
-
-	if not mission.search_activated:
-		raise MissionSearchNotActivatedError(
-			f"Search is not activated for mission {mission_id}. Update the mission to run again."
-		)
+		if is_search_stale(mission):
+			recover_stale_search(db, mission)
+		else:
+			raise MissionSearchAlreadyRunningError(
+				f"Search is already running for mission {mission_id}"
+			)
 
 	if get_business_profile_for_user(db, user_id) is None:
 		raise BusinessProfileNotFoundError(
@@ -67,11 +108,25 @@ def execute_mission_search(mission_id: int, user_id: int) -> None:
 
 
 def _execute_mission_search(db: Session, mission_id: int, user_id: int) -> None:
+	import os
+
+	provider = os.environ.get("SEARCH_PROVIDER", "").strip() or "unset"
+	logger.info(
+		"Starting mission search mission_id=%s SEARCH_PROVIDER=%s",
+		mission_id,
+		provider,
+	)
+
 	final_status = "ready"
 	lead_count = 0
+	search_progress.start_progress(mission_id)
+
+	def on_progress(fields: dict) -> None:
+		search_progress.update_progress(mission_id, **fields)
+
 	try:
 		result = search_agent_service.run_search_for_mission(
-			db, mission_id, user_id=user_id
+			db, mission_id, user_id=user_id, progress_callback=on_progress
 		)
 		if result is None:
 			final_status = "failed"
@@ -87,14 +142,20 @@ def _execute_mission_search(db: Session, mission_id: int, user_id: int) -> None:
 		final_status = "failed"
 		logger.exception("Search agent run failed for mission_id=%s", mission_id)
 	finally:
+		search_progress.finish_progress(mission_id, failed=final_status == "failed")
 		_set_search_status(db, mission_id, final_status)
 
 
 def enqueue_mission_search(mission_id: int, user_id: int) -> None:
-	"""Dispatch a Celery task to run the search agent for the given mission."""
-	from tasks.mission_search import run_mission_search_task
-
-	run_mission_search_task.delay(mission_id, user_id)
+	"""Run the search agent in a background thread (no Celery required)."""
+	thread = threading.Thread(
+		target=execute_mission_search,
+		args=(mission_id, user_id),
+		daemon=True,
+		name=f"mission-search-{mission_id}",
+	)
+	thread.start()
+	logger.info("Started background search thread for mission_id=%s", mission_id)
 
 
 def _set_search_status(db: Session, mission_id: int, status: str) -> None:
@@ -102,5 +163,4 @@ def _set_search_status(db: Session, mission_id: int, status: str) -> None:
 	if mission is None:
 		return
 	mission.search_status = status
-	mission.search_activated = False
 	db.commit()

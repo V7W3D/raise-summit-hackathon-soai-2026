@@ -1,19 +1,29 @@
 import { Info } from 'lucide-react';
 import { ScoreRing } from '@components/ScoreRing';
 import { BusinessProfileCard } from './BusinessProfileCard';
-import type { MissionUrgency, MissionVM } from './use-missions-api-queries';
+import { MISSION_PRIORITY_META, OUTREACH_CHANNEL_LABELS } from './mission-constants';
+import type { MissionVM } from './use-missions-api-queries';
 import { useBusinessProfile } from './use-business-profile-api-queries';
-
-const URGENCY_LABELS: Record<MissionUrgency, string> = {
-  low: 'Low',
-  medium: 'Medium',
-  high: 'High',
-};
 
 function displayValue(value: string | number | null | undefined) {
   if (value === null || value === undefined) return '—';
   const text = String(value).trim();
   return text || '—';
+}
+
+function TagList({ items }: { items: string[] }) {
+  if (!items.length) {
+    return <div className="mission-detail-value">—</div>;
+  }
+  return (
+    <div className="mission-tag-list">
+      {items.map((item) => (
+        <span key={item} className="mission-tag">
+          {item}
+        </span>
+      ))}
+    </div>
+  );
 }
 
 type DetailFieldProps = {
@@ -40,6 +50,10 @@ export function MissionDetailsContent({ mission, title = 'Mission details' }: Mi
   const { data: businessProfile, isPending: isProfilePending, isError: isProfileError } =
     useBusinessProfile();
 
+  const priorityLabel = mission.missionPriority
+    ? MISSION_PRIORITY_META[mission.missionPriority].label
+    : null;
+
   return (
     <>
       <div className="mission-detail-header">
@@ -58,7 +72,7 @@ export function MissionDetailsContent({ mission, title = 'Mission details' }: Mi
 
       <div className="create-step">
         <div className="create-step-head">
-          <span className="step-num">1</span> Use saved business profile
+          <span className="step-num">1</span> Business profile
         </div>
         {isProfilePending ? (
           <p className="mission-form-error">Loading business profile…</p>
@@ -71,40 +85,44 @@ export function MissionDetailsContent({ mission, title = 'Mission details' }: Mi
 
       <div className="create-step">
         <div className="create-step-head">
-          <span className="step-num">2</span> Mission details
+          <span className="step-num">2</span> Mission objective
         </div>
         <div className="mission-form-grid">
           <DetailField label="Mission name" value={mission.name} fullWidth />
-          <DetailField label="Target" value={mission.target} />
+          <DetailField label="Target type" value={mission.target} />
           <DetailField label="Location" value={mission.location} />
+          <DetailField label="Language" value={mission.language} />
           <DetailField label="Description" value={mission.description} fullWidth />
         </div>
       </div>
 
       <div className="create-step">
         <div className="create-step-head">
-          <span className="step-num">3</span> Target criteria
+          <span className="step-num">3</span> Mode
         </div>
         <div className="mission-form-grid">
-          <DetailField label="Target industry" value={mission.targetIndustry} />
-          <DetailField label="Business size" value={mission.targetBusinessSize} />
+          <DetailField label="Priority" value={priorityLabel} />
           <DetailField
-            label="Urgency"
-            value={mission.urgency ? URGENCY_LABELS[mission.urgency] : null}
+            label="Outreach channel"
+            value={mission.outreachChannel ? OUTREACH_CHANNEL_LABELS[mission.outreachChannel] : null}
           />
-          <DetailField label="Language" value={mission.language} />
+          <DetailField label="Business size" value={mission.targetBusinessSize} />
+          <div className="mission-field mission-field-full">
+            <span className="mission-field-label">Negative filters</span>
+            <TagList items={mission.negativeFilters} />
+          </div>
         </div>
       </div>
 
       <div className="create-step" style={{ marginBottom: 0 }}>
         <div className="create-step-head">
-          <span className="step-num">4</span> Success definition
+          <span className="step-num">4</span> Goal
         </div>
         <DetailField label="Desired lead count" value={mission.desiredLeadCount} />
       </div>
 
       <div className="create-note">
-        <Info /> This profile is saved from onboarding and applied to every mission you create.
+        <Info /> This mission packages one prospecting objective with clear targeting and output.
       </div>
     </>
   );

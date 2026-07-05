@@ -403,6 +403,26 @@
   box-shadow: var(--shadow);
 }
 
+.next-option.recommended {
+  border-color: var(--accent);
+  background: var(--accent-muted);
+  box-shadow: var(--shadow);
+}
+
+.next-option-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  vertical-align: middle;
+}
+
 .next-option svg.opt-icon {
   width: 18px;
   height: 18px;

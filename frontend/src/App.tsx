@@ -8,6 +8,7 @@ import { EditBusinessProfilePage } from '@features/missions/EditBusinessProfileP
 import { MissionsPage } from '@features/missions/MissionsPage';
 import { DiscoverPage } from '@features/discover/DiscoverPage';
 import { LeadDetailPage } from '@features/leads/LeadDetailPage';
+import { MissionVerdictPage } from '@features/verdict/MissionVerdictPage';
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/profile" element={<EditBusinessProfilePage />} />
           <Route path="/missions/:missionId/edit" element={<EditMissionPage />} />
           <Route path="/missions/:missionId" element={<MissionDetailPage />} />
+          <Route path="/missions/:missionId/verdict" element={<MissionVerdictPage />} />
           <Route path="/discover" element={<DiscoverPage />} />
           <Route path="/leads/:leadId" element={<LeadDetailPage />} />
         </Route>

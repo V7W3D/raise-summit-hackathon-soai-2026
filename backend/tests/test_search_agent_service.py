@@ -147,7 +147,7 @@ def test_run_mission_search_persists_leads(client: TestClient) -> None:
 	assert search_res.status_code == 200, search_res.text
 	search_body = search_res.json()
 	assert search_body["search_status"] == "ready"
-	assert search_body["search_activated"] is False
+	assert search_body["search_activated"] is True
 
 	leads = client.get("/leads", params={"mission_id": mission_id}).json()
 	assert len(leads) > 0

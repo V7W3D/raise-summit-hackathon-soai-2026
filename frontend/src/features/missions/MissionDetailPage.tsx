@@ -1,12 +1,14 @@
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Archive, ArchiveRestore, ChevronLeft, Loader2, Pencil, Trash2 } from 'lucide-react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Archive, ArchiveRestore, ChevronLeft, Pencil, Trash2 } from 'lucide-react';
 import { MissionDetailsContent } from './MissionDetailsContent';
+import { MissionSearchPanel } from './MissionSearchPanel';
 import { useDeleteMission, useMission, useUpdateMission } from './use-missions-api-queries';
 import './missions.css';
 
 export function MissionDetailPage() {
   const navigate = useNavigate();
   const { missionId } = useParams();
+  const [searchParams] = useSearchParams();
   const id = missionId ? Number(missionId) : NaN;
   const { data: mission, isPending, isError } = useMission(id);
   const deleteMission = useDeleteMission();
@@ -14,6 +16,7 @@ export function MissionDetailPage() {
   const isSearching = mission?.searchStatus === 'running';
   const isDeleting = deleteMission.isPending && deleteMission.variables === id;
   const isArchiving = updateMission.isPending && updateMission.variables?.id === id;
+  const autoStartSearch = searchParams.get('run') === '1';
 
   if (Number.isNaN(id)) {
     return <p className="page-subtitle">Invalid mission.</p>;
@@ -65,14 +68,9 @@ export function MissionDetailPage() {
       </Link>
 
       <h1 className="page-title">{mission.name}</h1>
-      <p className="page-subtitle">Review mission configuration and targeting criteria.</p>
+      <p className="page-subtitle">Run the lead search agent or review your mission setup.</p>
 
-      {isSearching ? (
-        <div className="mission-search-banner" role="status">
-          <Loader2 className="mission-search-spinner" size={16} aria-hidden />
-          Agent is currently fetching leads for this mission…
-        </div>
-      ) : null}
+      <MissionSearchPanel mission={mission} autoStart={autoStartSearch} />
 
       <div className="mission-detail-panel-wrapper">
         <div className="mission-detail-actions">

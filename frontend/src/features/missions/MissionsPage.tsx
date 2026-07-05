@@ -7,7 +7,7 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import { MissionListItem } from './MissionListItem';
-import { useMissions, useRunMissionSearch } from './use-missions-api-queries';
+import { useMissions } from './use-missions-api-queries';
 import './missions.css';
 
 export function MissionsPage() {
@@ -18,7 +18,6 @@ export function MissionsPage() {
     isPending: isArchivedPending,
     isError: isArchivedError,
   } = useMissions({ isArchived: true, enabled: showArchived });
-  const runMissionSearch = useRunMissionSearch();
   const missions = activeMissions ?? [];
   const archived = archivedMissions ?? [];
 
@@ -54,16 +53,7 @@ export function MissionsPage() {
         {missions.length === 0 ? (
           <p className="missions-list-empty">No active missions yet.</p>
         ) : (
-          missions.map((mission) => (
-            <MissionListItem
-              key={mission.id}
-              mission={mission}
-              onRunSearch={() => runMissionSearch.mutate(mission.id)}
-              isRunningSearch={
-                runMissionSearch.isPending && runMissionSearch.variables === mission.id
-              }
-            />
-          ))
+          missions.map((mission) => <MissionListItem key={mission.id} mission={mission} />)
         )}
       </div>
 
@@ -89,12 +79,7 @@ export function MissionsPage() {
           ) : (
             <div className="missions-list-scroll">
               {archived.map((mission) => (
-                <MissionListItem
-                  key={mission.id}
-                  mission={mission}
-                  archived
-                  isRunningSearch={false}
-                />
+                <MissionListItem key={mission.id} mission={mission} archived />
               ))}
             </div>
           )}

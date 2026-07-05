@@ -10,9 +10,9 @@ export function CreateMissionPage() {
         <ChevronLeft size={16} /> Back to missions
       </Link>
 
-      <h1 className="page-title">Create New Mission</h1>
+      <h1 className="page-title">Launch a Prospecting Mission</h1>
       <p className="page-subtitle">
-        Define a prospecting goal using your saved business profile and targeting criteria.
+        Tell us who you want, where, and what matters most — we build the mission for you.
       </p>
 
       <div className="card create-mission-page">

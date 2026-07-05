@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+LeadStatus = Literal["new", "approved", "rejected"]
 
 
 class LeadBase(BaseModel):
@@ -14,6 +16,7 @@ class LeadBase(BaseModel):
 	email: str = ""
 	phone: str = ""
 	score: int = 0
+	status: LeadStatus = "new"
 	why: list[str] = Field(default_factory=list)
 	missing: list[str] = Field(default_factory=list)
 	recommended: list[str] = Field(default_factory=list)
@@ -33,6 +36,7 @@ class LeadUpdate(BaseModel):
 	email: str | None = None
 	phone: str | None = None
 	score: int | None = None
+	status: LeadStatus | None = None
 	why: list[str] | None = None
 	missing: list[str] | None = None
 	recommended: list[str] | None = None
