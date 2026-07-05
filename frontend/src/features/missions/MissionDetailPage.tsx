@@ -68,7 +68,6 @@ export function MissionDetailPage() {
       </Link>
 
       <h1 className="page-title">{mission.name}</h1>
-      <p className="page-subtitle">Run the lead search agent or review your mission setup.</p>
 
       <MissionSearchPanel mission={mission} autoStart={autoStartSearch} />
 

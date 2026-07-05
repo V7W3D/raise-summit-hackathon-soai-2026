@@ -1,45 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
-  Sparkles,
-  MoreVertical,
   Building2,
   MapPin,
-  Factory,
-  Check,
   ArrowUpDown,
-  Eye,
   Send,
-  AlertCircle,
-  Lightbulb,
-  Mail,
-  Phone,
   ExternalLink,
-  CheckCircle2,
   LayoutList,
   Map,
 } from 'lucide-react';
 
-function BrandDot({ bg, label }: { bg: string; label: string }) {
-  return (
-    <span
-      style={{
-        width: 16,
-        height: 16,
-        borderRadius: 4,
-        background: bg,
-        color: '#fff',
-        display: 'inline-grid',
-        placeItems: 'center',
-        fontSize: 10,
-        fontWeight: 700,
-        flexShrink: 0,
-      }}
-    >
-      {label}
-    </span>
-  );
-}
 import { ScoreRing, fitColor } from '@components/ScoreRing';
 import { useLeads } from './use-discover-api-queries';
 import { useMissions } from '../missions/use-missions-api-queries';
@@ -71,17 +41,12 @@ const scorePill: Record<LeadVM['scoreTone'], string> = {
   orange: 'pill-orange',
 };
 
-function leadCity(lead: LeadVM): string {
-  return lead.location.split(',')[0]?.trim() ?? '';
-}
-
 export function DiscoverPage() {
   const [searchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState<FitCategory>('high_fit');
   const [viewMode, setViewMode] = useState<DiscoverViewMode>('list');
   const [missionChoice, setMissionChoice] = useState<number | null>(null);
-  const [locationFilter, setLocationFilter] = useState<string | null>(null);
-  const [industryFilter, setIndustryFilter] = useState<string | null>(null);
+  const [locationFilter, setLocationFilter] = useState('');
   const [requireContact, setRequireContact] = useState(false);
   const [requireEmail, setRequireEmail] = useState(false);
   const [requirePhone, setRequirePhone] = useState(false);
@@ -115,19 +80,8 @@ export function DiscoverPage() {
   });
   const discoverLeads = useMemo(() => data ?? [], [data]);
 
-  const locations = useMemo(() => {
-    const cities = discoverLeads.map(leadCity).filter(Boolean);
-    return [...new Set(cities)].slice(0, 6);
-  }, [discoverLeads]);
-
-  const industries = useMemo(() => {
-    const items = discoverLeads.map((lead) => lead.industry).filter(Boolean);
-    return [...new Set(items)].slice(0, 8);
-  }, [discoverLeads]);
-
   const resetFilters = () => {
-    setLocationFilter(null);
-    setIndustryFilter(null);
+    setLocationFilter('');
     setRequireContact(false);
     setRequireEmail(false);
     setRequirePhone(false);
@@ -135,27 +89,24 @@ export function DiscoverPage() {
   };
 
   /* Sidebar filters apply before the category tabs so tab counts stay honest. */
-  const baseLeads = useMemo(
-    () =>
-      discoverLeads.filter((lead) => {
-        if (locationFilter && leadCity(lead) !== locationFilter) return false;
-        if (industryFilter && lead.industry !== industryFilter) return false;
-        if (requireContact && !lead.email && !lead.phone) return false;
-        if (requireEmail && !lead.email) return false;
-        if (requirePhone && !lead.phone) return false;
-        if (requireWebsite && !lead.website) return false;
-        return true;
-      }),
-    [
-      discoverLeads,
-      locationFilter,
-      industryFilter,
-      requireContact,
-      requireEmail,
-      requirePhone,
-      requireWebsite,
-    ],
-  );
+  const baseLeads = useMemo(() => {
+    const locationQuery = locationFilter.trim().toLowerCase();
+    return discoverLeads.filter((lead) => {
+      if (locationQuery && !lead.location.toLowerCase().includes(locationQuery)) return false;
+      if (requireContact && !lead.email && !lead.phone) return false;
+      if (requireEmail && !lead.email) return false;
+      if (requirePhone && !lead.phone) return false;
+      if (requireWebsite && !lead.website) return false;
+      return true;
+    });
+  }, [
+    discoverLeads,
+    locationFilter,
+    requireContact,
+    requireEmail,
+    requirePhone,
+    requireWebsite,
+  ]);
 
   const categoryCounts = useMemo(() => countByCategory(baseLeads), [baseLeads]);
   const filteredLeads = useMemo(
@@ -167,8 +118,7 @@ export function DiscoverPage() {
   );
 
   const hasActiveFilters =
-    locationFilter !== null ||
-    industryFilter !== null ||
+    locationFilter.trim() !== '' ||
     requireContact ||
     requireEmail ||
     requirePhone ||
@@ -177,10 +127,6 @@ export function DiscoverPage() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [outreachLeadId, setOutreachLeadId] = useState<number | null>(null);
   const effectiveSelectedId = selectedId ?? filteredLeads[0]?.id ?? discoverLeads[0]?.id;
-  const selected =
-    discoverLeads.find((lead) => lead.id === effectiveSelectedId) ??
-    filteredLeads[0] ??
-    discoverLeads[0];
   const outreachLead = discoverLeads.find((lead) => lead.id === outreachLeadId);
   const outreachMissionName = outreachLead
     ? missions?.find((mission) => mission.id === outreachLead.missionId)?.name
@@ -200,34 +146,51 @@ export function DiscoverPage() {
         <h1 className="page-title">Discover Leads</h1>
       </div>
 
-      <div className="card mission-bar">
-        <span className="icon-tile blue">
-          <Building2 />
-        </span>
-        <div className="mission-bar-info">
-          <span className="mission-bar-name">
-            {activeMission ? activeMission.name : 'All missions'}
-            {activeMission && <span className="mission-bar-dot" />}
+      {activeMission ? (
+        <Link className="card mission-bar mission-bar-link" to={`/missions/${activeMission.id}`}>
+          <span className="icon-tile blue">
+            <Building2 />
           </span>
-          {activeMission && (
+          <div className="mission-bar-info">
+            <span className="mission-bar-name">
+              {activeMission.name}
+              <span className="mission-bar-dot" />
+            </span>
             <span className="mission-bar-meta">
               {[activeMission.location, activeMission.target || activeMission.targetIndustry]
                 .filter(Boolean)
                 .join(' · ')}
             </span>
-          )}
-        </div>
-        <div className="mission-bar-stats">
-          <span>
-            <strong>{discoverLeads.length}</strong> leads
+          </div>
+          <div className="mission-bar-stats">
+            <span>
+              <strong>{discoverLeads.length}</strong> leads
+            </span>
+            <span>
+              <strong>{countByCategory(discoverLeads).high_fit}</strong> high fit
+            </span>
+          </div>
+        </Link>
+      ) : (
+        <div className="card mission-bar">
+          <span className="icon-tile blue">
+            <Building2 />
           </span>
-          <span>
-            <strong>{countByCategory(discoverLeads).high_fit}</strong> high fit
-          </span>
+          <div className="mission-bar-info">
+            <span className="mission-bar-name">All missions</span>
+          </div>
+          <div className="mission-bar-stats">
+            <span>
+              <strong>{discoverLeads.length}</strong> leads
+            </span>
+            <span>
+              <strong>{countByCategory(discoverLeads).high_fit}</strong> high fit
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className={`discover-layout${selected ? '' : ' no-panel'}`}>
+      <div className="discover-layout no-panel">
         <aside className="card filters-panel">
           <div className="filters-head">
             <span className="filters-head-title">Filters</span>
@@ -250,7 +213,6 @@ export function DiscoverPage() {
                 resetFilters();
               }}
             >
-              <option value={ALL_MISSIONS}>All missions</option>
               {(missions ?? []).map((mission) => (
                 <option key={mission.id} value={mission.id}>
                   {mission.name}
@@ -259,45 +221,19 @@ export function DiscoverPage() {
             </select>
           </div>
 
-          {locations.length > 0 && (
-            <div className="filter-group">
-              <div className="filter-label">Location</div>
-              <div className="tag-row">
-                {locations.map((city) => (
-                  <button
-                    key={city}
-                    type="button"
-                    className={`filter-tag${locationFilter === city ? ' selected' : ''}`}
-                    onClick={() =>
-                      setLocationFilter((current) => (current === city ? null : city))
-                    }
-                  >
-                    <MapPin size={11} /> {city}
-                  </button>
-                ))}
-              </div>
+          <div className="filter-group">
+            <div className="filter-label">Location</div>
+            <div className="filter-search">
+              <MapPin size={13} />
+              <input
+                type="text"
+                className="filter-search-input"
+                placeholder="Filter by location"
+                value={locationFilter}
+                onChange={(event) => setLocationFilter(event.target.value)}
+              />
             </div>
-          )}
-
-          {industries.length > 0 && (
-            <div className="filter-group">
-              <div className="filter-label">Industry</div>
-              <div className="tag-row">
-                {industries.map((industry) => (
-                  <button
-                    key={industry}
-                    type="button"
-                    className={`filter-tag${industryFilter === industry ? ' selected' : ''}`}
-                    onClick={() =>
-                      setIndustryFilter((current) => (current === industry ? null : industry))
-                    }
-                  >
-                    <Factory size={11} /> {industry}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          </div>
 
           <div className="filter-group" style={{ marginBottom: 0 }}>
             <div className="filter-label">Requirements</div>
@@ -402,29 +338,22 @@ export function DiscoverPage() {
               onDraftOutreach={setOutreachLeadId}
             />
           ) : (
-            filteredLeads.map((lead) => {
-            const isSelected = lead.id === effectiveSelectedId;
-            return (
-              <div
-                key={lead.id}
-                className={`card lead-card${isSelected ? ' selected' : ''}`}
-                onClick={() => setSelectedId(lead.id)}
-              >
+            filteredLeads.map((lead) => (
+              <Link key={lead.id} to={`/leads/${lead.id}`} className="card lead-card">
                 <div className="lead-card-main">
-                  <span className={`lead-radio${isSelected ? ' checked' : ''}`} />
-                  <div className="lead-identity">
-                    <span className="lead-logo" style={{ background: lead.logoColor }}>
-                      {lead.initials}
-                    </span>
-                    <div>
-                      <div className="lead-name">{lead.name}</div>
-                      <div className="lead-desc">{lead.description}</div>
-                      <div className="lead-loc">
+                  <span className="lead-logo" style={{ background: lead.logoColor }}>
+                    {lead.initials}
+                  </span>
+                  <div className="lead-identity-body">
+                    <div className="lead-name">{lead.name}</div>
+                    <div className="lead-desc">{lead.description}</div>
+                    <div className="lead-meta-row">
+                      <span className="lead-loc">
                         <MapPin /> {lead.location}
-                      </div>
-                      <div className="lead-loc">
+                      </span>
+                      <span className="lead-loc">
                         <ExternalLink /> {lead.website}
-                      </div>
+                      </span>
                       <span className="lead-contact-badge">{lead.contactBadge}</span>
                     </div>
                   </div>
@@ -434,45 +363,12 @@ export function DiscoverPage() {
                     <span className={`pill ${scorePill[lead.scoreTone]}`}>{lead.scoreLabel}</span>
                   </div>
 
-                  <div className="lead-cols">
-                    <div>
-                      <div className="lead-col-title">Why</div>
-                      {lead.why.map((reason) => (
-                        <div key={reason} className="lead-col-item why">
-                          <Check /> {reason}
-                        </div>
-                      ))}
-                    </div>
-                    <div>
-                      <div className="lead-col-title">Missing</div>
-                      {lead.missing.map((item) => (
-                        <div key={item} className="lead-col-item missing">
-                          <AlertCircle /> {item}
-                        </div>
-                      ))}
-                    </div>
-                    <div>
-                      <div className="lead-col-title">Recommended</div>
-                      {lead.recommended.map((item) => (
-                        <div key={item} className="lead-col-item rec">
-                          <Lightbulb /> {item}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {!isSelected && <MoreVertical size={16} className="lead-more" />}
-                </div>
-
-                {isSelected && (
                   <div className="lead-actions">
-                    <Link to={`/leads/${lead.id}`} className="btn btn-outline btn-sm">
-                      <Eye size={14} /> Open details
-                    </Link>
                     <button
                       type="button"
                       className="btn btn-primary btn-sm"
                       onClick={(event) => {
+                        event.preventDefault();
                         event.stopPropagation();
                         setOutreachLeadId(lead.id);
                       }}
@@ -480,107 +376,11 @@ export function DiscoverPage() {
                       <Send size={14} /> Draft outreach
                     </button>
                   </div>
-                )}
-              </div>
-            );
-          })
+                </div>
+              </Link>
+            ))
           )}
         </div>
-
-        {selected && (
-        <div className="lead-panel-wrap">
-          <aside className="card lead-panel">
-            <div className="lead-panel-head">
-              <span className="pill pill-blue">Selected lead</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span className="pill pill-purple">
-                  AI-verified <Sparkles size={11} />
-                </span>
-              </span>
-            </div>
-
-            <div className="lead-panel-identity">
-              <span className="lead-logo" style={{ background: selected.logoColor, width: 46, height: 46 }}>
-                {selected.initials}
-              </span>
-              <div>
-                <div className="lead-panel-name">{selected.name}</div>
-                <div className="lead-panel-desc">{selected.description}</div>
-              </div>
-              <div className="lead-panel-score">
-                <ScoreRing value={selected.score} size={54} stroke={5} color={fitColor(selected.score)} fontSize={15} />
-                <span className={`pill ${scorePill[selected.scoreTone]}`}>{selected.scoreLabel}</span>
-              </div>
-            </div>
-
-            <div className="lead-panel-section-title">Key evidence snippets</div>
-            {selected.evidence.length > 0 ? (
-              selected.evidence.map((snippet) => (
-                <div key={snippet.quote} className="snippet">
-                  <span className="snippet-quote">“</span>
-                  <span>{snippet.quote}</span>
-                  <span className="snippet-source">{snippet.source}</span>
-                </div>
-              ))
-            ) : (
-              <p className="lead-panel-text">No evidence snippets captured yet.</p>
-            )}
-
-            <div className="lead-panel-section-title" style={{ marginTop: 16 }}>
-              Contact information
-            </div>
-            {selected.email && (
-              <div className="contact-row">
-                <Mail /> {selected.email}
-              </div>
-            )}
-            {selected.phone && (
-              <div className="contact-row">
-                <Phone /> {selected.phone}
-              </div>
-            )}
-            {!selected.email && !selected.phone && (
-              <p className="lead-panel-text">No contact details found yet.</p>
-            )}
-
-            <div className="lead-panel-section-title" style={{ marginTop: 16 }}>Social presence</div>
-            <div className="social-row">
-              <span className="social-chip">
-                <BrandDot bg="var(--blue)" label="in" /> LinkedIn
-              </span>
-              <span className="social-chip">
-                <BrandDot bg="var(--muted)" label="f" /> Facebook
-              </span>
-              <span className="social-chip">
-                <BrandDot bg="var(--faint)" label="ig" /> Instagram
-              </span>
-            </div>
-
-            {selected.sourcesScanned.length > 0 && (
-              <>
-                <div className="lead-panel-section-title">Evidence timeline</div>
-                {selected.sourcesScanned.map((event) => (
-                  <div key={event.label} className="timeline-item">
-                    <CheckCircle2 /> {event.label}
-                    <span className="time">{event.time}</span>
-                  </div>
-                ))}
-              </>
-            )}
-
-            <div className="lead-panel-foot">
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
-                style={{ width: '100%' }}
-                onClick={() => setOutreachLeadId(selected.id)}
-              >
-                <Send size={14} /> Draft outreach
-              </button>
-            </div>
-          </aside>
-        </div>
-        )}
       </div>
 
       {outreachLead && (
