@@ -32,6 +32,9 @@ class Lead(Base):
 	status: Mapped[str] = mapped_column(
 		String(20), default="new", server_default="new", nullable=False
 	)
+	tracking_status: Mapped[str] = mapped_column(
+		String(20), default="to_contact", server_default="to_contact", nullable=False
+	)
 
 	why: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
 	missing: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)

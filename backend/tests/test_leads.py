@@ -73,5 +73,13 @@ def test_update_lead(client: TestClient) -> None:
 	assert res.json()["description"] == "Updated"
 
 
+def test_update_lead_tracking_status(client: TestClient) -> None:
+	mission_id = _create_mission(client)
+	created = _create_lead(client, mission_id, status="approved")
+	res = client.patch(f"/leads/{created['id']}", json={"tracking_status": "contacted"})
+	assert res.status_code == 200
+	assert res.json()["tracking_status"] == "contacted"
+
+
 def test_lead_404(client: TestClient) -> None:
 	assert client.get("/leads/999").status_code == 404
