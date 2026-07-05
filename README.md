@@ -1,6 +1,6 @@
 # raise-summit-hackathon-soai-2026
 
-**ProspectPath** — an AI-assisted lead prospecting workspace. A FastAPI + SQLite
+**Scouter** — an AI-assisted lead prospecting workspace. A FastAPI + SQLite
 backend and a Vite + React frontend for Home, Missions, Discover, Lead Verification,
 and Insights.
 
@@ -16,7 +16,7 @@ Mission search runs in the background via Celery, which uses Redis as its messag
 **Docker (recommended):**
 
 ```bash
-docker run -d --name prospectpath-redis -p 6379:6379 redis:7
+docker run -d --name scouter-redis -p 6379:6379 redis:7
 ```
 
 **Or install locally (Ubuntu/Debian):**
