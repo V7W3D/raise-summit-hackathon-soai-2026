@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Query, status
 
 from database.dependencies import DbSession
+from models.schemas.prospect_segments import ProspectSegmentsResponse
 from models.schemas.target_keywords import TargetKeywordsResponse
 from models.schemas.mission_assist import MissionAssistRequest, MissionAssistResponse
 from models.schemas.mission_preview import (
@@ -20,6 +21,7 @@ from services.mission_llm import (
 	MissionLLMError,
 	generate_fallback_assist,
 	generate_mission_assist,
+	generate_prospect_segments,
 	generate_target_keywords,
 	llm_available,
 )
@@ -59,6 +61,25 @@ def get_mission_suggestions(db: DbSession):
 		profile_languages=profile.languages if profile else None,
 		default_location=default_location,
 	)
+
+
+@router.get("/prospect-segments", response_model=ProspectSegmentsResponse)
+def get_prospect_segments(db: DbSession):
+	user = _require_default_user(db)
+	profile = get_business_profile_for_user(db, user.id)
+	profile_payload = None
+	if profile:
+		profile_payload = {
+			"businessName": profile.business_name,
+			"businessType": profile.business_type,
+			"whatWeSell": profile.what_we_sell,
+			"valueProposition": profile.value_proposition,
+			"idealCustomers": profile.ideal_customers,
+			"badFitCustomers": profile.bad_fit_customers,
+			"targetGeographies": profile.target_geographies,
+			"languages": profile.languages,
+		}
+	return generate_prospect_segments(business_profile=profile_payload)
 
 
 @router.get("/target-keywords", response_model=TargetKeywordsResponse)

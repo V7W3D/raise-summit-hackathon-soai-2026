@@ -20,6 +20,8 @@ class CamelModel(BaseModel):
 
 SourceKind = Literal["web", "maps", "directories", "linkedin_public", "user_urls"]
 
+SearchMode = Literal["fast", "balanced", "deep"]
+
 ProviderName = Literal["exa", "tavily", "brave", "serper", "custom", "fixture"]
 
 
@@ -47,18 +49,27 @@ class Mission(CamelModel):
     desired_lead_count: Optional[int] = None
     urgency: Optional[Literal["low", "medium", "high"]] = None
     language: Optional[str] = None
+    buyer_roles: list[str] = Field(default_factory=list)
+    trigger_signals: list[str] = Field(default_factory=list)
+    negative_filters: list[str] = Field(default_factory=list)
+    mission_priority: Optional[str] = None
 
 
 class SearchOptions(CamelModel):
+    search_mode: SearchMode = "balanced"
     max_queries: int = 6
     max_results_per_query: int = 8
     max_pages_to_fetch: int = 12
+    max_rounds: int = 1
+    queries_per_round: int = 4
     include_sources: list[SourceKind] = Field(
         default_factory=lambda: ["web", "directories"]
     )
     user_provided_urls: list[str] = Field(default_factory=list)
     freshness_days: Optional[int] = None
     allow_llm: bool = False
+    deep_search: bool = False
+    llm_score_candidates: bool = False
     dry_run: bool = False
 
 

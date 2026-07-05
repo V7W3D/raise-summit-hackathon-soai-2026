@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from models.clients.business_profiles import BusinessProfile
 from models.clients.user_mission_links import UserMissionLink
 from models.schemas.business_profiles import BusinessProfileCreate, BusinessProfileUpdate
+from search_agent.extraction.url import get_domain
 from search_agent.schemas import BusinessProfile as AgentBusinessProfile
 
 
@@ -36,10 +37,20 @@ def create_business_profile(
 	return profile
 
 
+def _normalize_website(value: str | None) -> str | None:
+	if not value:
+		return None
+	domain = get_domain(value.strip())
+	return domain or value.strip().lower() or None
+
+
 def update_business_profile(
 	db: Session, profile: BusinessProfile, payload: BusinessProfileUpdate
 ) -> BusinessProfile:
-	for field, value in payload.model_dump(exclude_unset=True).items():
+	updates = payload.model_dump(exclude_unset=True)
+	if "website" in updates:
+		updates["website"] = _normalize_website(updates.get("website"))
+	for field, value in updates.items():
 		setattr(profile, field, value)
 	db.commit()
 	db.refresh(profile)

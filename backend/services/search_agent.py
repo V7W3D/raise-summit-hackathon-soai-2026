@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from models.schemas.leads import LeadCreate
 from search_agent import run_search_agent
 from search_agent.errors import ProviderNotConfiguredError
+from search_agent.search_profiles import search_options_for_priority
 from search_agent.fetching import PageFetcher
 from search_agent.providers import SearchProvider
 from search_agent.schemas import (
@@ -27,6 +28,7 @@ from search_agent.view_models.discover_card import ACTION_LABELS
 from services.leads import create_leads
 from services.business_profiles import resolve_agent_business_profile
 from services.missions import get_mission
+from services.network_members import load_network_directory, match_lead
 
 if TYPE_CHECKING:
 	from models.clients.leads import Lead
@@ -60,7 +62,15 @@ def mission_to_agent_mission(mission: Mission) -> AgentMission:
 		desired_lead_count=mission.desired_lead_count,
 		urgency=mission.urgency,  # type: ignore[arg-type]
 		language=mission.language,
+		buyer_roles=list(mission.buyer_roles or []),
+		trigger_signals=list(mission.trigger_signals or []),
+		negative_filters=list(mission.negative_filters or []),
+		mission_priority=mission.mission_priority,
 	)
+
+
+def _search_options_for_mission(mission: Mission) -> SearchOptions:
+	return search_options_for_priority(mission.mission_priority)
 
 
 def mission_to_agent_input(
@@ -76,7 +86,7 @@ def mission_to_agent_input(
 		request_id=request_id,
 		business_profile=business_profile,
 		mission=mission_to_agent_mission(mission),
-		search_options=search_options or SearchOptions(),
+		search_options=search_options or _search_options_for_mission(mission),
 		provider_options=provider_options,
 	)
 
@@ -107,6 +117,20 @@ def _primary_phone(candidate: CandidateLead) -> str:
 def _evidence_for_db(evidence: Evidence) -> dict[str, str]:
 	source = evidence.title or evidence.source_url
 	return {"quote": evidence.snippet, "source": source}
+
+
+def _dedupe_evidence_for_db(evidence_list: list[Evidence]) -> list[dict[str, str]]:
+	"""Collapse multiple signal types that share the same page snippet."""
+	seen: set[str] = set()
+	entries: list[dict[str, str]] = []
+	for item in evidence_list:
+		entry = _evidence_for_db(item)
+		key = (entry.get("quote") or "").strip().casefold()
+		if not key or key in seen:
+			continue
+		seen.add(key)
+		entries.append(entry)
+	return entries
 
 
 def _recommended_for_db(candidate: CandidateLead) -> list[str]:
@@ -142,7 +166,7 @@ def candidate_to_lead_create(candidate: CandidateLead, mission_id: int) -> LeadC
 		why=list(candidate.classification.reasons),
 		missing=list(candidate.classification.missing_info),
 		recommended=_recommended_for_db(candidate),
-		evidence=[_evidence_for_db(item) for item in candidate.evidence],
+		evidence=_dedupe_evidence_for_db(candidate.evidence),
 		sources_scanned=_sources_scanned_for_db(candidate),
 	)
 
@@ -200,12 +224,30 @@ def run_search_for_mission(
 	if persist and output.candidates:
 		# Re-runs must not duplicate leads: skip websites already saved.
 		known_websites = {lead.website for lead in mission.leads if lead.website}
+		network_directory = load_network_directory(db)
 		payloads = []
 		for candidate in output.candidates:
 			payload = candidate_to_lead_create(candidate, mission_id)
 			if payload.website and payload.website in known_websites:
 				continue
 			known_websites.add(payload.website)
+			network_match = match_lead(
+				db,
+				website=payload.website,
+				email=payload.email,
+				directory=network_directory,
+			)
+			if network_match is not None:
+				badge_label = (
+					"Sponsored" if network_match.badge == "sponsored" else "Verified"
+				)
+				network_note = (
+					f"Scouter network member ({badge_label}) — "
+					f"{network_match.business_name} gets priority visibility"
+				)
+				payload = payload.model_copy(
+					update={"why": [network_note, *list(payload.why)]}
+				)
 			payloads.append(payload)
 		if payloads:
 			leads = create_leads(db, payloads)

@@ -14,6 +14,7 @@ type ProfileFormState = {
   description: string;
   whatWeSell: string;
   valueProposition: string;
+  website: string;
   targetGeographies: string;
   idealCustomers: string;
   badFitCustomers: string;
@@ -39,6 +40,7 @@ function profileToForm(profile: BusinessProfileVM): ProfileFormState {
     description: profile.description ?? '',
     whatWeSell: profile.whatWeSell,
     valueProposition: profile.valueProposition ?? '',
+    website: profile.website ?? '',
     targetGeographies: joinList(profile.targetGeographies),
     idealCustomers: joinList(profile.idealCustomers),
     badFitCustomers: joinList(profile.badFitCustomers),
@@ -69,6 +71,9 @@ function buildPayload(form: ProfileFormState): BusinessProfileUpdatePayload | nu
 
   const valueProposition = form.valueProposition.trim();
   payload.value_proposition = valueProposition || null;
+
+  const website = form.website.trim();
+  payload.website = website || null;
 
   const preferredTone = form.preferredTone.trim();
   payload.preferred_tone = preferredTone || null;
@@ -146,6 +151,20 @@ export function EditBusinessProfileForm({ profile }: EditBusinessProfileFormProp
               placeholder="e.g. B2B SaaS"
               maxLength={120}
             />
+          </label>
+          <label className="mission-field mission-field-full">
+            <span className="mission-field-label">Company website</span>
+            <input
+              className="mission-input"
+              value={form.website}
+              onChange={(event) => updateField('website', event.target.value)}
+              placeholder="e.g. yourcompany.com"
+              maxLength={255}
+            />
+            <span className="mission-field-hint">
+              Network members are matched by domain and shown with a Verified badge when other
+              companies prospect in your space.
+            </span>
           </label>
           <label className="mission-field mission-field-full">
             <span className="mission-field-label">Description</span>

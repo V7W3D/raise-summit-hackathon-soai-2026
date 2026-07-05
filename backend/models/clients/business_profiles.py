@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import DateTime, ForeignKey, String, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
 
@@ -31,6 +31,10 @@ class BusinessProfile(Base):
 	bad_fit_customers: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
 	preferred_tone: Mapped[str | None] = mapped_column(String(120), nullable=True)
 	languages: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+
+	website: Mapped[str | None] = mapped_column(String(255), nullable=True)
+	is_network_member: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+	network_badge: Mapped[str | None] = mapped_column(String(20), nullable=True)
 
 	created_at: Mapped[datetime] = mapped_column(
 		DateTime(timezone=True), server_default=func.now(), nullable=False

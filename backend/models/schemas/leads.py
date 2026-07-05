@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 LeadStatus = Literal["new", "approved", "rejected"]
 TrackingStatus = Literal["to_contact", "contacted", "replied", "engaged", "won", "lost"]
+NetworkBadge = Literal["verified", "sponsored"]
 
 
 class LeadBase(BaseModel):
@@ -54,3 +55,7 @@ class LeadRead(LeadBase):
 	mission_id: int
 	created_at: datetime
 	updated_at: datetime
+	is_network_member: bool = False
+	network_member_name: str | None = None
+	network_badge: NetworkBadge | None = None
+	network_pitch: str | None = None

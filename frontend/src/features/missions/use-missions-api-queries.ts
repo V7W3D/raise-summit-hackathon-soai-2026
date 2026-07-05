@@ -184,6 +184,41 @@ export type TargetKeywordsVM = {
   source: string;
 };
 
+export type ProspectSegmentVM = {
+  id: string;
+  label: string;
+  target: string;
+  reason: string;
+  triggerSignals: string[];
+  buyerRoles: string[];
+};
+
+const prospectSegmentsSchema = z
+  .object({
+    segments: z.array(
+      z.object({
+        id: z.string(),
+        label: z.string(),
+        target: z.string(),
+        reason: z.string(),
+        trigger_signals: z.array(z.string()).default([]),
+        buyer_roles: z.array(z.string()).default([]),
+      }),
+    ),
+    source: z.string(),
+  })
+  .transform((dto) => ({
+    segments: dto.segments.map((segment) => ({
+      id: segment.id,
+      label: segment.label,
+      target: segment.target,
+      reason: segment.reason,
+      triggerSignals: segment.trigger_signals,
+      buyerRoles: segment.buyer_roles,
+    })),
+    source: dto.source,
+  }));
+
 const targetKeywordsSchema = z
   .object({
     keywords: z.array(z.string()),
@@ -315,6 +350,11 @@ async function fetchMissionSuggestions(signal?: AbortSignal) {
   return missionSuggestionsSchema.parse(data);
 }
 
+async function fetchProspectSegments(signal?: AbortSignal) {
+  const { data } = await axios.get(`${API_BASE_URL}/missions/prospect-segments`, { signal });
+  return prospectSegmentsSchema.parse(data);
+}
+
 async function fetchTargetKeywords(signal?: AbortSignal) {
   const { data } = await axios.get(`${API_BASE_URL}/missions/target-keywords`, { signal });
   return targetKeywordsSchema.parse(data);
@@ -369,6 +409,8 @@ export const searchProgressPhases = [
   'idle',
   'planning',
   'searching',
+  'refining',
+  'evaluating',
   'extracting',
   'scoring',
   'done',
@@ -392,6 +434,9 @@ const searchProgressSchema = z
     shortlisted: z.number(),
     rejected: z.number(),
     elapsed_ms: z.number(),
+    search_mode: z.string().optional(),
+    deep_round: z.number().optional(),
+    deep_rounds_total: z.number().optional(),
   })
   .transform((dto) => ({
     phase: dto.phase,
@@ -407,6 +452,9 @@ const searchProgressSchema = z
     shortlisted: dto.shortlisted,
     rejected: dto.rejected,
     elapsedMs: dto.elapsed_ms,
+    searchMode: dto.search_mode ?? 'Balanced search',
+    deepRound: dto.deep_round ?? 0,
+    deepRoundsTotal: dto.deep_rounds_total ?? 0,
   }));
 
 export type SearchProgressVM = z.infer<typeof searchProgressSchema>;
@@ -460,6 +508,17 @@ export function useCreateMission() {
       queryClient.invalidateQueries({ queryKey: ['missions'] });
       queryClient.invalidateQueries({ queryKey: dashboardQueryKey });
     },
+  });
+}
+
+export const prospectSegmentsQueryKey = ['prospect-segments'] as const;
+
+export function useProspectSegments(profileRevision?: string, enabled = true) {
+  return useQuery({
+    queryKey: [...prospectSegmentsQueryKey, profileRevision ?? 'none'],
+    queryFn: ({ signal }) => fetchProspectSegments(signal),
+    enabled,
+    staleTime: 0,
   });
 }
 

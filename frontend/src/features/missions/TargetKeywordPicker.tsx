@@ -8,7 +8,6 @@ type TargetKeywordPickerProps = {
   onAdd: (keyword: string) => void;
   onRemove: (keyword: string) => void;
   isLoading?: boolean;
-  source?: string;
 };
 
 export function normalizeKeyword(value: string): string {
@@ -24,7 +23,6 @@ export function TargetKeywordPicker({
   onAdd,
   onRemove,
   isLoading = false,
-  source,
 }: TargetKeywordPickerProps) {
   const handleAdd = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -41,13 +39,9 @@ export function TargetKeywordPicker({
       <div className="target-keyword-head">
         <div>
           <span className="target-keyword-title">Your targets</span>
-          <span className="target-keyword-hint">
-            {isLoading
-              ? 'Generating keywords from your profile…'
-              : source === 'llm'
-                ? 'Suggested by AI from your profile'
-                : 'Suggested from your profile'}
-          </span>
+          {isLoading ? (
+            <span className="target-keyword-hint">Generating keywords…</span>
+          ) : null}
         </div>
 
         <form className="target-keyword-add-form" onSubmit={handleAdd}>
@@ -103,9 +97,6 @@ export function TargetKeywordPicker({
         )}
       </div>
 
-      {!isLoading && keywords.length > 0 ? (
-        <p className="target-keyword-foot">Click to select your primary target · × to remove</p>
-      ) : null}
     </div>
   );
 }

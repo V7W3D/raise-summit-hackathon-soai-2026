@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import models.clients  # noqa: F401  (register ORM models on Base.metadata)
 from database.base import Base
 from database.session import engine
-from routers import business_profiles, home, leads, missions, outreach
+from routers import business_profiles, home, leads, missions, network_members, outreach
 from routers.search_agent import router as search_agent_router
 
 
@@ -37,6 +37,7 @@ app.include_router(home.router)
 app.include_router(business_profiles.router)
 app.include_router(missions.router)
 app.include_router(leads.router)
+app.include_router(network_members.router)
 app.include_router(outreach.router)
 app.include_router(search_agent_router)
 

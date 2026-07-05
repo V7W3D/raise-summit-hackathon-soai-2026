@@ -6,7 +6,6 @@ import { BusinessProfileCard } from './BusinessProfileCard';
 import { ChipSelector } from './MissionChipSelector';
 import {
   businessSizeOptions,
-  leadCountPresets,
   missionPriorities,
   MISSION_PRIORITY_META,
   negativeFilterOptions,
@@ -14,7 +13,7 @@ import {
   OUTREACH_CHANNEL_LABELS,
   type MissionFormState,
 } from './mission-constants';
-import { buildCreatePayload, inferLanguageFromLocation } from './mission-form-utils';
+import { buildCreatePayload, inferLanguageFromLocation, toggleChipSelection } from './mission-form-utils';
 import {
   type MissionUpdatePayload,
   type MissionVM,
@@ -24,18 +23,25 @@ import { useBusinessProfile } from './use-business-profile-api-queries';
 
 function missionToForm(mission: MissionVM): MissionFormState {
   return {
-    targetKeywords: mission.target ? [mission.target] : [],
+    selectedSegmentId: '',
+    segmentLabel: mission.target,
     target: mission.target,
     location: mission.location,
     language: mission.language ?? 'fr',
+    triggerSignals: mission.triggerSignals,
+    buyerRoles: mission.buyerRoles,
     missionPriority: mission.missionPriority ?? 'fast_wins',
     negativeFilters: mission.negativeFilters,
     outreachChannel: mission.outreachChannel ?? 'mixed',
-    targetBusinessSize: mission.targetBusinessSize ?? 'small',
+    targetBusinessSizes: mission.targetBusinessSize
+      ? mission.targetBusinessSize.split(',').map((item) => item.trim()).filter(Boolean)
+      : ['small'],
     desiredLeadCount: mission.desiredLeadCount ?? 25,
     customLeadCount: '',
     name: mission.name,
     nameManuallyEdited: true,
+    prospectBrief: '',
+    assistReasoning: '',
   };
 }
 
@@ -212,50 +218,32 @@ export function EditMissionForm({ mission }: EditMissionFormProps) {
 
       <div className="create-step" style={{ marginBottom: 0 }}>
         <div className="create-step-head">
-          <span className="step-num">4</span> Goal
+          <span className="step-num">4</span> Filters
         </div>
-        <div className="mission-chip-row" style={{ marginBottom: 12 }}>
-          {leadCountPresets.map((count) => (
-            <button
-              key={count}
-              type="button"
-              className={`mission-chip mission-chip-lg${
-                form.desiredLeadCount === count && !form.customLeadCount ? ' selected' : ''
-              }`}
-              onClick={() => {
-                updateField('desiredLeadCount', count);
-                updateField('customLeadCount', '');
-              }}
-            >
-              {count}
-            </button>
-          ))}
-        </div>
-        <div className="mission-form-grid mission-form-grid-wide">
-          <label className="mission-field">
-            <span className="mission-field-label">Custom lead count</span>
-            <input
-              className="mission-input"
-              type="number"
-              min={1}
-              value={form.customLeadCount}
-              onChange={(event) => updateField('customLeadCount', event.target.value)}
-            />
-          </label>
-          <div className="mission-chip-group">
-            <span className="mission-field-label">Business size</span>
-            <div className="mission-chip-row">
-              {businessSizeOptions.map(({ value, label }) => (
-                <button
-                  key={value}
-                  type="button"
-                  className={`mission-chip${form.targetBusinessSize === value ? ' selected' : ''}`}
-                  onClick={() => updateField('targetBusinessSize', value)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+        <p className="wizard-panel-subtitle" style={{ marginBottom: 12 }}>
+          The agent runs freely — no fixed lead count.
+        </p>
+        <div className="mission-chip-group mission-chip-group-spaced">
+          <span className="mission-field-label">Business size</span>
+          <div className="mission-chip-row">
+            {businessSizeOptions.map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                className={`mission-chip${
+                  form.targetBusinessSizes.includes(value) ? ' selected' : ''
+                }`}
+                aria-pressed={form.targetBusinessSizes.includes(value)}
+                onClick={() =>
+                  updateField(
+                    'targetBusinessSizes',
+                    toggleChipSelection(form.targetBusinessSizes, value),
+                  )
+                }
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
       </div>

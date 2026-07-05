@@ -11,22 +11,32 @@ import {
   Search,
   Sparkles,
   X,
+  BadgeCheck,
 } from 'lucide-react';
 import { useLeads } from '../discover/use-discover-api-queries';
+import { NetworkMemberBadge, sortLeadsWithNetworkPriority } from '../leads/NetworkMemberBadge';
 import { useUpdateLeadStatus, type LeadVM } from '../leads/use-leads-api-queries';
+import '../leads/network-member-badge.css';
 import { useMission, useMissionSearchProgress } from '../missions/use-missions-api-queries';
 import './verdict.css';
 
 const SHORTLIST_MAX = 8;
 const SHORTLIST_MIN_SCORE = 75;
 const REVIEW_MIN_SCORE = 60;
+const VERDICT_TEXT_MAX = 200;
+
+function truncateVerdictText(text: string, max = VERDICT_TEXT_MAX): string {
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  if (normalized.length <= max) return normalized;
+  return `${normalized.slice(0, max - 1).trimEnd()}…`;
+}
 
 function skipReason(lead: LeadVM): string {
   if (lead.missing.length > 0) {
-    return lead.missing.slice(0, 2).join(' · ');
+    return truncateVerdictText(lead.missing.slice(0, 2).join(' · '));
   }
   if (lead.why.length > 0) {
-    return lead.why[0];
+    return truncateVerdictText(lead.why[0]);
   }
   return 'Low overall fit for this mission';
 }
@@ -37,21 +47,46 @@ function evidenceHref(source: string, website: string): string | null {
   return null;
 }
 
+function uniqueVerdictEvidence(
+  evidence: LeadVM['evidence'],
+  max = 2,
+): LeadVM['evidence'] {
+  const seen = new Set<string>();
+  const unique: LeadVM['evidence'] = [];
+  for (const item of evidence) {
+    const key = item.quote.replace(/\s+/g, ' ').trim().toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    unique.push(item);
+    if (unique.length >= max) break;
+  }
+  return unique;
+}
+
 function VerdictLeadCard({ lead }: { lead: LeadVM }) {
   const navigate = useNavigate();
   const updateStatus = useUpdateLeadStatus();
-  const evidence = lead.evidence.slice(0, 3);
+  const evidence = uniqueVerdictEvidence(lead.evidence);
 
   return (
-    <article className={`verdict-lead card${lead.status === 'approved' ? ' approved' : ''}`}>
+    <article
+      className={`verdict-lead card${lead.status === 'approved' ? ' approved' : ''}${
+        lead.isNetworkMember
+          ? ` network-member${lead.networkBadge === 'sponsored' ? ' sponsored' : ''}`
+          : ''
+      }`}
+    >
       <header className="verdict-lead-head">
         <span className="verdict-lead-logo" style={{ background: lead.logoColor }}>
           {lead.initials}
         </span>
         <div className="verdict-lead-title">
-          <Link to={`/leads/${lead.id}`} className="verdict-lead-name">
-            {lead.name}
-          </Link>
+          <div className="verdict-lead-name-row">
+            <Link to={`/leads/${lead.id}`} className="verdict-lead-name">
+              {lead.name}
+            </Link>
+            <NetworkMemberBadge lead={lead} />
+          </div>
           <span className="verdict-lead-meta">
             {lead.location ? (
               <>
@@ -81,7 +116,9 @@ function VerdictLeadCard({ lead }: { lead: LeadVM }) {
             const href = evidenceHref(item.source, lead.website);
             return (
               <li key={item.quote + item.source}>
-                <span className="verdict-evidence-quote">“{item.quote}”</span>
+                <span className="verdict-evidence-quote">
+                  “{truncateVerdictText(item.quote)}”
+                </span>
                 {href ? (
                   <a
                     className="verdict-evidence-src"
@@ -89,10 +126,12 @@ function VerdictLeadCard({ lead }: { lead: LeadVM }) {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    {item.source} <ExternalLink size={11} />
+                    {truncateVerdictText(item.source, 80)} <ExternalLink size={11} />
                   </a>
                 ) : (
-                  <span className="verdict-evidence-src">{item.source}</span>
+                  <span className="verdict-evidence-src">
+                    {truncateVerdictText(item.source, 80)}
+                  </span>
                 )}
               </li>
             );
@@ -145,7 +184,7 @@ export function MissionVerdictPage() {
   const { shortlist, review, skipped } = useMemo(() => {
     const active = leads.filter((lead) => lead.status !== 'rejected');
     const rejectedByUser = leads.filter((lead) => lead.status === 'rejected');
-    const sorted = [...active].sort((a, b) => b.score - a.score);
+    const sorted = sortLeadsWithNetworkPriority(active);
     const shortlist = sorted
       .filter((lead) => lead.score >= SHORTLIST_MIN_SCORE)
       .slice(0, SHORTLIST_MAX);
@@ -165,6 +204,8 @@ export function MissionVerdictPage() {
   }
 
   const showAgentStats = progress !== undefined && progress.phase === 'done';
+
+  const networkCount = leads.filter((lead) => lead.isNetworkMember).length;
 
   return (
     <div className="verdict">
@@ -196,6 +237,22 @@ export function MissionVerdictPage() {
               <span className="verdict-stat-label">{stat.label}</span>
             </div>
           ))}
+        </div>
+      ) : null}
+
+      {networkCount > 0 ? (
+        <div className="network-value-banner card">
+          <BadgeCheck size={20} color="#1d4ed8" />
+          <div>
+            <strong>
+              {networkCount} Scouter network member{networkCount === 1 ? '' : 's'} in your results
+            </strong>
+            <p>
+              These companies subscribe to Scouter and get priority visibility when other
+              businesses prospect in their space — join the network to be featured in future
+              verdicts.
+            </p>
+          </div>
         </div>
       ) : null}
 
@@ -244,7 +301,7 @@ export function MissionVerdictPage() {
           aria-expanded={showSkipped}
         >
           {showSkipped ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-          Skipped {skipped.length} lead{skipped.length === 1 ? '' : 's'} — don’t waste time here
+          Low value ({skipped.length})
         </button>
         {showSkipped ? (
           skipped.length > 0 ? (

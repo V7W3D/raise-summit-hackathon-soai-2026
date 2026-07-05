@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field
+
+NetworkBadge = Literal["verified", "sponsored"]
 
 
 class BusinessProfileBase(BaseModel):
@@ -16,6 +20,7 @@ class BusinessProfileBase(BaseModel):
 	bad_fit_customers: list[str] = Field(default_factory=list)
 	preferred_tone: str | None = Field(default=None, max_length=120)
 	languages: list[str] = Field(default_factory=list)
+	website: str | None = Field(default=None, max_length=255)
 
 
 class BusinessProfileCreate(BusinessProfileBase):
@@ -33,6 +38,7 @@ class BusinessProfileUpdate(BaseModel):
 	bad_fit_customers: list[str] | None = None
 	preferred_tone: str | None = Field(default=None, max_length=120)
 	languages: list[str] | None = None
+	website: str | None = Field(default=None, max_length=255)
 
 
 class BusinessProfileRead(BusinessProfileBase):
@@ -40,5 +46,7 @@ class BusinessProfileRead(BusinessProfileBase):
 
 	id: int
 	user_id: int
+	is_network_member: bool = False
+	network_badge: NetworkBadge | None = None
 	created_at: datetime
 	updated_at: datetime

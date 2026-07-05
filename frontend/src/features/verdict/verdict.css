@@ -73,9 +73,11 @@
 }
 
 .verdict-lead {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
   padding: 18px;
+  height: 100%;
 }
 
 .verdict-lead.approved {
@@ -106,6 +108,13 @@
   gap: 2px;
   min-width: 0;
   flex: 1;
+}
+
+.verdict-lead-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .verdict-lead-name {
@@ -167,6 +176,11 @@
   font-size: 0.85rem;
   color: var(--text);
   line-height: 1.45;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+  word-break: break-word;
 }
 
 .verdict-evidence-src {
@@ -178,6 +192,10 @@
   color: var(--blue);
   text-decoration: none;
   width: fit-content;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 a.verdict-evidence-src:hover {
@@ -188,6 +206,13 @@ a.verdict-evidence-src:hover {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  align-items: center;
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.verdict-lead-actions .btn {
+  flex: 0 0 auto;
 }
 
 .verdict-empty {

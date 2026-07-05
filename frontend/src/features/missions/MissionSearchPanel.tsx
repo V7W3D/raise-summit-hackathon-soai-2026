@@ -10,13 +10,16 @@ import {
   type SearchProgressPhase,
   type SearchProgressVM,
 } from './use-missions-api-queries';
+import { MISSION_PRIORITY_META } from './mission-constants';
 
 const PHASE_LABELS: Record<SearchProgressPhase, string> = {
   idle: 'Starting agent…',
   planning: 'Planning search queries for your target market…',
   searching: 'Scanning the web for matching businesses…',
+  refining: 'Deep search: generating improved queries…',
+  evaluating: 'Deep search: learning from this round’s results…',
   extracting: 'Fetching websites and extracting contacts…',
-  scoring: 'Scoring leads against your mission criteria…',
+  scoring: 'Scoring leads with Groq AI…',
   done: 'Finalizing results…',
   failed: 'Search failed.',
 };
@@ -25,6 +28,8 @@ const PHASE_STEP: Record<SearchProgressPhase, number> = {
   idle: 0,
   planning: 0,
   searching: 1,
+  refining: 1,
+  evaluating: 1,
   extracting: 2,
   scoring: 3,
   done: 3,
@@ -148,10 +153,18 @@ export function MissionSearchPanel({ mission, autoStart = false }: MissionSearch
       : 'idle';
   const activeStep = PHASE_STEP[phase];
   const phaseLabel =
-    phase === 'searching' && progress && progress.queriesPlanned > 0
-      ? `Scanning the web — query ${Math.min(progress.queriesRun + 1, progress.queriesPlanned)} of ${progress.queriesPlanned}…`
-      : PHASE_LABELS[phase];
+    progress && progress.deepRoundsTotal > 0 && phase !== 'idle'
+      ? `${PHASE_LABELS[phase]} (round ${progress.deepRound || 1}/${progress.deepRoundsTotal})`
+      : phase === 'searching' && progress && progress.queriesPlanned > 0
+        ? `Scanning the web — query ${Math.min(progress.queriesRun + 1, progress.queriesPlanned)} of ${progress.queriesPlanned}…`
+        : PHASE_LABELS[phase];
   const hasLiveCounts = progress !== undefined && phase !== 'idle';
+
+  const searchModeLabel =
+    progress?.searchMode ??
+    (mission.missionPriority
+      ? MISSION_PRIORITY_META[mission.missionPriority].searchMode
+      : 'Balanced search');
 
   if (mission.isArchived) {
     return null;
@@ -166,7 +179,7 @@ export function MissionSearchPanel({ mission, autoStart = false }: MissionSearch
         <div>
           <h2 className="mission-search-panel-title">Lead search agent</h2>
           <p className="mission-search-panel-subtitle">
-            AI scans the web for {mission.target || 'matching businesses'} in{' '}
+            {searchModeLabel} for {mission.target || 'matching businesses'} in{' '}
             {mission.location || 'your target area'}.
           </p>
         </div>

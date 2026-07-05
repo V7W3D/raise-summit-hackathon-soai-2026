@@ -6,19 +6,17 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
-  Info,
   Rocket,
   Sparkles,
 } from 'lucide-react';
 import { BusinessProfileCard } from './BusinessProfileCard';
 import { ChipSelector, OptionCard } from './MissionChipSelector';
-import { TargetKeywordPicker } from './TargetKeywordPicker';
+import { ProspectSegmentPicker } from './ProspectSegmentPicker';
 import {
   businessSizeOptions,
   DIFFICULTY_LABELS,
   INITIAL_MISSION_FORM,
   languageOptions,
-  leadCountPresets,
   MISSION_PRIORITY_META,
   missionPriorities,
   negativeFilterOptions,
@@ -29,19 +27,20 @@ import {
   type WizardStepId,
 } from './mission-constants';
 import {
-  addTargetKeyword,
   buildCreatePayload,
   canAdvanceFromStep,
   defaultLocationFromProfile,
   formToPreviewPayload,
   inferLanguageFromLocation,
-  removeTargetKeyword,
+  toggleChipSelection,
 } from './mission-form-utils';
 import {
   useCreateMission,
+  useMissionAssist,
   useMissionPreview,
-  useTargetKeywords,
+  useProspectSegments,
   type MissionPreviewVM,
+  type ProspectSegmentVM,
 } from './use-missions-api-queries';
 import { useBusinessProfile } from './use-business-profile-api-queries';
 
@@ -61,17 +60,36 @@ export function CreateMissionForm() {
   const [preview, setPreview] = useState<MissionPreviewVM | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
-  const [keywordsLoaded, setKeywordsLoaded] = useState(false);
+  const [segmentsLoaded, setSegmentsLoaded] = useState(false);
 
   const createMission = useCreateMission();
   const previewMission = useMissionPreview();
+  const missionAssist = useMissionAssist();
   const { data: businessProfile, isPending: isProfilePending, isError: isProfileError } =
     useBusinessProfile();
   const {
-    data: targetKeywords,
-    isPending: isKeywordsPending,
-    isError: isKeywordsError,
-  } = useTargetKeywords(Boolean(businessProfile));
+    data: prospectSegments,
+    isPending: isSegmentsPending,
+    isError: isSegmentsError,
+  } = useProspectSegments(businessProfile?.updatedAt, Boolean(businessProfile));
+
+  const profileRevision = businessProfile?.updatedAt ?? '';
+
+  useEffect(() => {
+    if (!profileRevision) return;
+    setSegmentsLoaded(false);
+    setForm((current) => ({
+      ...current,
+      selectedSegmentId: '',
+      segmentLabel: '',
+      target: '',
+      triggerSignals: [],
+      buyerRoles: [],
+      prospectBrief: '',
+      assistReasoning: '',
+      nameManuallyEdited: false,
+    }));
+  }, [profileRevision]);
 
   useEffect(() => {
     if (!businessProfile || initialized) return;
@@ -86,14 +104,18 @@ export function CreateMissionForm() {
   }, [businessProfile, initialized]);
 
   useEffect(() => {
-    if (!targetKeywords || keywordsLoaded) return;
+    if (!prospectSegments?.segments.length || segmentsLoaded) return;
+    const first = prospectSegments.segments[0];
     setForm((current) => ({
       ...current,
-      targetKeywords: targetKeywords.keywords,
-      target: current.target || targetKeywords.keywords[0] || '',
+      selectedSegmentId: first.id,
+      segmentLabel: first.label,
+      target: first.target,
+      triggerSignals: first.triggerSignals,
+      buyerRoles: first.buyerRoles,
     }));
-    setKeywordsLoaded(true);
-  }, [targetKeywords, keywordsLoaded]);
+    setSegmentsLoaded(true);
+  }, [prospectSegments, segmentsLoaded]);
 
   useEffect(() => {
     if (!form.target.trim() || !form.location.trim()) {
@@ -116,12 +138,12 @@ export function CreateMissionForm() {
   }, [
     form.target,
     form.location,
-    form.targetBusinessSize,
+    form.targetBusinessSizes,
     form.missionPriority,
     form.negativeFilters,
+    form.triggerSignals,
+    form.buyerRoles,
     form.outreachChannel,
-    form.desiredLeadCount,
-    form.customLeadCount,
     form.nameManuallyEdited,
     form.language,
   ]);
@@ -134,34 +156,65 @@ export function CreateMissionForm() {
     setValidationError(null);
   };
 
-  const handleAddKeyword = (keyword: string) => {
-    setForm((current) => {
-      const targetKeywords = addTargetKeyword(current.targetKeywords, keyword);
-      const target =
-        current.target && targetKeywords.some((item) => item.toLowerCase() === current.target.toLowerCase())
-          ? current.target
-          : keyword;
-      return { ...current, targetKeywords, target };
-    });
+  const handleSelectSegment = (segment: ProspectSegmentVM) => {
+    setForm((current) => ({
+      ...current,
+      selectedSegmentId: segment.id,
+      segmentLabel: segment.label,
+      target: segment.target,
+      triggerSignals: segment.triggerSignals,
+      buyerRoles: segment.buyerRoles,
+      prospectBrief: '',
+      assistReasoning: '',
+      nameManuallyEdited: false,
+    }));
+    setValidationError(null);
   };
 
-  const handleRemoveKeyword = (keyword: string) => {
-    setForm((current) => {
-      const targetKeywords = removeTargetKeyword(current.targetKeywords, keyword);
-      const removedCurrent = current.target.toLowerCase() === keyword.toLowerCase();
-      return {
-        ...current,
-        targetKeywords,
-        target: removedCurrent ? (targetKeywords[0] ?? '') : current.target,
-      };
-    });
+  const handleApplyProspectBrief = () => {
+    const query = form.prospectBrief.trim();
+    if (query.length < 8) {
+      setValidationError('Write at least a short sentence about who you want to prospect.');
+      return;
+    }
+
+    missionAssist.mutate(
+      { query, current_location: form.location.trim() },
+      {
+        onSuccess: (assist) => {
+          setForm((current) => ({
+            ...current,
+            selectedSegmentId: 'custom',
+            segmentLabel: assist.targetLabel,
+            target: assist.target,
+            triggerSignals: assist.triggerSignals,
+            buyerRoles: assist.buyerRoles,
+            negativeFilters: assist.negativeFilters.length
+              ? assist.negativeFilters
+              : current.negativeFilters,
+            missionPriority: assist.missionPriority ?? current.missionPriority,
+            outreachChannel: assist.outreachChannel ?? current.outreachChannel,
+            location: assist.location.trim() || current.location,
+            language: assist.location.trim()
+              ? inferLanguageFromLocation(assist.location, businessProfile?.languages)
+              : current.language,
+            assistReasoning: assist.reasoning,
+            nameManuallyEdited: false,
+          }));
+          setValidationError(null);
+        },
+        onError: () => {
+          setValidationError('Could not interpret your description. Try rephrasing it.');
+        },
+      },
+    );
   };
 
   const stepIndex = WIZARD_STEPS.findIndex((item) => item.id === step);
 
   const goNext = () => {
     if (!canAdvanceFromStep(step, form)) {
-      setValidationError('Pick a target keyword and set a location before continuing.');
+      setValidationError('Describe who you want to prospect and set a location before continuing.');
       return;
     }
     const next = WIZARD_STEPS[stepIndex + 1];
@@ -227,28 +280,70 @@ export function CreateMissionForm() {
 
       {step === 'what' ? (
         <section className="wizard-panel">
-          <h2 className="wizard-panel-title">What are you looking for?</h2>
+          <h2 className="wizard-panel-title">Who should you prospect?</h2>
           <p className="wizard-panel-subtitle">
-            Pick your target from AI-suggested keywords — add or remove words as you go.
+            Segments are based on what you sell and who your ideal customers are.
           </p>
 
-          <TargetKeywordPicker
-            keywords={form.targetKeywords}
-            selected={form.target}
-            onSelect={(keyword) => updateForm('target', keyword)}
-            onAdd={handleAddKeyword}
-            onRemove={handleRemoveKeyword}
-            isLoading={isKeywordsPending && !keywordsLoaded}
-            source={targetKeywords?.source}
+          {businessProfile ? (
+            <div className="mission-profile-context card">
+              <p>
+                <strong>You sell:</strong> {businessProfile.whatWeSell}
+              </p>
+              {businessProfile.idealCustomers.length > 0 ? (
+                <p>
+                  <strong>Ideal customers:</strong>{' '}
+                  {businessProfile.idealCustomers.join(' · ')}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
+          <ProspectSegmentPicker
+            segments={prospectSegments?.segments ?? []}
+            selectedId={form.selectedSegmentId}
+            onSelect={handleSelectSegment}
+            isLoading={isSegmentsPending && !segmentsLoaded}
           />
 
-          {isKeywordsError ? (
+          {isSegmentsError ? (
             <p className="mission-form-error" role="alert">
-              Could not load AI keywords. Add your own targets to continue.
+              Could not load prospect segments. Check your profile and try again.
             </p>
           ) : null}
 
-          <label className="mission-field mission-field-full">
+          <div className="mission-custom-prospect">
+            <label className="mission-field mission-field-full">
+              <span className="mission-field-label">Or describe in your own words</span>
+              <textarea
+                className="mission-input mission-textarea"
+                value={form.prospectBrief}
+                onChange={(event) => updateForm('prospectBrief', event.target.value)}
+                placeholder="e.g. Small garages in Lyon that miss calls when mechanics are under cars"
+                rows={3}
+              />
+            </label>
+            <button
+              type="button"
+              className="btn btn-outline mission-custom-prospect-btn"
+              onClick={handleApplyProspectBrief}
+              disabled={missionAssist.isPending || form.prospectBrief.trim().length < 8}
+            >
+              {missionAssist.isPending ? 'Interpreting…' : 'Use this description'}
+            </button>
+            {form.assistReasoning ? (
+              <p className="mission-custom-prospect-reason">
+                <Sparkles size={14} /> {form.assistReasoning}
+              </p>
+            ) : null}
+            {form.selectedSegmentId === 'custom' && form.segmentLabel ? (
+              <p className="mission-custom-prospect-active">
+                Active target: <strong>{form.segmentLabel}</strong>
+              </p>
+            ) : null}
+          </div>
+
+          <label className="mission-field mission-field-full mission-field-spaced">
             <span className="mission-field-label">Location</span>
             <input
               className="mission-input"
@@ -265,7 +360,7 @@ export function CreateMissionForm() {
             />
           </label>
 
-          <div className="mission-chip-group">
+          <div className="mission-chip-group mission-chip-group-spaced">
             <span className="mission-field-label">Language</span>
             <div className="mission-chip-row">
               {languageOptions.map(({ value, label }) => (
@@ -286,9 +381,6 @@ export function CreateMissionForm() {
       {step === 'priority' ? (
         <section className="wizard-panel">
           <h2 className="wizard-panel-title">How should this mission run?</h2>
-          <p className="wizard-panel-subtitle">
-            Pick a mode, what to exclude, and how you plan to reach out.
-          </p>
 
           <div className="mission-option-grid">
             {missionPriorities.map((priority) => {
@@ -297,19 +389,13 @@ export function CreateMissionForm() {
                 <OptionCard
                   key={priority}
                   label={meta.label}
-                  description={meta.description}
+                  description={`${meta.description} ${meta.urgencyEffect}`}
                   selected={form.missionPriority === priority}
                   onSelect={() => updateForm('missionPriority', priority)}
                 />
               );
             })}
           </div>
-
-          {form.missionPriority ? (
-            <p className="mission-priority-effect">
-              <Info size={14} /> {MISSION_PRIORITY_META[form.missionPriority].urgencyEffect}
-            </p>
-          ) : null}
 
           <ChipSelector
             label="Negative filters"
@@ -339,51 +425,29 @@ export function CreateMissionForm() {
 
       {step === 'goal' ? (
         <section className="wizard-panel">
-          <h2 className="wizard-panel-title">How many leads do you want?</h2>
-          <p className="wizard-panel-subtitle">Pick a preset or enter a custom count.</p>
+          <h2 className="wizard-panel-title">Refine who you hunt</h2>
+          <p className="wizard-panel-subtitle">
+            The agent runs freely — no fixed lead count. Broad mode uses evolutive deep search
+            until coverage is exhausted.
+          </p>
 
-          <div className="mission-chip-group">
-            <span className="mission-field-label">Lead count</span>
-            <div className="mission-chip-row">
-              {leadCountPresets.map((count) => (
-                <button
-                  key={count}
-                  type="button"
-                  className={`mission-chip mission-chip-lg${
-                    form.desiredLeadCount === count && !form.customLeadCount ? ' selected' : ''
-                  }`}
-                  onClick={() => {
-                    updateForm('desiredLeadCount', count);
-                    updateForm('customLeadCount', '');
-                  }}
-                >
-                  {count}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <label className="mission-field">
-            <span className="mission-field-label">Custom count</span>
-            <input
-              className="mission-input"
-              type="number"
-              min={1}
-              value={form.customLeadCount}
-              onChange={(event) => updateForm('customLeadCount', event.target.value)}
-              placeholder={`Default: ${form.desiredLeadCount}`}
-            />
-          </label>
-
-          <div className="mission-chip-group">
+          <div className="mission-chip-group mission-chip-group-spaced">
             <span className="mission-field-label">Business size</span>
             <div className="mission-chip-row">
               {businessSizeOptions.map(({ value, label }) => (
                 <button
                   key={value}
                   type="button"
-                  className={`mission-chip${form.targetBusinessSize === value ? ' selected' : ''}`}
-                  onClick={() => updateForm('targetBusinessSize', value)}
+                  className={`mission-chip${
+                    form.targetBusinessSizes.includes(value) ? ' selected' : ''
+                  }`}
+                  aria-pressed={form.targetBusinessSizes.includes(value)}
+                  onClick={() =>
+                    updateForm(
+                      'targetBusinessSizes',
+                      toggleChipSelection(form.targetBusinessSizes, value),
+                    )
+                  }
                 >
                   {label}
                 </button>
@@ -396,9 +460,6 @@ export function CreateMissionForm() {
       {step === 'review' ? (
         <section className="wizard-panel">
           <h2 className="wizard-panel-title">Review your mission</h2>
-          <p className="wizard-panel-subtitle">
-            Confirm the generated strategy before launching prospecting.
-          </p>
 
           {preview ? (
             <div className="mission-review-card">
@@ -407,7 +468,7 @@ export function CreateMissionForm() {
                 <p>{preview.summary}</p>
               </div>
 
-              <div className="mission-review-meta">
+              <div className="mission-review-meta mission-review-meta-spaced">
                 <div>
                   <span className="profile-field-label">Estimated yield</span>
                   <span className="profile-field-value">
@@ -447,11 +508,6 @@ export function CreateMissionForm() {
           </label>
         </section>
       ) : null}
-
-      <div className="create-note">
-        <Info /> Your saved profile is reused — define targeting once, launch missions in under a
-        minute.
-      </div>
 
       {(validationError || createMission.isError) && (
         <p className="mission-form-error" role="alert">

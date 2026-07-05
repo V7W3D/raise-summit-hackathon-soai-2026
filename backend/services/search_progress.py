@@ -37,9 +37,10 @@ def _empty(phase: str = "idle") -> dict[str, Any]:
 	return entry
 
 
-def start_progress(mission_id: int) -> None:
+def start_progress(mission_id: int, *, search_mode: str = "balanced") -> None:
 	with _lock:
 		entry = _empty(phase="planning")
+		entry["search_mode"] = search_mode
 		entry["_started_at"] = time.monotonic()
 		_progress[mission_id] = entry
 

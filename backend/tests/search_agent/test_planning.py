@@ -17,7 +17,7 @@ def test_query_generation_for_construction_lyon():
     assert len(plan.generated_queries) <= 6  # respects maxQueries
     assert all("lyon" in q.lower() for q in plan.generated_queries)
     # French market -> French query templates.
-    assert any("devis" in q or "urgence" in q for q in plan.generated_queries)
+    assert any("email" in q or "agence" in q or "annuaire" in q for q in plan.generated_queries)
 
 
 def test_bad_fit_signals_include_profile_entries():
@@ -32,3 +32,16 @@ def test_unknown_industry_falls_back_to_ideal_customers():
     plan = build_fallback_plan(agent_input)
     assert plan.target_segments
     assert plan.generated_queries
+
+
+def test_social_media_target_uses_mission_not_profile():
+    agent_input = example_input()
+    agent_input.mission.target_industry = "agence social media"
+    agent_input.mission.trigger_signals = ["community management", "Instagram"]
+    agent_input.mission.description = (
+        "Prospecting focus: social media agencies in Lyon."
+    )
+    plan = build_fallback_plan(agent_input)
+    assert any("social" in s.lower() for s in plan.target_segments)
+    assert any("social" in q.lower() or "community" in q.lower() for q in plan.generated_queries)
+    assert not any("sécurité" in q.lower() or "cyber" in q.lower() for q in plan.generated_queries)

@@ -1,7 +1,19 @@
-"""Deterministic classification into the four Discover groups."""
+"""Priority-aware candidate classification."""
 
 from ..schemas import CandidateLead, Classification, Mission
 from .score import ScoringResult
+
+
+def _thresholds(mission: Mission) -> tuple[int, int]:
+	"""Return (overall_min, fit_min) for high_fit bucket."""
+	priority = (mission.mission_priority or "").strip()
+	if priority == "fast_wins":
+		return 68, 55
+	if priority == "high_value":
+		return 80, 75
+	if priority == "broad_coverage":
+		return 70, 62
+	return 75, 70
 
 
 def classify_candidate(
@@ -9,10 +21,16 @@ def classify_candidate(
 ) -> Classification:
     scores = result.scores
     overall, fit = scores.overall_score, scores.fit_score
+    high_overall, high_fit = _thresholds(mission)
+    priority = (mission.mission_priority or "").strip()
 
     if len(result.bad_signal_hits) >= 2 and fit < 50:
         category = "rejected_or_low_fit"
-    elif overall >= 75 and fit >= 70:
+    elif (
+        overall >= high_overall
+        and fit >= high_fit
+        and (priority != "fast_wins" or result.has_contact)
+    ):
         category = "high_fit"
     elif fit >= 55 and not result.has_contact:
         category = "promising_but_incomplete"

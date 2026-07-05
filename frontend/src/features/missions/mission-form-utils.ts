@@ -53,7 +53,6 @@ export function buildCreatePayload(form: MissionFormState): MissionCreatePayload
   const location = form.location.trim();
   if (!target || !location) return null;
 
-  const leadCount = resolveLeadCount(form);
   const name = form.name.trim();
   if (!name) return null;
 
@@ -62,14 +61,26 @@ export function buildCreatePayload(form: MissionFormState): MissionCreatePayload
     target,
     location,
     target_industry: target,
-    desired_lead_count: leadCount,
     language: form.language || undefined,
-    target_business_size: form.targetBusinessSize || undefined,
+    target_business_size: form.targetBusinessSizes.length
+      ? form.targetBusinessSizes.join(', ')
+      : undefined,
   };
 
   if (form.missionPriority) payload.mission_priority = form.missionPriority;
   if (form.outreachChannel) payload.outreach_channel = form.outreachChannel;
   if (form.negativeFilters.length) payload.negative_filters = form.negativeFilters;
+  if (form.triggerSignals.length) payload.trigger_signals = form.triggerSignals;
+  if (form.buyerRoles.length) payload.buyer_roles = form.buyerRoles;
+
+  const prospectFocus = form.prospectBrief.trim() || form.segmentLabel.trim();
+  if (prospectFocus) {
+    const signalNote =
+      form.triggerSignals.length > 0
+        ? ` Signals: ${form.triggerSignals.slice(0, 4).join(', ')}.`
+        : '';
+    payload.description = `Prospecting focus: ${prospectFocus}. Target: ${target} in ${location}.${signalNote}`;
+  }
 
   return payload;
 }
@@ -78,10 +89,13 @@ export function formToPreviewPayload(form: MissionFormState) {
   return {
     target: form.target.trim(),
     location: form.location.trim(),
-    target_business_size: form.targetBusinessSize || null,
-    desired_lead_count: resolveLeadCount(form),
+    target_business_size: form.targetBusinessSizes.length
+      ? form.targetBusinessSizes.join(', ')
+      : null,
     mission_priority: form.missionPriority || null,
     negative_filters: form.negativeFilters,
+    trigger_signals: form.triggerSignals,
+    buyer_roles: form.buyerRoles,
     outreach_channel: form.outreachChannel || null,
     name: form.name.trim(),
   };
@@ -117,7 +131,7 @@ export function canAdvanceFromStep(step: string, form: MissionFormState): boolea
     case 'priority':
       return Boolean(form.missionPriority);
     case 'goal':
-      return resolveLeadCount(form) >= 1;
+      return form.targetBusinessSizes.length > 0;
     case 'review':
       return Boolean(form.name.trim());
     default:

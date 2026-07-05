@@ -2,6 +2,7 @@ import axios from 'axios';
 import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { API_BASE_URL } from '../../api/config';
+import { prospectSegmentsQueryKey } from './use-missions-api-queries';
 
 const businessProfileSchema = z
   .object({
@@ -19,6 +20,9 @@ const businessProfileSchema = z
     languages: z.array(z.string()),
     created_at: z.string(),
     updated_at: z.string(),
+    website: z.string().nullable().optional(),
+    is_network_member: z.boolean().default(false),
+    network_badge: z.enum(['verified', 'sponsored']).nullable().optional(),
   })
   .transform((dto) => ({
     id: dto.id,
@@ -33,6 +37,10 @@ const businessProfileSchema = z
     badFitCustomers: dto.bad_fit_customers,
     preferredTone: dto.preferred_tone,
     languages: dto.languages,
+    updatedAt: dto.updated_at,
+    website: dto.website ?? null,
+    isNetworkMember: dto.is_network_member,
+    networkBadge: dto.network_badge ?? null,
   }));
 
 export type BusinessProfileVM = z.infer<typeof businessProfileSchema>;
@@ -55,6 +63,7 @@ export type BusinessProfileUpdatePayload = {
   bad_fit_customers?: string[];
   preferred_tone?: string | null;
   languages?: string[];
+  website?: string | null;
 };
 
 async function updateBusinessProfile(payload: BusinessProfileUpdatePayload) {
@@ -74,7 +83,8 @@ export function useUpdateBusinessProfile() {
   return useMutation({
     mutationFn: updateBusinessProfile,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: businessProfileQueryKey });
+      void queryClient.invalidateQueries({ queryKey: businessProfileQueryKey });
+      void queryClient.invalidateQueries({ queryKey: prospectSegmentsQueryKey });
     },
   });
 }
