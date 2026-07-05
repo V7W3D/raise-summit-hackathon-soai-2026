@@ -6,6 +6,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 LeadStatus = Literal["new", "approved", "rejected"]
+TrackingStatus = Literal["to_contact", "contacted", "replied", "engaged", "won", "lost"]
 
 
 class LeadBase(BaseModel):
@@ -17,6 +18,7 @@ class LeadBase(BaseModel):
 	phone: str = ""
 	score: int = 0
 	status: LeadStatus = "new"
+	tracking_status: TrackingStatus = "to_contact"
 	why: list[str] = Field(default_factory=list)
 	missing: list[str] = Field(default_factory=list)
 	recommended: list[str] = Field(default_factory=list)
@@ -37,6 +39,7 @@ class LeadUpdate(BaseModel):
 	phone: str | None = None
 	score: int | None = None
 	status: LeadStatus | None = None
+	tracking_status: TrackingStatus | None = None
 	why: list[str] | None = None
 	missing: list[str] | None = None
 	recommended: list[str] | None = None

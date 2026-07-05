@@ -7,6 +7,7 @@ import { CreateMissionPage } from '@features/missions/CreateMissionPage';
 import { EditBusinessProfilePage } from '@features/missions/EditBusinessProfilePage';
 import { MissionsPage } from '@features/missions/MissionsPage';
 import { DiscoverPage } from '@features/discover/DiscoverPage';
+import { TrackingPage } from '@features/tracking/TrackingPage';
 import { LeadDetailPage } from '@features/leads/LeadDetailPage';
 import { MissionVerdictPage } from '@features/verdict/MissionVerdictPage';
 
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/missions/:missionId" element={<MissionDetailPage />} />
           <Route path="/missions/:missionId/verdict" element={<MissionVerdictPage />} />
           <Route path="/discover" element={<DiscoverPage />} />
+          <Route path="/tracking" element={<TrackingPage />} />
           <Route path="/leads/:leadId" element={<LeadDetailPage />} />
         </Route>
       </Routes>

@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { to: '/', label: 'Home', end: true },
   { to: '/missions', label: 'Missions' },
   { to: '/discover', label: 'Discover' },
+  { to: '/tracking', label: 'Track' },
 ];
 
 export function AppLayout() {

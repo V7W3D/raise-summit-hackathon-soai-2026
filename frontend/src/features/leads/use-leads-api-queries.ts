@@ -7,8 +7,17 @@ import { enrichLeadContent } from './lead-content';
 import { enrichLeadDisplay } from './lead-display';
 
 export const leadStatuses = ['new', 'approved', 'rejected'] as const;
+export const trackingStatuses = [
+  'to_contact',
+  'contacted',
+  'replied',
+  'engaged',
+  'won',
+  'lost',
+] as const;
 
 export type LeadStatus = (typeof leadStatuses)[number];
+export type TrackingStatus = (typeof trackingStatuses)[number];
 
 const evidenceSchema = z.object({
   quote: z.string(),
@@ -32,6 +41,7 @@ export const leadSchema = z
     phone: z.string(),
     score: z.number(),
     status: z.enum(leadStatuses).default('new'),
+    tracking_status: z.enum(trackingStatuses).default('to_contact'),
     why: z.array(z.string()),
     missing: z.array(z.string()),
     recommended: z.array(z.string()),
@@ -53,6 +63,7 @@ export const leadSchema = z
         phone: dto.phone,
         score: dto.score,
         status: dto.status,
+        trackingStatus: dto.tracking_status,
         why: dto.why,
         missing: dto.missing,
         recommended: dto.recommended,
@@ -85,6 +96,13 @@ async function updateLeadStatus(id: number, status: LeadStatus) {
   return leadSchema.parse(data);
 }
 
+async function updateLeadTrackingStatus(id: number, trackingStatus: TrackingStatus) {
+  const { data } = await axios.patch(`${API_BASE_URL}/leads/${id}`, {
+    tracking_status: trackingStatus,
+  });
+  return leadSchema.parse(data);
+}
+
 export function useUpdateLeadStatus() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -94,6 +112,18 @@ export function useUpdateLeadStatus() {
       queryClient.setQueryData(leadQueryKey(lead.id), lead);
       void queryClient.invalidateQueries({ queryKey: ['leads'] });
       void queryClient.invalidateQueries({ queryKey: dashboardQueryKey });
+    },
+  });
+}
+
+export function useUpdateLeadTrackingStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, trackingStatus }: { id: number; trackingStatus: TrackingStatus }) =>
+      updateLeadTrackingStatus(id, trackingStatus),
+    onSuccess: (lead) => {
+      queryClient.setQueryData(leadQueryKey(lead.id), lead);
+      void queryClient.invalidateQueries({ queryKey: ['leads'] });
     },
   });
 }
